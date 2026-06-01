@@ -19,5 +19,12 @@
     "description": "Un framework de Node.js progresivo y robusto para construir aplicaciones altamente eficientes, confiables y escalables.",
     "color": "bg-[#e0234e]",
     "gradient": "from-[#e0234e]/10 to-[#e0234e]/5"
+  },
+  {
+    "title": "Docker",
+    "url": "https://docs-docker.esdocu.com",
+    "description": "Una plataforma abierta para desarrollar, enviar y ejecutar aplicaciones mediante el uso de contenedores de software.",
+    "color": "bg-[#2496ed]",
+    "gradient": "from-[#2496ed]/10 to-[#2496ed]/5"
   }
 ]
