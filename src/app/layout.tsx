@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import Script from "next/script";
+import { AdScript } from "@/components/ad-script";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -76,16 +76,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
-          {process.env.NEXT_PUBLIC_ENABLE_ADS === "true" && (
-            <Script
-              src={
-                process.env.NODE_ENV === "development"
-                  ? "http://localhost:8787/ads.js"
-                  : "https://static-ads.xeost.com/ads.js"
-              }
-              strategy="afterInteractive"
-            />
-          )}
+          <AdScript />
         </ThemeProvider>
       </body>
     </html>
