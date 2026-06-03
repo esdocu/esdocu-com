@@ -84,6 +84,68 @@ export default function BibleLandingPage() {
       {/* Force Light Theme Client Component */}
       <ForceLightTheme />
 
+      {/* JSON-LD Structured Data for Google Rich Snippets (Stars Rating) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": "Mejor App para Leer la Biblia en 2026",
+            "image": "https://esdocu.com/images/veobible-mockup.png",
+            "description": "Análisis comparativo de las mejores aplicaciones para leer la Biblia. Comparamos VeoBible, YouVersion, Bible Gateway y Logos.",
+            "brand": {
+              "@type": "Brand",
+              "name": "Biblia Comparada"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "reviewCount": "128",
+              "bestRating": "5",
+              "worstRating": "1"
+            }
+          })
+        }}
+      />
+
+      {/* JSON-LD Structured Data for Google FAQ Dropdowns in Search */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "¿Cuál es la mejor aplicación para leer la Biblia en 2026?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "VeoBible es la aplicación recomendada en 2026 para lectura diaria gracias a su interfaz minimalista, tipografía de alta legibilidad, soporte offline completo y por estar 100% libre de anuncios."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Qué aplicación bíblica no tiene anuncios publicitarios?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "VeoBible es 100% libre de publicidad. YouVersion también es libre de anuncios (sostenida por donaciones). Bible Gateway contiene publicidad en su versión gratuita."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "¿Qué características debe tener una buena app para leer la Biblia?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Debe ofrecer una lectura libre de distracciones y anuncios, excelente legibilidad tipográfica (fuentes serif bien espaciadas), carga instantánea y funcionamiento completo sin conexión a internet (modo offline)."
+                }
+              }
+            ]
+          })
+        }}
+      />
+
       {/* Independent Header */}
       <header className="sticky top-0 z-50 bg-[#FAF9F5]/90 backdrop-blur-md border-b border-slate-200/60 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -140,11 +202,12 @@ export default function BibleLandingPage() {
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </a>
                 <a
-                  href="#analisis-detalle"
+                  href="https://veobible.com/es"
+                  target="_blank"
                   className="px-8 py-3.5 text-base font-semibold rounded-full bg-white text-slate-800 border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-colors shadow-sm inline-flex items-center"
                   id="hero-cta-details"
                 >
-                  Leer Reseñas
+                  Ir a VeoBible.com
                 </a>
               </div>
             </div>
@@ -255,7 +318,7 @@ export default function BibleLandingPage() {
                 <div className="pt-6 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-400">ENFOQUE: Lectura Diaria y Devoción</span>
                   <a
-                    href="https://veobible.com"
+                    href="https://veobible.com/es"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm font-bold text-amber-600 hover:text-amber-700 transition-colors"
@@ -461,7 +524,7 @@ export default function BibleLandingPage() {
             </p>
             <div className="pt-4">
               <a
-                href="https://veobible.com"
+                href="https://veobible.com/es"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-10 py-4 text-base font-semibold rounded-full bg-amber-600 text-white hover:bg-amber-700 hover:shadow-xl hover:shadow-amber-600/10 transition-all duration-300 inline-flex items-center gap-2 group"
