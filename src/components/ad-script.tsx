@@ -10,8 +10,12 @@ import Script from "next/script";
 export function AdScript() {
   const pathname = usePathname();
 
-  // Exclude the Bible comparison landing pages from having ads script
-  if (pathname === "/mejor-app-para-leer-la-biblia" || pathname === "/mejor-pagina-para-leer-la-biblia") {
+  // Exclude the comparison landing pages from having ads script
+  if (
+    pathname === "/mejor-app-para-leer-la-biblia" ||
+    pathname === "/mejor-pagina-para-leer-la-biblia" ||
+    pathname === "/mejor-app-para-leer-libros"
+  ) {
     return null;
   }
 
