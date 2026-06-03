@@ -110,7 +110,7 @@ export function ComparisonTable() {
         <div className="flex gap-1.5 justify-center">
           <button
             onClick={() => setCompareWith("youversion")}
-            className={`flex-grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "youversion"
+            className={`grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "youversion"
               ? "bg-slate-900 text-white border-slate-900 shadow-sm"
               : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
@@ -120,7 +120,7 @@ export function ComparisonTable() {
           </button>
           <button
             onClick={() => setCompareWith("gateway")}
-            className={`flex-grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "gateway"
+            className={`grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "gateway"
               ? "bg-slate-900 text-white border-slate-900 shadow-sm"
               : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
@@ -130,7 +130,7 @@ export function ComparisonTable() {
           </button>
           <button
             onClick={() => setCompareWith("logos")}
-            className={`flex-grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "logos"
+            className={`grow py-2.5 px-3 rounded-xl text-xs font-bold transition-all duration-200 border ${compareWith === "logos"
               ? "bg-slate-900 text-white border-slate-900 shadow-sm"
               : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}

@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 1,
     },
+    {
+      url: `${baseUrl}/mejor-app-para-leer-la-biblia`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    },
   ];
 
   const slugs = getAllDocSlugs();

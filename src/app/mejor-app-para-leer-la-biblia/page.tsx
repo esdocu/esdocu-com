@@ -80,7 +80,7 @@ export default function BibleLandingPage() {
   ];
 
   return (
-    <div className="flex-grow bg-[#FAF9F5] text-slate-900 flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
+    <div className="grow bg-[#FAF9F5] text-slate-900 flex flex-col font-sans selection:bg-amber-100 selection:text-amber-900">
       {/* Force Light Theme Client Component */}
       <ForceLightTheme />
 
@@ -106,11 +106,11 @@ export default function BibleLandingPage() {
         </div>
       </header>
 
-      <main className="flex-grow">
+      <main className="grow">
         {/* Hero Section */}
         <section className="relative py-16 md:py-24 overflow-hidden px-6">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(217,119,6,0.04)_0%,transparent_100%)]" />
-          
+
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
             {/* Hero Text */}
             <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
@@ -121,7 +121,7 @@ export default function BibleLandingPage() {
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight text-slate-950 leading-tight">
                 Mejor app para leer la <br className="hidden sm:inline" />
-                <span className="bg-gradient-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
                   Biblia en 2026
                 </span>
               </h1>
@@ -153,8 +153,8 @@ export default function BibleLandingPage() {
             <div className="lg:col-span-5 flex justify-center">
               <div className="relative w-full max-w-[340px] md:max-w-[380px] aspect-square lg:aspect-auto flex justify-center items-center">
                 {/* Premium Glow effect */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-amber-200/30 to-amber-100/20 blur-3xl rounded-full transform -translate-y-4 -z-10" />
-                
+                <div className="absolute inset-0 bg-linear-to-tr from-amber-200/30 to-amber-100/20 blur-3xl rounded-full transform -translate-y-4 -z-10" />
+
                 <div className="relative p-2.5 bg-white rounded-[40px] shadow-[0_24px_50px_rgba(0,0,0,0.06)] border border-slate-100 hover:shadow-[0_32px_64px_rgba(0,0,0,0.08)] transition-shadow duration-500">
                   <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-[#FAF9F5]">
                     <ExportedImage
@@ -213,8 +213,8 @@ export default function BibleLandingPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* App 0: VeoBible */}
               <div className="bg-white p-8 rounded-2xl border border-amber-100 shadow-[0_10px_30px_rgba(217,119,6,0.03)] flex flex-col justify-between relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-amber-200/20 to-transparent rounded-bl-full" />
-                
+                <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-bl from-amber-200/20 to-transparent rounded-bl-full" />
+
                 <div>
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -293,7 +293,7 @@ export default function BibleLandingPage() {
                         <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 mt-0.5" />
                         <span><strong>Es 100% gratis:</strong> No contiene pagos dentro de la aplicación.</span>
                       </li>
-                      <li className="flex items-start gap-2.5 text-sm text-slate-600 text-red-700/90">
+                      <li className="flex items-start gap-2.5 text-sm text-slate-600">
                         <AlertCircle className="h-4.5 w-4.5 text-amber-500 shrink-0 mt-0.5" />
                         <span><strong>Mucha distracción visual:</strong> Difícil enfocarse debido a constantes estímulos sociales.</span>
                       </li>
@@ -333,7 +333,7 @@ export default function BibleLandingPage() {
                         <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 mt-0.5" />
                         <span><strong>Múltiples versiones:</strong> Excelente motor de búsqueda e indexación.</span>
                       </li>
-                      <li className="flex items-start gap-2.5 text-sm text-slate-600 text-red-700/90">
+                      <li className="flex items-start gap-2.5 text-sm text-slate-600">
                         <X className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
                         <span><strong>Publicidad molesta:</strong> Banners que ensucian la experiencia estética y lectora.</span>
                       </li>
@@ -373,7 +373,7 @@ export default function BibleLandingPage() {
                         <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0 mt-0.5" />
                         <span><strong>Poder analítico insuperable:</strong> Permite desglosar palabra por palabra el original griego.</span>
                       </li>
-                      <li className="flex items-start gap-2.5 text-sm text-slate-600 text-red-700/90">
+                      <li className="flex items-start gap-2.5 text-sm text-slate-600">
                         <X className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
                         <span><strong>Coste e Interfaz Compleja:</strong> Precios prohibitivos y requiere semanas de aprendizaje.</span>
                       </li>
@@ -449,9 +449,9 @@ export default function BibleLandingPage() {
         </section>
 
         {/* Section 4: Final Call to Action */}
-        <section className="py-20 px-6 bg-gradient-to-b from-[#FAF9F5] to-amber-50/20 text-center relative overflow-hidden border-t border-slate-200/50">
+        <section className="py-20 px-6 bg-linear-to-b from-[#FAF9F5] to-amber-50/20 text-center relative overflow-hidden border-t border-slate-200/50">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_100%,rgba(217,119,6,0.05)_0%,transparent_100%)]" />
-          
+
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="text-3xl md:text-4xl font-display font-extrabold text-slate-950 tracking-tight">
               ¿Listo para una mejor experiencia de lectura?
