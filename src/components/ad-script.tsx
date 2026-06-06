@@ -14,7 +14,8 @@ export function AdScript() {
   if (
     pathname === "/mejor-app-para-leer-la-biblia" ||
     pathname === "/mejor-pagina-para-leer-la-biblia" ||
-    pathname === "/mejor-app-para-leer-libros"
+    pathname === "/mejor-app-para-leer-libros" ||
+    pathname === "/mejor-hosting"
   ) {
     return null;
   }
