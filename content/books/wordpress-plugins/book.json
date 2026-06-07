@@ -1,0 +1,161 @@
+{
+  "slug": "wordpress-plugins",
+  "locale": "es",
+  "title": "Desarrollo de plugins para WordPress",
+  "subtitle": "De la anatomía del plugin a la publicación en el repositorio oficial",
+  "author": "Esdocu Team",
+  "description": "Aprende a desarrollar plugins profesionales para WordPress desde cero. Cubre la arquitectura del núcleo, manipulación de datos con CPTs y metadatos, interfaces de administración, seguridad, rendimiento, REST API, tareas programadas, internacionalización y publicación en el repositorio oficial.",
+  "cover": "",
+  "category": "programacion",
+  "tags": [
+    "wordpress",
+    "php",
+    "plugins",
+    "cms",
+    "backend"
+  ],
+  "featured": false,
+  "publishedAt": "2026-06-07",
+  "language": "es",
+  "chapters": [
+    {
+      "slug": "arquitectura-core-de-wp",
+      "title": "Arquitectura Core de WP",
+      "order": 1,
+      "description": "Repaso de la estructura interna de WordPress, su núcleo, temas y cómo los plugins interactúan dentro de este ecosistema específico, asumiendo ya un fuerte dominio técnico de PHP."
+    },
+    {
+      "slug": "anatomia-de-un-plugin",
+      "title": "Anatomía de un Plugin",
+      "order": 2,
+      "description": "Comprende los elementos fundamentales que componen un plugin, desde las cabeceras obligatorias hasta los ganchos de activación, desactivación y desinstalación para un ciclo limpio."
+    },
+    {
+      "slug": "custom-post-types-cpts",
+      "title": "Custom Post Types (CPTs)",
+      "order": 3,
+      "description": "Aprende a expandir los tipos de contenido por defecto creando y gestionando Custom Post Types y taxonomías personalizadas para organizar estructuras de datos complejas ágilmente."
+    },
+    {
+      "slug": "metadatos-y-campos-propios",
+      "title": "Metadatos y Campos Propios",
+      "order": 4,
+      "description": "Domina la API de metadatos para extender la información de posts, usuarios y términos. Crea y gestiona custom fields sin depender de plugins de terceros, maximizando el control."
+    },
+    {
+      "slug": "la-base-de-datos-wpdb",
+      "title": "La Base de Datos (WPDB)",
+      "order": 5,
+      "description": "Utiliza la clase wpdb para realizar consultas SQL seguras y eficientes. Descubre cómo crear y modificar tablas personalizadas cuando la estructura nativa de WordPress es limitada."
+    },
+    {
+      "slug": "api-de-opciones-y-ajustes",
+      "title": "API de Opciones y Ajustes",
+      "order": 6,
+      "description": "Implementa paneles de configuración utilizando la Options API y la Settings API. Gestiona las preferencias globales de tu plugin de forma estandarizada e integrada en el panel."
+    },
+    {
+      "slug": "menus-y-paginas-de-admin",
+      "title": "Menús y Páginas de Admin",
+      "order": 7,
+      "description": "Construye interfaces de administración profesionales. Agrega menús principales, submenús y páginas de opciones personalizadas manteniendo la coherencia visual con el ecosistema."
+    },
+    {
+      "slug": "shortcodes-y-bloques",
+      "title": "Shortcodes y Bloques",
+      "order": 8,
+      "description": "Desarrolla elementos interactivos para el front-end. Explora la Shortcode API clásica y da el salto inicial al desarrollo de bloques nativos para el editor Gutenberg en PHP."
+    },
+    {
+      "slug": "integracion-de-ajax-en-wp",
+      "title": "Integración de AJAX en WP",
+      "order": 9,
+      "description": "Mejora la experiencia de usuario implementando peticiones asíncronas con AJAX. Domina el enrutamiento nativo tanto para usuarios autenticados como para visitantes anónimos."
+    },
+    {
+      "slug": "seguridad-integral",
+      "title": "Seguridad Integral",
+      "order": 10,
+      "description": "Blinda tus desarrollos contra vulnerabilidades comunes. Aprende las técnicas indispensables de sanitización, validación y escape de datos requeridas para un plugin profesional."
+    },
+    {
+      "slug": "cache-y-transients-api",
+      "title": "Caché y Transients API",
+      "order": 11,
+      "description": "Optimiza el tiempo de carga y reduce el consumo de recursos. Utiliza la Transients API para almacenar resultados de consultas pesadas o llamadas a APIs con tiempo de expiración."
+    },
+    {
+      "slug": "roles-y-capacidades",
+      "title": "Roles y Capacidades",
+      "order": 12,
+      "description": "Controla quién puede hacer qué dentro de tu plugin. Gestiona el sistema de usuarios, añade capacidades personalizadas y restringe el acceso a funciones sensibles de forma granular."
+    },
+    {
+      "slug": "la-rest-api-de-wordpress",
+      "title": "La REST API de WordPress",
+      "order": 13,
+      "description": "Conecta tu plugin con aplicaciones externas. Descubre cómo registrar endpoints personalizados, gestionar la autenticación y estructurar respuestas mediante la potente WP REST API."
+    },
+    {
+      "slug": "wp-cron-y-tareas-de-fondo",
+      "title": "WP-Cron y Tareas de Fondo",
+      "order": 14,
+      "description": "Automatiza procesos recurrentes en el servidor. Programa eventos, domina el sistema de pseudo-cron de WordPress y aprende a manejar tareas en segundo plano optimizada y segura."
+    },
+    {
+      "slug": "internacionalizacion-i18n",
+      "title": "Internacionalización (i18n)",
+      "order": 15,
+      "description": "Prepara tu código para una audiencia global. Implementa funciones de traducción, genera archivos de idioma y asegura que tu plugin esté listo para ser localizado universalmente."
+    },
+    {
+      "slug": "publicacion-y-mantenimiento",
+      "title": "Publicación y Mantenimiento",
+      "order": 16,
+      "description": "Lleva tu desarrollo al repositorio oficial. Aprende los requisitos de aprobación, el uso de SVN, la gestión de versiones y las mejores prácticas para mantenerte actualizado."
+    }
+  ],
+  "parts": [
+    {
+      "title": "Parte 1: Fundamentos y Ecosistema",
+      "chapterSlugs": [
+        "arquitectura-core-de-wp",
+        "anatomia-de-un-plugin"
+      ]
+    },
+    {
+      "title": "Parte 2: Manipulación de Datos",
+      "chapterSlugs": [
+        "custom-post-types-cpts",
+        "metadatos-y-campos-propios",
+        "la-base-de-datos-wpdb",
+        "api-de-opciones-y-ajustes"
+      ]
+    },
+    {
+      "title": "Parte 3: Interfaz y Experiencia (UI/UX)",
+      "chapterSlugs": [
+        "menus-y-paginas-de-admin",
+        "shortcodes-y-bloques",
+        "integracion-de-ajax-en-wp"
+      ]
+    },
+    {
+      "title": "Parte 4: Seguridad, Rendimiento y Control",
+      "chapterSlugs": [
+        "seguridad-integral",
+        "cache-y-transients-api",
+        "roles-y-capacidades"
+      ]
+    },
+    {
+      "title": "Parte 5: Integración y Funciones Avanzadas",
+      "chapterSlugs": [
+        "la-rest-api-de-wordpress",
+        "wp-cron-y-tareas-de-fondo",
+        "internacionalizacion-i18n",
+        "publicacion-y-mantenimiento"
+      ]
+    }
+  ]
+}
