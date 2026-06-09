@@ -1,0 +1,180 @@
+{
+  "slug": "wordpress-themes",
+  "locale": "es",
+  "title": "Desarrollo de themes para WordPress",
+  "subtitle": "De la jerarquía de plantillas al Full Site Editing",
+  "author": "Esdocu Team",
+  "description": "Aprende a desarrollar themes profesionales para WordPress desde cero. Cubre la arquitectura del ecosistema, jerarquía de plantillas, The Loop, Custom Post Types, componentes de interfaz, Block Themes con theme.json, seguridad, rendimiento y distribución en el repositorio oficial.",
+  "cover": "",
+  "category": "programacion",
+  "tags": [
+    "wordpress",
+    "php",
+    "themes",
+    "cms",
+    "frontend"
+  ],
+  "featured": false,
+  "publishedAt": "2026-06-07",
+  "language": "es",
+  "chapters": [
+    {
+      "slug": "el-ecosistema-de-wordpress",
+      "title": "El Ecosistema de WordPress",
+      "order": 1,
+      "description": "Repaso técnico de la arquitectura de WordPress, estructura de la base de datos y la interacción entre el core, plugins y themes. Diseñado para nivelar a desarrolladores con experiencia previa en PHP."
+    },
+    {
+      "slug": "anatomia-de-un-theme",
+      "title": "Anatomía de un Theme",
+      "order": 2,
+      "description": "Explora los archivos esenciales que conforman cualquier theme, la declaración de cabeceras en style.css y cómo WordPress reconoce, activa y procesa un nuevo tema en su directorio de instalación."
+    },
+    {
+      "slug": "jerarquia-de-plantillas",
+      "title": "Jerarquía de Plantillas",
+      "order": 3,
+      "description": "Análisis profundo del Template Hierarchy, el sistema de enrutamiento visual que decide qué archivo PHP renderiza cada URL. Aprende a predecir y manipular la carga de plantillas dinámicamente."
+    },
+    {
+      "slug": "el-archivo-functions-php",
+      "title": "El Archivo functions.php",
+      "order": 4,
+      "description": "Descubre el motor lógico de tu theme. Este capítulo detalla cómo inicializar características, registrar soportes del tema y organizar el código PHP para mantener un proyecto limpio y escalable."
+    },
+    {
+      "slug": "el-sistema-de-hooks",
+      "title": "El Sistema de Hooks",
+      "order": 5,
+      "description": "El corazón de la extensibilidad en WordPress. Dominarás la API de Plugins creando y consumiendo Action Hooks y Filter Hooks para modificar el comportamiento del core sin alterar sus archivos."
+    },
+    {
+      "slug": "gestion-de-assets",
+      "title": "Gestión de Assets",
+      "order": 6,
+      "description": "Metodología correcta para encolar hojas de estilo y scripts JavaScript. Abordaremos el manejo de dependencias, paso de variables PHP a JS y estrategias de versionado para evitar caché estática."
+    },
+    {
+      "slug": "dominando-the-loop",
+      "title": "Dominando The Loop",
+      "order": 7,
+      "description": "Estudio exhaustivo del bucle principal de WordPress y la clase WP_Query. Aprenderás a extraer, iterar, filtrar y renderizar el contenido de la base de datos de forma segura y altamente optimizada."
+    },
+    {
+      "slug": "custom-post-types",
+      "title": "Custom Post Types",
+      "order": 8,
+      "description": "Expande WordPress más allá de un simple blog creando estructuras de datos a medida. Aprende a registrar Custom Post Types y Taxonomías personalizadas mediante código, estructurando datos complejos."
+    },
+    {
+      "slug": "metadatos-y-campos",
+      "title": "Metadatos y Campos",
+      "order": 9,
+      "description": "Profundiza en la tabla postmeta para enriquecer tu contenido. Exploraremos cómo crear cajas meta personalizadas, guardar datos de forma segura y recuperar información específica en el frontend."
+    },
+    {
+      "slug": "menus-de-navegacion",
+      "title": "Menús de Navegación",
+      "order": 10,
+      "description": "Implementación y personalización del sistema de menús. Desde el registro de ubicaciones en el panel de administración hasta la sobreescritura de la clase Walker para estructuras HTML personalizadas."
+    },
+    {
+      "slug": "sidebars-y-widgets",
+      "title": "Sidebars y Widgets",
+      "order": 11,
+      "description": "Gestión de áreas de widgets para proporcionar modularidad al usuario final. Veremos cómo registrar áreas dinámicas y crear widgets personalizados utilizando la API moderna basada en bloques."
+    },
+    {
+      "slug": "funciones-del-frontend",
+      "title": "Funciones del Frontend",
+      "order": 12,
+      "description": "Herramientas indispensables para el renderizado final. Integraremos clases dinámicas para el body, etiquetas de encabezado compatibles con SEO, galerías nativas y respuestas a formularios web."
+    },
+    {
+      "slug": "introduccion-a-fse",
+      "title": "Introducción a FSE",
+      "order": 13,
+      "description": "El nuevo paradigma visual de WordPress. Transición del desarrollo PHP clásico al concepto de Block Themes, explorando las ventajas, desventajas y la nueva arquitectura sin archivos PHP de plantilla."
+    },
+    {
+      "slug": "configurando-theme-json",
+      "title": "Configurando theme.json",
+      "order": 14,
+      "description": "El centro de control absoluto de los Block Themes. Aprende a configurar variables CSS globales, paletas de color, escalas tipográficas y permisos del editor directamente desde un archivo JSON."
+    },
+    {
+      "slug": "patrones-de-bloques",
+      "title": "Patrones de Bloques",
+      "order": 15,
+      "description": "Crea diseños reutilizables para tus usuarios. Este capítulo te enseñará a registrar Block Patterns, agruparlos en categorías personalizadas y bloquear su estructura para evitar roturas de diseño."
+    },
+    {
+      "slug": "seguridad-practica",
+      "title": "Seguridad Práctica",
+      "order": 16,
+      "description": "Protege tu código contra vulnerabilidades comunes. Implementaremos sanitización de entradas, escape de salidas, uso de nonces para verificación y revisión de permisos de usuario según roles."
+    },
+    {
+      "slug": "rendimiento-y-cache",
+      "title": "Rendimiento y Caché",
+      "order": 17,
+      "description": "Técnicas avanzadas para maximizar la velocidad. Estudiaremos la Transient API para cachear consultas pesadas a la base de datos, optimización de assets y eliminación de queries redundantes o lentas."
+    },
+    {
+      "slug": "distribucion-y-despliegue",
+      "title": "Distribución y Despliegue",
+      "order": 18,
+      "description": "Prepara tu theme para el mundo real. Cubriremos la internacionalización para múltiples idiomas, el cumplimiento de estándares oficiales y la configuración de flujos de integración continua (CI/CD)."
+    }
+  ],
+  "parts": [
+    {
+      "title": "Parte I: Fundamentos y Arquitectura",
+      "chapterSlugs": [
+        "el-ecosistema-de-wordpress",
+        "anatomia-de-un-theme",
+        "jerarquia-de-plantillas"
+      ]
+    },
+    {
+      "title": "Parte II: Lógica y Control Interno",
+      "chapterSlugs": [
+        "el-archivo-functions-php",
+        "el-sistema-de-hooks",
+        "gestion-de-assets"
+      ]
+    },
+    {
+      "title": "Parte III: Manejo de Datos y Contenido",
+      "chapterSlugs": [
+        "dominando-the-loop",
+        "custom-post-types",
+        "metadatos-y-campos"
+      ]
+    },
+    {
+      "title": "Parte IV: Interfaz y Componentes",
+      "chapterSlugs": [
+        "menus-de-navegacion",
+        "sidebars-y-widgets",
+        "funciones-del-frontend"
+      ]
+    },
+    {
+      "title": "Parte V: Full Site Editing y Bloques",
+      "chapterSlugs": [
+        "introduccion-a-fse",
+        "configurando-theme-json",
+        "patrones-de-bloques"
+      ]
+    },
+    {
+      "title": "Parte VI: Optimización y Entrega",
+      "chapterSlugs": [
+        "seguridad-practica",
+        "rendimiento-y-cache",
+        "distribucion-y-despliegue"
+      ]
+    }
+  ]
+}
