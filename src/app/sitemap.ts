@@ -1,10 +1,13 @@
 import { MetadataRoute } from 'next';
 import { getAllDocSlugs } from '@/lib/docs';
+import { getLocale } from '@/lib/i18n';
 
 export const dynamic = 'force-static';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://esdocu.com';
+  const locale = getLocale();
+  const domain = locale === 'es' ? 'esdocu.com' : `${locale}.esdocu.com`;
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `https://${domain}`;
 
   const routes: MetadataRoute.Sitemap = [
     {
@@ -13,31 +16,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 1,
     },
-    {
-      url: `${baseUrl}/mejor-app-para-leer-la-biblia`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/mejor-pagina-para-leer-la-biblia`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/mejor-app-para-leer-libros`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/mejor-hosting`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.9,
-    },
   ];
+
+  if (locale === 'es') {
+    routes.push(
+      {
+        url: `${baseUrl}/mejor-app-para-leer-la-biblia`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/mejor-pagina-para-leer-la-biblia`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/mejor-app-para-leer-libros`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/mejor-hosting`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      }
+    );
+  }
 
   const slugs = getAllDocSlugs();
 
