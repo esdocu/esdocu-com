@@ -1,23 +1,23 @@
-Todo plugin robusto en WordPress requiere cimientos sólidos. En este capítulo desentrañaremos la estructura interna de un desarrollo profesional, alejándonos del código amateur para adoptar una arquitectura modular y escalable.
+Jedes robuste WordPress-Plugin benötigt ein solides Fundament. In diesem Kapitel werden wir die interne Struktur einer professionellen Entwicklung entschlüsseln und uns von Amateur-Code verabschieden, um eine modulare und skalierbare Architektur zu etablieren.
 
-Explorarás las directivas obligatorias en las cabeceras, la distribución segura de archivos y el dominio absoluto del sistema de **Hooks** (Actions y Filters), el corazón de la extensibilidad del *Core*. Finalmente, aprenderás a gestionar el ciclo de vida completo del software (activación, desactivación y la purga *Tabula Rasa* al desinstalar), blindando tu código con los estrictos estándares oficiales de codificación (WPCS).
+Du wirst die obligatorischen Direktiven in den Headern, die sichere Verteilung von Dateien und die absolute Beherrschung des Hooks-Systems (Actions und Filters) kennenlernen – dem Herzstück der Erweiterbarkeit des Cores. Schließlich lernst du, den gesamten Lebenszyklus der Software zu verwalten (Aktivierung, Deaktivierung und die Bereinigung nach dem Prinzip *Tabula Rasa* bei der Deinstallation), während du deinen Code mit den strengen offiziellen WordPress-Coding-Standards (WPCS) absicherst.
 
-## 2.1 Cabeceras y estructura de archivos
+## 2.1 Header- und Dateistruktur
 
-El punto de partida de cualquier desarrollo de plugins en WordPress es el diseño de su arquitectura de archivos y la correcta declaración de sus metadatos. WordPress depende de un bloque de comentarios formateado de manera específica en el archivo principal del plugin para reconocer su existencia, registrarlo en el ecosistema del panel de administración y gestionar sus dependencias básicas.
+Der Ausgangspunkt für jede Plugin-Entwicklung in WordPress ist das Design der Dateistruktur und die korrekte Deklaration der Metadaten. WordPress verlässt sich auf einen speziell formatierten Kommentarblock in der Hauptdatei des Plugins, um dessen Existenz zu erkennen, es im Admin-Bereich zu registrieren und grundlegende Abhängigkeiten zu verwalten.
 
-### El bloque de cabeceras del plugin
+### Der Header-Block des Plugins
 
-Para que el motor de WordPress identifique un archivo PHP válido como un plugin activo o activable, dicho archivo debe contener un comentario de bloque inicial. WordPress utiliza la función interna `get_plugin_data()` para escanear y parsear estas directivas mediante expresiones regulares, abstrayendo esta información para el panel de control del administrador.
+Damit die WordPress-Engine eine PHP-Datei als gültiges aktives oder aktivierbares Plugin erkennt, muss diese Datei einen einleitenden Blockkommentar enthalten. WordPress nutzt die interne Funktion `get_plugin_data()`, um diese Direktiven mithilfe von regulären Ausdrücken zu scannen und zu parsen und diese Informationen für das Dashboard des Administrators aufzubereiten.
 
-A continuación se presenta una plantilla estandarizada con todas las directivas de cabecera que requiere un desarrollo profesional y empresarial:
+Es folgt eine standardisierte Vorlage mit allen Header-Direktiven, die für eine professionelle und unternehmenseigene Entwicklung benötigt werden:
 
 ```php
 <?php
 /**
  * Plugin Name:       Enterprise Order Router
  * Plugin URI:        https://ejemplo.com/plugins/enterprise-order-router
- * Description:       Enruta pedidos de alta prioridad a centros logísticos externos utilizando colas asíncronas.
+ * Description:       Routet Bestellungen mit hoher Priorität unter Verwendung asynchroner Warteschlangen an externe Logistikzentren.
  * Version:           1.0.0
  * Requires at least: 6.2
  * Requires PHP:      8.1
@@ -30,103 +30,103 @@ A continuación se presenta una plantilla estandarizada con todas las directivas
  * Update URI:        https://ejemplo.com/api/updates/enterprise-order-router
  */
 
-// Clausura de seguridad: Evita la ejecución directa desde el servidor web
+// Sicherheitsprüfung: Verhindert die direkte Ausführung vom Webserver aus
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
 ```
 
-#### Anatomía y semántica de las directivas de cabecera
+#### Anatomie und Semantik der Header-Direktiven
 
-* **Plugin Name** *(Obligatorio)*: Define el nombre comercial u operativo que se mostrará en la lista de plugins del área de administración. Debe ser único para evitar confusiones de identidad en el entorno del cliente.
-* **Plugin URI**: La URL de la página de información, documentación o repositorio del plugin. Debe apuntar a un recurso web específico del producto.
-* **Description**: Un resumen técnico conciso (se recomiendan menos de 140 caracteres) que describe la funcionalidad exacta del componente.
-* **Version**: La versión actual del plugin. Es imperativo seguir el paradigma de *Versionado Semántico* (MAJOR.MINOR.PATCH) para que los sistemas de actualización comparen cadenas correctamente.
-* **Requires at least**: La versión mínima del núcleo de WordPress que garantiza la existencia de las funciones nativas y APIs utilizadas en el código.
-* **Requires PHP**: La versión mínima del intérprete de PHP necesaria. Si el servidor del usuario ejecuta una versión inferior, WordPress abortará la activación de manera segura, previniendo errores de sintaxis fatales (*Fatal Errors*).
-* **Author / Author URI**: Identificación del desarrollador o la entidad corporativa responsable del mantenimiento y su enlace de contacto.
-* **License / License URI**: El marco legal del software. Para interactuar sin fricciones en el ecosistema WordPress, se adopta la licencia GPLv2 o posterior.
-* **Text Domain**: El identificador único único (slug) utilizado por el motor de internacionalización (`i18n`) para vincular las funciones de traducción (`__()`, `_e()`) con los archivos de idioma locales.
-* **Domain Path**: Especifica la ruta física donde residen los archivos de traducción compilados (`.mo` y `.po`). Por estandarización, se sitúa en `/languages`.
-* **Update URI**: Anula el servidor de actualizaciones por defecto del repositorio oficial de WordPress. Es crucial para plugins de distribución interna o privada, forzando al núcleo a buscar metadatos de actualización en endpoints propios.
+* **Plugin Name** *(Erforderlich)*: Definiert den kommerziellen oder operativen Namen, der in der Plugin-Liste des Administrationsbereichs angezeigt wird. Er muss einzigartig sein, um Identitätskonflikte beim Kunden zu vermeiden.
+* **Plugin URI**: Die URL der Informationsseite, Dokumentation oder des Repositories des Plugins. Sie sollte auf eine produktspezifische Webressource verweisen.
+* **Description**: Eine prägnante technische Zusammenfassung (empfohlen werden weniger als 140 Zeichen), die die genaue Funktionalität der Komponente beschreibt.
+* **Version**: Die aktuelle Version des Plugins. Es ist zwingend erforderlich, dem Paradigma der *semantischen Versionierung* (MAJOR.MINOR.PATCH) zu folgen, damit Update-Systeme Versions-Strings korrekt vergleichen können.
+* **Requires at least**: Die minimale WordPress-Core-Version, die die Existenz der im Code verwendeten nativen Funktionen und APIs garantiert.
+* **Requires PHP**: Die erforderliche PHP-Mindestversion. Wenn der Server des Benutzers eine niedrigere Version ausführt, bricht WordPress die Aktivierung sicher ab und verhindert so schwerwiegende Syntaxfehler (*Fatal Errors*).
+* **Author / Author URI**: Identifikation des Entwicklers oder der verantwortlichen Organisation sowie deren kontaktlink.
+* **License / License URI**: Der rechtliche Rahmen der Software. Für ein reibungsloses Zusammenspiel im WordPress-Ökosystem wird die GPLv2-Lizenz oder neuer gewählt.
+* **Text Domain**: Der eindeutige Bezeichner (Slug), der von der Internationalisierungs-Engine (`i18n`) verwendet wird, um Übersetzungsfunktionen (`__()`, `_e()`) mit den lokalen Sprachdateien zu verknüpfen.
+* **Domain Path**: Gibt den physischen Pfad an, in dem sich die kompilierten Übersetzungsdateien (`.mo` und `.po`) befinden. Standardmäßig wird dies in `/languages` abgelegt.
+* **Update URI**: Überschreibt den Standard-Update-Server des offiziellen WordPress-Verzeichnisses. Dies ist entscheidend für intern oder privat vertriebene Plugins, um den Core anzuweisen, Update-Metadaten auf eigenen Endpunkten abzurufen.
 
-### Arquitectura estructural del sistema de archivos
+### Strukturelle Architektur des Dateisystems
 
-Aunque WordPress permite ejecutar un plugin empaquetado en un único archivo PHP ubicado directamente en la raíz de `wp-content/plugins/`, este enfoque penaliza severamente la mantenibilidad, el testing unitario y la escalabilidad del código. Un entorno industrial exige una separación estricta de responsabilidades mediante una arquitectura modular.
+Obwohl WordPress die Ausführung eines Plugins erlaubt, das in einer einzigen PHP-Datei direkt im Root von `wp-content/plugins/` liegt, beeinträchtigt dieser Ansatz die Wartbarkeit, das Unit-Testing und die Skalierbarkeit des Codes erheblich. Ein professionelles Umfeld erfordert eine strikte Trennung der Belange durch eine modulare Architektur.
 
-#### Mitigación de vectores de ataque por acceso directo
+#### Schadensbegrenzung bei direkten Zugriffsangriffen
 
-La instrucción de control colocada inmediatamente después de las cabeceras responde a una directriz de seguridad crítica:
+Die Kontrollanweisung direkt nach den Headern entspricht einer kritischen Sicherheitsrichtlinie:
 
 ```php
 if ( ! defined( 'ABSPATH' ) ) {
     header( 'HTTP/1.0 403 Forbidden' );
-    exit( 'Acceso directo denegado.' );
+    exit( 'Direkter Zugriff verweigert.' );
 }
 
 ```
 
-Al verificar que la constante global `ABSPATH` no esté definida, se detiene la ejecución del script si un atacante intenta invocar el archivo directamente llamando a la URL física del archivo (ej. `https://sitio.com/wp-content/plugins/plugin/archivo.php`). Esto garantiza que el código solo se ejecute cuando WordPress ha inicializado su pila de seguridad, cargado las opciones de configuración y autenticado el entorno.
+Durch die Überprüfung, ob die globale Konstante `ABSPATH` nicht definiert ist, wird die Ausführung des Scripts gestoppt, falls ein Angreifer versucht, die Datei direkt über die physische URL aufzurufen (z. B. `https://sitio.com/wp-content/plugins/plugin/archivo.php`). Dies stellt sicher, dass der Code nur ausgeführt wird, wenn WordPress seinen Sicherheits-Stack initialisiert, die Konfigurationsoptionen geladen und die Umgebung authentifiziert hat.
 
-#### Distribución profesional de directorios
+#### Professionelle Verzeichnisaufteilung
 
-Para garantizar el desacoplamiento entre las reglas de negocio, la lógica de presentación del backend (área de administración) y la vista pública (frontend), se implementa la siguiente estructura de directorios:
+Um die Entkopplung zwischen den Geschäftsregeln, der Präsentationslogik des Backends (Administrationsbereich) und der öffentlichen Ansicht (Frontend) zu gewährleisten, wird folgende Verzeichnisstruktur implementiert:
 
 ```text
 enterprise-order-router/
 │
-├── enterprise-order-router.php    # Archivo bootstrap principal
-├── uninstall.php                  # Script de purga profunda en desinstalación
-├── README.md                      # Documentación técnica del proyecto
+├── enterprise-order-router.php    # Haupt-Bootstrap-Datei
+├── uninstall.php                  # Script zur vollständigen Bereinigung bei Deinstallation
+├── README.md                      # Technische Projektdokumentation
 │
-├── admin/                         # Capa de administración (Back-end)
-│   ├── class-plugin-admin.php     # Controlador del panel de administración
-│   ├── partials/                  # Vistas y layouts HTML del admin
-│   ├── css/                       # Hojas de estilo específicas del admin
-│   └── js/                        # Scripts de comportamiento del admin
+├── admin/                         # Admin-Ebene (Backend)
+│   ├── class-plugin-admin.php     # Controller für den Administrationsbereich
+│   ├── partials/                  # HTML-Ansichten und Layouts für das Admin
+│   ├── css/                       # Admin-spezifische Stylesheets
+│   └── js/                        # Scripts für das Admin-Verhalten
 │
-├── public/                        # Capa pública (Front-end)
-│   ├── class-plugin-public.php    # Controlador de la interfaz pública
-│   ├── partials/                  # Plantillas de renderizado para el usuario final
-│   ├── css/                       # Estilos para la interfaz pública
-│   └── js/                        # JavaScript dinámico del frontend
+├── public/                        # Öffentliche Ebene (Frontend)
+│   ├── class-plugin-public.php    # Controller für die öffentliche Oberfläche
+│   ├── partials/                  # Templates zum Rendern für den Endnutzer
+│   ├── css/                       # Styles für die öffentliche Oberfläche
+│   └── js/                        # Dynamisches Frontend-JavaScript
 │
-├── includes/                      # Núcleo y utilidades del sistema
-│   ├── class-plugin-loader.php    # Orquestador central de Hooks (Actions/Filters)
-│   ├── class-plugin-i18n.php      # Inicializador del dominio de idiomas
-│   ├── class-plugin-activator.php # Tareas de inicialización y migración
-│   └── class-plugin-deactivator.php# Limpieza temporal al desactivar
+├── includes/                      # Systemkern und Hilfsmittel (Utilities)
+│   ├── class-plugin-loader.php    # Zentraler Hooks-Orchestrator (Actions/Filters)
+│   ├── class-plugin-i18n.php      # Initialisierer für die Sprachdomäne
+│   ├── class-plugin-activator.php # Initialisierungs- und Migrationsaufgaben
+│   └── class-plugin-deactivator.php# Temporäre Bereinigung bei Deaktivierung
 │
-├── languages/                     # Catálogos de traducción (.pot, .po, .mo)
-└── vendor/                        # Dependencias externas administradas vía Composer
+├── languages/                     # Übersetzungskataloge (.pot, .po, .mo)
+└── vendor/                        # Über Composer verwaltete externe Abhängigkeiten
 
 ```
 
-#### Flujo de inicialización guiado por el archivo de arranque (Bootstrap)
+#### Initialisierungsfluss durch die Bootstrap-Datei
 
-El archivo raíz `enterprise-order-router.php` no debe contener lógica de negocio ni manipulación directa de datos. Su única responsabilidad es actuar como el punto de orquestación inicial o *bootstrap*.
+Die Root-Datei `enterprise-order-router.php` darf keine Geschäftslogik oder direkte Datenmanipulation enthalten. Ihre einzige Aufgabe besteht darin, als initialer Orchestrierungspunkt oder *Bootstrap* zu fungieren.
 
-Un patrón técnico de inicialización robusto y orientado a objetos se estructura de la siguiente manera:
+Ein robustes und objektorientiertes technisches Initialisierungsmuster strukturiert sich wie folgt:
 
 ```php
 <?php
 /**
  * Plugin Name: Enterprise Order Router
- * ... [Cabeceras del bloque de metadatos]
+ * ... [Header des Metadatenblocks]
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Inclusión del autoloader automático si el proyecto integra dependencias mediante Composer
+// Einbindung des automatischen Autoloaders, falls das Projekt Abhängigkeiten über Composer integriert
 if ( file_exists( plugin_dir_path( __FILE__ ) . 'vendor/autoload.php' ) ) {
     require_once plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 }
 
 /**
- * Carga manual de los componentes fundamentales de la arquitectura
+ * Manuelles Laden der grundlegenden Komponenten der Architektur
  */
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-loader.php';
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-i18n.php';
@@ -134,21 +134,21 @@ require_once plugin_dir_path( __FILE__ ) . 'admin/class-plugin-admin.php';
 require_once plugin_dir_path( __FILE__ ) . 'public/class-plugin-public.php';
 
 /**
- * Desencadena la ejecución y el registro del ciclo de vida del plugin
+ * Löst die Ausführung und die Registrierung des Plugin-Lebenszyklus aus
  */
 function run_enterprise_order_router() {
-    // Orquestador que acumula y despacha los hooks hacia WordPress
+    // Orchestrator, der Hooks sammelt und an WordPress weiterleitet
     $loader = new Enterprise_Order_Router_Loader();
 
-    // Carga de la capa de traducción del plugin
+    // Laden der Übersetzungsebene des Plugins
     $plugin_i18n = new Enterprise_Order_Router_I18n();
     $loader->add_action( 'plugins_loaded', $plugin_i18n, 'load_plugin_textdomain' );
 
-    // Inicialización y pase de dependencias a los subsistemas
+    // Initialisierung und Übergabe von Abhängigkeiten an die Subsysteme
     $plugin_admin  = new Enterprise_Order_Router_Admin( $loader );
     $plugin_public = new Enterprise_Order_Router_Public( $loader );
 
-    // Se ejecutan las suscripciones a add_action y add_filter de forma centralizada
+    // Abonnements von add_action und add_filter werden zentral ausgeführt
     $loader->run();
 }
 
@@ -156,57 +156,57 @@ run_enterprise_order_router();
 
 ```
 
-Este diseño estructural asegura un aislamiento completo de los componentes, permitiendo que múltiples desarrolladores trabajen en distintas secciones del plugin sin generar conflictos en el control de versiones y garantizando una traza de ejecución predecible y limpia para el motor de WordPress.
+Dieses strukturelle Design gewährleistet eine vollständige Isolierung der Komponenten, sodass mehrere Entwickler an verschiedenen Sektionen des Plugins arbeiten können, ohne Versionskonflikte zu erzeugen. Zudem garantiert es einen vorhersehbaren und sauberen Ausführungspfad für die WordPress-Engine.
 
-## 2.2 Hooks: Actions y Filters
+## 2.2 Hooks: Actions und Filters
 
-El núcleo de WordPress y su ecosistema de extensibilidad se fundamentan en una arquitectura orientada a eventos (Event-Driven Architecture). Este sistema, comúnmente conocido como el **Sistema de Hooks** (ganchos), implementa una variación del patrón de diseño *Observer* o *Mediator*. Permite a los desarrolladores inyectar lógica personalizada o modificar el comportamiento por defecto del núcleo, temas u otros plugins, sin necesidad de alterar los archivos originales del código fuente.
+Der WordPress-Core und sein Erweiterungssystem basieren auf einer ereignisgesteuerten Architektur (Event-Driven Architecture). Dieses System, allgemein bekannt als das **Hooks-System**, implementiert eine Variante des *Observer*- oder *Mediator*-Entwurfsmusters. Es ermöglicht Entwicklern, benutzerdefinierte Logik einzuschleusen oder das Standardverhalten des Cores, von Themes oder anderen Plugins zu ändern, ohne die Originaldateien des Quellcodes modifizieren zu müssen.
 
-Comprender la distinción anatómica y funcional entre los dos tipos de hooks disponibles —Actions (Acciones) y Filters (Filtros)— es el pilar central del desarrollo de plugins.
+Das Verständnis des anatomischen und funktionalen Unterschieds zwischen den beiden verfügbaren Hook-Typen — Actions (Aktionen) und Filters (Filter) — ist der Grundpfeiler der Plugin-Entwicklung.
 
-### El flujo de intercepción
+### Der Interzeptionsfluss
 
-En texto plano, el ciclo de vida de un hook se visualiza de la siguiente manera:
+In Textform lässt sich der Lebenszyklus eines Hooks wie folgt visualisieren:
 
 ```text
 =======================================================================
-                        FLUJO DE EJECUCIÓN CORE
+                         CORE-AUSFÜHRUNGSFLUSS
 =======================================================================
-[Proceso Interno WP] 
+[Interner WP-Prozess] 
        |
        v
-  do_action() / apply_filters()  -----> [ REGISTRO GLOBAL DE HOOKS ($wp_filter) ]
+  do_action() / apply_filters()  -----> [ GLOBALES REGISTER FÜR HOOKS ($wp_filter) ]
        |                                          |
-       |                                          +-- Prioridad 1:  PluginA_Callback()
+       |                                          +-- Priorität 1:  PluginA_Callback()
        |                                          |
-       |                                          +-- Prioridad 10: Tu_Plugin_Callback()
+       |                                          +-- Priorität 10: Tu_Plugin_Callback()
        |                                          |
-       |                                          +-- Prioridad 99: Tema_Callback()
+       |                                          +-- Priorität 99: Tema_Callback()
        v                                          |
-[Continúa el proceso] <---------------------------+ (Retorna control o datos modificados)
+[Fluss wird fortgesetzt] <-----------------------+ (Gibt Kontrolle oder modifizierte Daten zurück)
 
 ```
 
-WordPress mantiene un registro global (instanciado en la clase `WP_Hook`) de todas las funciones que se han "suscrito" a un evento específico. Cuando el flujo de ejecución alcanza un punto definido, WordPress detiene momentáneamente su proceso nativo y ejecuta secuencialmente todos los *callbacks* registrados, respetando su nivel de prioridad.
+WordPress pflegt ein globales Register (instanziiert in der Klasse `WP_Hook`) aller Funktionen, die sich für ein bestimmtes Event „registriert“ haben. Wenn der Ausführungsfluss einen definierten Punkt erreicht, stoppt WordPress seinen nativen Prozess vorübergehend und führt nacheinander alle registrierten *Callbacks* unter Berücksichtigung ihrer Priorität aus.
 
-### Actions (Acciones): Inyección de comportamiento
+### Actions (Aktionen): Verhalten einbinden
 
-Las **Acciones** son eventos en el ciclo de vida de WordPress donde se te permite ejecutar código personalizado. Una acción no necesita retornar un valor; su propósito es producir efectos secundarios (escribir en la base de datos, enviar un correo electrónico, imprimir código HTML, encolar un script, etc.).
+**Actions** sind Ereignisse im Lebenszyklus von WordPress, bei denen du benutzerdefinierten Code ausführen kannst. Eine Action muss keinen Wert zurückgeben; ihr Zweck ist es, Nebeneffekte zu erzeugen (Daten in die Datenbank schreiben, eine E-Mail senden, HTML-Code ausgeben, ein Script einreihen usw.).
 
-El núcleo invoca una acción utilizando la función `do_action( 'nombre_del_hook', $argumentos )`.
+Der Core ruft eine Action mit der Funktion `do_action( 'hook_name', $args )` auf.
 
-Para interceptar esta acción desde tu plugin, utilizas la función `add_action()`. En una arquitectura orientada a objetos (como la vista en la sección anterior), el registro y el *callback* se estructuran así:
+Um diese Action in deinem Plugin abzufangen, nutzt du die Funktion `add_action()`. In einer objektorientierten Architektur (wie in der vorherigen Sektion gezeigt) strukturieren sich die Registrierung und der *Callback* wie folgt:
 
 ```php
-// 1. Registro del Hook en tu orquestador o constructor
+// 1. Registrierung des Hooks in deinem Orchestrator oder Konstruktor
 // add_action( string $hook_name, callable $callback, int $priority = 10, int $accepted_args = 1 )
 add_action( 'user_register', [ $this, 'send_welcome_email_to_new_user' ], 10, 1 );
 
-// 2. El método Callback
+// 2. Die Callback-Methode
 /**
- * Envía un correo corporativo cuando un usuario se registra.
+ * Sendet eine Begrüßungs-E-Mail, wenn sich ein Benutzer registriert.
  *
- * @param int $user_id El ID del usuario recién creado pasado por el hook 'user_register'.
+ * @param int $user_id Die ID des neu erstellten Benutzers, übergeben vom Hook 'user_register'.
  */
 public function send_welcome_email_to_new_user( int $user_id ): void {
     $user_info = get_userdata( $user_id );
@@ -216,134 +216,134 @@ public function send_welcome_email_to_new_user( int $user_id ): void {
     }
 
     $to      = $user_info->user_email;
-    $subject = 'Bienvenido a la Intranet Corporativa';
-    $message = 'Su cuenta ha sido aprovisionada con éxito.';
+    $subject = 'Willkommen im internen Firmennetzwerk';
+    $message = 'Ihr Konto wurde erfolgreich eingerichtet.';
 
     wp_mail( $to, $subject, $message );
 }
 
 ```
 
-### Filters (Filtros): Mutación de datos
+### Filters (Filter): Daten mutieren
 
-A diferencia de las acciones, los **Filtros** interceptan datos antes de que se guarden en la base de datos o se rendericen en la pantalla. La regla inquebrantable de un filtro es que **siempre debe retornar un valor**, específicamente el mismo tipo de dato que recibió, habiendo aplicado (o no) las transformaciones necesarias.
+Im Gegensatz zu Actions fangen **Filter** Daten ab, bevor sie in der Datenbank gespeichert oder auf dem Bildschirm gerendert werden. Die unumstößliche Regel für einen Filter lautet: **Er muss immer einen Wert zurückgeben**, und zwar vom gleichen Datentyp, den er empfangen hat, nachdem (oder auch nicht) die notwendigen Transformationen angewendet wurden.
 
-El núcleo expone una variable a filtrado utilizando `apply_filters( 'nombre_del_filtro', $valor_a_filtrar, $argumentos_extra )`.
+Der Core stellt eine Variable mit `apply_filters( 'filter_name', $value_to_filter, $extra_args )` zur Filterung bereit.
 
-Tu plugin captura y modifica esta variable mediante `add_filter()`:
+Dein Plugin fängt diese Variable über `add_filter()` ab und modifiziert sie:
 
 ```php
-// 1. Registro del Filtro
+// 1. Registrierung des Filters
 // add_filter( string $hook_name, callable $callback, int $priority = 10, int $accepted_args = 2 )
 add_filter( 'wp_insert_post_data', [ $this, 'sanitize_enterprise_post_title' ], 10, 2 );
 
-// 2. El método Callback
+// 2. Die Callback-Methode
 /**
- * Añade un prefijo estandarizado a los títulos de los CPT 'orders'.
+ * Fügt den Titeln des CPT 'orders' ein standardisiertes Präfix hinzu.
  *
- * @param array $data    Array asociativo con los datos del post a insertar.
- * @param array $postarr Array con los datos originales enviados por el usuario.
- * @return array         El array de datos modificado (OBLIGATORIO).
+ * @param array $data    Assoziatives Array mit den zu speichernden Post-Daten.
+ * @param array $postarr Array mit den ursprünglichen vom Benutzer gesendeten Daten.
+ * @return array         Das modifizierte Daten-Array (ERFORDERLICH).
  */
 public function sanitize_enterprise_post_title( array $data, array $postarr ): array {
-    // Verificamos que estamos operando sobre el Custom Post Type correcto
+    // Wir prüfen, ob wir auf dem korrekten Custom Post Type arbeiten
     if ( 'orders' === $data['post_type'] ) {
-        // Evitamos añadir el prefijo si ya existe (ej. en una actualización)
+        // Wir vermeiden das Hinzufügen des Präfixes, falls es bereits existiert (z. B. bei einem Update)
         if ( ! str_starts_with( $data['post_title'], '[ENT-ORDER]' ) ) {
             $data['post_title'] = '[ENT-ORDER] ' . sanitize_text_field( $data['post_title'] );
         }
     }
 
-    // Un filtro NUNCA debe interrumpir el flujo; siempre debe devolver el primer argumento
+    // Ein Filter darf NIEMALS den Fluss unterbrechen; er muss immer das erste Argument zurückgeben
     return $data;
 }
 
 ```
 
-### Gestión de prioridades y parámetros múltiples
+### Prioritätenverwaltung und mehrere Parameter
 
-La flexibilidad del sistema de hooks reside en dos parámetros críticos de las funciones `add_action` y `add_filter`:
+Die Flexibilität des Hooks-Systems beruht auf zwei kritischen Parametern der Funktionen `add_action` und `add_filter`:
 
-1. **Prioridad (Priority):** Es un número entero que dicta el orden de ejecución. El valor por defecto es `10`. Los números más bajos (ej. `1`, `5`) se ejecutan primero, mientras que los más altos (ej. `20`, `99`) se ejecutan después. Si dos callbacks tienen la misma prioridad, se ejecutan en el orden en que fueron registrados durante la carga de PHP.
+1. **Priorität (Priority):** Ein ganzzahliger Wert, der die Ausführungsreihenfolge bestimmt. Der Standardwert ist `10`. Niedrigere Zahlen (z. B. `1`, `5`) werden zuerst ausgeführt, während höhere Zahlen (z. B. `20`, `99`) danach ausgeführt werden. Wenn zwei Callbacks dieselbe Priorität haben, werden sie in der Reihenfolge ausgeführt, in der sie während des PHP-Ladevorgangs registriert wurden.
+   
+   * *Anwendungsfall:* Wenn du die Änderung eines Drittanbieter-Plugins überschreiben musst, das seinen Filter bei Priorität 10 ausführt, solltest du deinen bei einer späteren Priorität einhängen, z. B. 20 oder 99.
 
-* *Caso de uso:* Si necesitas sobrescribir la modificación hecha por un plugin de terceros que ejecuta su filtro en prioridad 10, debes enganchar el tuyo en una prioridad posterior, como 20 o 99.
+2. **Akzeptierte Argumente (Accepted Args):** Standardmäßig erhält ein *Callback* nur den ersten Parameter, den `do_action` oder `apply_filters` sendet. Wenn der ursprüngliche Hook drei Variablen übergibt und du alle drei in deiner Methode benötigst, musst du explizit `3` als vierten Parameter bei deiner Registrierung angeben.
 
-1. **Argumentos aceptados (Accepted Args):** Por defecto, un *callback* solo recibe el primer parámetro que envía `do_action` o `apply_filters`. Si el hook original emite tres variables y necesitas las tres en tu método, debes definir explícitamente `3` en el cuarto parámetro de tu registro.
+### Entfernen und Aufheben von Hooks
 
-### Remoción y anulación de Hooks
+Fortgeschrittene Entwicklung umfasst auch das Deaktivieren von Verhaltensweisen, die vom Core oder anderen Plugins eingeführt wurden. Dafür gibt es `remove_action()` und `remove_filter()`.
 
-Parte del desarrollo avanzado implica desactivar comportamientos introducidos por el núcleo u otros plugins. Para ello existen `remove_action()` y `remove_filter()`.
-
-Para que la remoción sea exitosa, la función de eliminación debe ejecutarse *después* de que el hook objetivo haya sido registrado, y la firma (el nombre del hook, el callback exacto y la prioridad) debe coincidir milimétricamente.
+Damit das Entfernen erfolgreich ist, muss die Löschfunktion ausgeführt werden, *nachdem* der Ziel-Hook registriert wurde, und die Signatur (Hook-Name, exakter Callback und Priorität) muss milimetergenau übereinstimmen.
 
 ```php
-// Ejemplo: Eliminar una acción registrada de forma procedural por un plugin de terceros
-// Tercero: add_action( 'wp_head', 'inject_tracking_script', 15 );
+// Beispiel: Entfernen einer prozedural registrierten Action eines Drittanbieters
+// Dritter: add_action( 'wp_head', 'inject_tracking_script', 15 );
 remove_action( 'wp_head', 'inject_tracking_script', 15 );
 
-// Ejemplo: Eliminar un método de un objeto instanciado (requiere acceso a la instancia original)
+// Beispiel: Entfernen einer Methode eines instanziierten Objekts (erfordert Zugriff auf die ursprüngliche Instanz)
 global $third_party_plugin;
 remove_action( 'the_content', [ $third_party_plugin, 'append_signature' ], 10 );
 
 ```
 
-La incapacidad de remover hooks anónimos (Closures o Arrow functions de PHP) es la razón principal por la cual los estándares de codificación de WordPress desaconsejan fuertemente su uso al definir *callbacks* en el desarrollo de plugins que pretendan ser extensibles.
+Da anonyme Hooks (PHP-Closures oder Arrow-Functions) nicht gezielt entfernt werden können, raten die WordPress-Coding-Standards dringend davon ab, sie als *Callbacks* bei der Entwicklung von Plugins zu verwenden, die erweiterbar sein sollen.
 
-## 2.3 Rutinas de activación
+## 2.3 Aktivierungsroutinen
 
-La rutina de activación de un plugin es un punto crítico en su ciclo de vida. Se ejecuta única y exclusivamente en el momento en que un administrador hace clic en el enlace "Activar" desde el panel de control, o bien cuando se ejecuta el comando correspondiente a través de la interfaz de línea de comandos `wp-cli` (`wp plugin activate`).
+Der Aktivierungsprozess eines Plugins ist ein kritischer Punkt in dessen Lebenszyklus. Er wird einzig und allein in dem Moment ausgeführt, in dem ein Administrator im Admin-Bereich auf den Link „Aktivieren“ klickt oder wenn der entsprechende Befehl über die Kommandozeile `wp-cli` (`wp plugin activate`) ausgeführt wird.
 
-El propósito fundamental de esta fase es preparar el entorno de WordPress para que el plugin pueda operar correctamente a partir de ese instante. No debe utilizarse para ejecutar lógica de negocio recurrente, sino para tareas de aprovisionamiento, verificación estructural y configuración inicial.
+Der Hauptzweck dieser Phase besteht darin, die WordPress-Umgebung so vorzubereiten, dass das Plugin ab diesem Moment einwandfrei arbeiten kann. Sie sollte nicht für wiederkehrende Geschäftslogik genutzt werden, sondern ausschließlich für Bereitstellung, strukturelle Validierung und initiale Konfigurationen.
 
-### Mecánica de ejecución y el hook de activación
+### Ausführungsmechanik und der Aktivierungs-Hook
 
-Para registrar una función de activación, WordPress expone la función nativa `register_activation_hook()`. Un error común en el desarrollo amateur es invocar esta función dentro de un hook como `init` o `plugins_loaded`. Debido a la forma en que WordPress carga los archivos, `register_activation_hook()` debe ser llamada directamente en el cuerpo principal del archivo raíz (bootstrap) del plugin, o bien en una clase cargada de forma inmediata por este.
+Um eine Aktivierungsfunktion zu registrieren, stellt WordPress die native funktion `register_activation_hook()` bereit. Ein häufiger Fehler in der Amateur-Entwicklung besteht darin, diese Funktion innerhalb eines Hooks wie `init` oder `plugins_loaded` aufzurufen. Aufgrund der Art und Weise, wie WordPress Dateien lädt, muss `register_activation_hook()` direkt im Hauptteil der Root-Datei (Bootstrap) des Plugins aufgerufen werden oder in einer Klasse, die sofort von dieser geladen wird.
 
 ```text
 =======================================================================
-               FLUJO PRINCIPAL DE ACTIVACIÓN EN WORDPRESS
+               HAUPT-AKTIVIERUNGSFLUSS IN WORDPRESS
 =======================================================================
- [Petición POST Admin] ──> [Carga de Archivo Principal] 
-                                    │
-                                    v
-                     [¿ register_activation_hook ?]
-                                    │
-                  ┌─────────────────┴─────────────────┐
-                  ▼                                   ▼
-          [Validar Entorno]                  [Aprovisionamiento]
-       - Versión PHP / Core WP             - Crear tablas ($wpdb)
-       - Extensiones requeridas            - Inyectar 'Options API'
-                  │                                   │
-                  └─────────────────┬─────────────────┘
-                                    v
-                        [Flush Rewrite Rules]
-                        (Solo si maneja CPTs)
-                                    │
-                                    v
-                     [Redirección / Éxito en UI]
+  [Admin-POST-Anfrage] ──> [Laden der Hauptdatei] 
+                                     │
+                                     v
+                      [register_activation_hook?]
+                                     │
+                    ┌─────────────────┴─────────────────┐
+                    ▼                                   ▼
+          [Umgebung validieren]                  [Bereitstellung]
+         - PHP-Version / WP-Core             - Tabellen erstellen ($wpdb)
+         - Benötigte Erweiterungen           - Options-API einbinden
+                    │                                   │
+                    └─────────────────┬─────────────────┘
+                                     v
+                          [Flush Rewrite Rules]
+                          (Nur wenn CPTs verwaltet werden)
+                                     │
+                                     v
+                      [Redirection / UI-Erfolg]
 
 ```
 
-### Implementación de un Activador Estructurado
+### Implementierung eines strukturierten Aktivierers
 
-Siguiendo la arquitectura orientada a objetos definida en las secciones previas, delegaremos la responsabilidad de la activación en una clase especializada (`Enterprise_Order_Router_Activator`), aislada de la lógica de ejecución diaria.
+Entsprechend der in den vorherigen Sektionen definierten objektorientierten Architektur delegieren wir die Verantwortung für die Aktivierung an eine spezialisierte Klasse (`Enterprise_Order_Router_Activator`), die von der täglichen Ausführungslogik isoliert ist.
 
-En el archivo principal del plugin (`enterprise-order-router.php`), el registro se realiza apuntando al método estático de dicha clase:
+In der Hauptdatei des Plugins (`enterprise-order-router.php`) verweist die Registrierung auf die statische Methode dieser Klasse:
 
 ```php
-// En el archivo raíz del plugin:
+// In der Hauptdatei des Plugins:
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-activator.php';
 
 register_activation_hook( __FILE__, [ 'Enterprise_Order_Router_Activator', 'activate' ] );
 
 ```
 
-A continuación se detalla el desarrollo de la clase encargada de gestionar el aprovisionamiento de forma segura y estricta bajo PHP 8.1+:
+Nachfolgend wird die Implementierung der Klasse beschrieben, die die Bereitstellung sicher und unter PHP 8.1+ verwaltet:
 
 ```php
 <?php
 /**
- * Se encarga de las tareas de inicialización durante la activación del plugin.
+ * Kümmert sich um die Initialisierungsaufgaben während der Aktivierung des Plugins.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -353,7 +353,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Enterprise_Order_Router_Activator {
 
     /**
-     * Método principal invocado por el hook de activación.
+     * Hauptmethode, die vom Aktivierungs-Hook aufgerufen wird.
      *
      * @return void
      */
@@ -362,37 +362,37 @@ class Enterprise_Order_Router_Activator {
         self::set_default_options();
         self::initialize_custom_structures();
         
-        // Indicamos al sistema que se requiere regenerar los enlaces permanentes
+        // Wir signalisieren dem System, dass die Permalinks neu generiert werden müssen
         set_transient( 'enterprise_order_router_flush_rewrite', 1, 30 );
     }
 
     /**
-     * Valida de manera estricta los requisitos mínimos del servidor.
-     * Si falla, aborta la ejecución impidiendo que el plugin se active.
+     * Validiert strikt die Mindestanforderungen des Servers.
+     * Falls Fehler auftreten, wird die Aktivierung abgebrochen.
      */
     private static function validate_environment(): void {
-        // Validación de versión de PHP
+        // Validierung der PHP-Version
         if ( version_compare( PHP_VERSION, '8.1.0', '<' ) ) {
             wp_die(
-                esc_html__( 'Este plugin requiere PHP 8.1 o superior para funcionar. Modifique la configuración de su servidor.', 'enterprise-order-router' ),
-                esc_html__( 'Error de activación del plugin', 'enterprise-order-router' ),
+                esc_html__( 'Dieses Plugin erfordert PHP 8.1 oder höher. Bitte ändere die Konfiguration deines Servers.', 'enterprise-order-router' ),
+                esc_html__( 'Fehler bei der Plugin-Aktivierung', 'enterprise-order-router' ),
                 [ 'back_link' => true ]
             );
         }
 
-        // Validación de extensiones requeridas de PHP (ejemplo: cURL)
+        // Validierung benötigter PHP-Erweiterungen (Beispiel: cURL)
         if ( ! function_exists( 'curl_init' ) ) {
             wp_die(
-                esc_html__( 'La extensión cURL de PHP es obligatoria para este plugin.', 'enterprise-order-router' ),
-                esc_html__( 'Dependencia ausente', 'enterprise-order-router' ),
+                esc_html__( 'Die cURL-Erweiterung für PHP ist für dieses Plugin zwingend erforderlich.', 'enterprise-order-router' ),
+                esc_html__( 'Fehlende Abhängigkeit', 'enterprise-order-router' ),
                 [ 'back_link' => true ]
             );
         }
     }
 
     /**
-     * Establece los valores de configuración por defecto si no existen previamente.
-     * Utiliza la Options API de manera no destructiva.
+     * Legt die Standardkonfigurationswerte fest, falls sie noch nicht existieren.
+     * Nutzt die Options API auf nicht-destruktive Weise.
      */
     private static function set_default_options(): void {
         $default_settings = [
@@ -408,89 +408,89 @@ class Enterprise_Order_Router_Activator {
     }
 
     /**
-     * Ejecuta rutinas para registrar estructuras que persisten en la base de datos.
+     * Führt Routinen zur Registrierung von Strukturen aus, die in der Datenbank verbleiben.
      */
     private static function initialize_custom_structures(): void {
-        // Nota: La creación de tablas SQL mediante dbDelta se detallará en el Capítulo 5.
-        // Aquí se pueden declarar llamadas preliminares o inicializaciones de taxonomías.
+        // Hinweis: Das Erstellen von SQL-Tabellen per dbDelta wird in Kapitel 5 im Detail beschrieben.
+        // Hier können vorläufige Aufrufe oder Taxonomie-Initialisierungen deklariert werden.
     }
 }
 
 ```
 
-### El peligro del "Flush" indiscriminado de Rewrite Rules
+### Die Gefahr von wahllosen Rewrite-Rules-Flushes
 
-Cuando un plugin introduce Custom Post Types (CPTs) o estructuras de enrutamiento personalizadas (como se verá en la Parte 2), las reglas de reescritura de URLs de WordPress (*rewrite rules*) deben actualizarse para que el servidor web (`Apache` o `Nginx`) reconozca los nuevos endpoints y no devuelva un error 404.
+Wenn ein Plugin Custom Post Types (CPTs) oder benutzerdefinierte Routing-Strukturen einführt (wie in Teil 2 zu sehen), müssen die URL-Umschreibungsregeln von WordPress (*rewrite rules*) aktualisiert werden, damit der Webserver (`Apache` oder `Nginx`) die neuen Endpunkte erkennt und keinen 404-Fehler zurückgibt.
 
-La función encargada de esta actualización es `flush_rewrite_rules()`. Sin embargo, invocar esta función es una operación computacionalmente muy costosa: requiere reconstruir la matriz de rutas completa, evaluar estructuras de enlaces permanentes y escribir físicamente en el archivo `.htaccess` o actualizar opciones de la base de datos.
+Die für diese Aktualisierung zuständige Funktion lautet `flush_rewrite_rules()`. Dieser Aufruf ist jedoch eine rechentechnisch sehr teure Operation: Sie erfordert den Neuaufbau des gesamten Routen-Arrays, die Auswertung von Permalink-Strukturen und das physische Schreiben in die Datei `.htaccess` bzw. das Aktualisieren von Optionen in der Datenbank.
 
-**Regla de oro de rendimiento:** Nunca ejecutes `flush_rewrite_rules()` directamente en el flujo normal de carga del plugin (como en el hook `init`). Debe ejecutarse exclusivamente de forma diferida.
+**Goldene Performance-Regel:** Führe `flush_rewrite_rules()` niemals direkt im normalen Ladevorgang des Plugins (wie beim Hook `init`) aus. Dies darf ausschließlich verzögert bzw. bedingt geschehen.
 
-#### Patrón seguro de actualización de rutas (Deferred Flush)
+#### Sicheres Muster für Permalink-Aktualisierungen (Deferred Flush)
 
-Dado que los CPTs se registran formalmente durante el hook `init` (el cual ocurre *después* de que el script de activación ha finalizado su ejecución), si llamas a `flush_rewrite_rules()` directamente dentro del método `activate()`, WordPress limpiará las reglas pero no incluirá tu nuevo CPT porque este aún no ha sido registrado en memoria.
+Da CPTs formal während des Hooks `init` registriert werden (der *nach* Beendigung des Aktivierungsscripts ausgeführt wird), wird WordPress die Regeln zwar bereinigen, wenn du `flush_rewrite_rules()` direkt in der Methode `activate()` aufrufst, aber deinen neuen CPT noch nicht im Speicher haben und ihn daher ignorieren.
 
-Para resolver este desfase temporal de forma elegante, se utiliza el patrón de transitorios (*transients*) implementado en la clase anterior:
+Um diesen zeitlichen Versatz elegant zu lösen, nutzen wir das in der vorherigen Klasse implementierte Muster mit Transients:
 
 ```php
-// En la clase principal de administración u orquestación de Hooks (ej. admin/class-plugin-admin.php)
+// In der Hauptklasse für Admin oder Hooks-Orchestrierung (z. B. admin/class-plugin-admin.php)
 public function __construct( Enterprise_Order_Router_Loader $loader ) {
     $this->loader = $loader;
     
-    // Enganchamos la verificación en 'init', con prioridad tardía
+    // Wir hängen die Überprüfung mit einer späten Priorität an 'init' an
     $this->loader->add_action( 'init', $this, 'conditional_rewrite_flush', 99 );
 }
 
 /**
- * Verifica si el plugin se acaba de activar y ejecuta el flush de forma segura.
+ * Prüft, ob das Plugin gerade aktiviert wurde, und führt den Flush sicher aus.
  */
 public function conditional_rewrite_flush(): void {
     if ( get_transient( 'enterprise_order_router_flush_rewrite' ) ) {
-        // Pasamos el argumento 'false' para no forzar la regeneración dura del .htaccess si no es estrictamente necesario
+        // Wir übergeben das Argument 'false', um keine harte Regeneration der .htaccess zu erzwingen, wenn dies nicht zwingend erforderlich ist
         flush_rewrite_rules( false );
         
-        // Consumimos el transitorio para asegurar que esto ocurra una sola vez
+        // Wir verbrauchen den Transient, um sicherzustellen, dass dies nur einmal passiert
         delete_transient( 'enterprise_order_router_flush_rewrite' );
     }
 }
 
 ```
 
-Este enfoque garantiza que el entorno se actualice solo una vez, manteniendo la integridad del rendimiento del servidor y asegurando que las nuevas estructuras de URLs del plugin sean reconocidas inmediatamente por el núcleo de WordPress sin lanzar excepciones.
+Dieser Ansatz stellt sicher, dass die Umgebung nur einmal aktualisiert wird, was die Performance des Servers schont und sicherstellt, dass die neuen URL-Strukturen des Plugins sofort vom WordPress-Core erkannt werden, ohne Ausnahmen auszulösen.
 
-## 2.4 Rutinas de desactivación y limpieza
+## 2.4 Deaktivierungs- und Bereinigungsroutinen
 
-Una arquitectura de software responsable exige que un plugin deje el ecosistema de WordPress en el mismo estado en el que lo encontró al ser retirado. En el desarrollo de plugins, existe una distinción crítica y a menudo malentendida entre **desactivar** un plugin y **desinstalarlo** (o borrarlo).
+Eine verantwortungsvolle Softwarearchitektur verlangt, dass ein Plugin das WordPress-Ökosystem beim Entfernen in demselben Zustand hinterlässt, in dem es vorgefunden wurde. Bei der Plugin-Entwicklung gibt es eine kritische und oft missverstandene Unterscheidung zwischen dem **Deaktivieren** eines Plugins und dessen **Deinstallieren** (oder Löschen).
 
-Para ilustrar esta separación de responsabilidades, el flujo de vida final de un plugin se estructura de la siguiente manera:
+Um diese Aufteilung der Verantwortlichkeiten zu veranschaulichen, stellt sich der abschließende Lebenszyklus eines Plugins wie folgt dar:
 
 ```text
 =======================================================================
-               CICLO DE FINALIZACIÓN Y LIMPIEZA
+               BEENDIGUNGS- UND BEREINIGUNGSZYKLUS
 =======================================================================
-                        [Acción del Usuario]
-                                 │
+                         [Aktion des Benutzers]
+                                  │
          ┌───────────────────────┴───────────────────────┐
          ▼                                               ▼
-   [Desactivar]                                      [Borrar]
+   [Deaktivieren]                                    [Löschen]
          │                                               │
- [register_deactivation_hook]                     [uninstall.php]
+  [register_deactivation_hook]                     [uninstall.php]
          │                                               │
-   - Pausar eventos (Cron)                         - Eliminar Opciones (Options API)
-   - Limpiar caché propia                          - Borrar Transitorios
-   - Flush Rewrite Rules (Limpiar rutas)           - Dropear tablas SQL personalizadas
-   - CONSERVAR DATOS Y OPCIONES                    - Eliminar CPTs y Metadatos
+   - Events pausieren (Cron)                       - Optionen löschen (Options API)
+   - Eigenen Cache leeren                          - Transients löschen
+   - Flush Rewrite Rules (Routen leeren)           - Benutzerdefinierte SQL-Tabellen löschen (DROP)
+   - DATEN UND OPTIONEN BEHALTEN                   - CPTs und Metadaten löschen
          │                                               │
          ▼                                               ▼
- [El plugin queda inactivo]                      [TABULA RASA: Sistema limpio]
+  [Das Plugin bleibt inaktiv]                     [TABULA RASA: Sauberes System]
 
 ```
 
-### La rutina de desactivación: Pausa temporal
+### Die Deaktivierungsroutine: Temporäre Pause
 
-La desactivación ocurre cuando el administrador suspende el plugin pero mantiene los archivos en el servidor. La premisa fundamental aquí es **no destruir datos**. Si el usuario reactiva el plugin horas después, su configuración, registros y pedidos deben seguir intactos.
+Die Deaktivierung erfolgt, wenn der Administrator das Plugin suspendiert, die Dateien jedoch auf dem Server belässt. Die grundlegende Prämisse lautet hier: **Keine Daten zerstören**. Wenn der Benutzer das Plugin Stunden später reaktiviert, müssen seine Einstellungen, Protokolle und Bestellungen noch intakt sein.
 
-Para registrar esta rutina, se utiliza `register_deactivation_hook()` en el archivo principal (`enterprise-order-router.php`), apuntando a una clase especializada:
+Um diese Routine zu registrieren, wird `register_deactivation_hook()` in der Hauptdatei (`enterprise-order-router.php`) verwendet und verweist auf eine spezialisierte Klasse:
 
 ```php
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-plugin-deactivator.php';
@@ -499,12 +499,12 @@ register_deactivation_hook( __FILE__, [ 'Enterprise_Order_Router_Deactivator', '
 
 ```
 
-El objetivo de la clase `Deactivator` es detener procesos en segundo plano y limpiar estructuras temporales.
+Ziel der Klasse `Deactivator` ist es, Hintergrundprozesse anzuhalten und temporäre Strukturen zu bereinigen.
 
 ```php
 <?php
 /**
- * Se encarga de las tareas de limpieza temporal durante la desactivación.
+ * Kümmert sich um die Aufgaben zur temporären Bereinigung während der Deaktivierung.
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -514,7 +514,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Enterprise_Order_Router_Deactivator {
 
     /**
-     * Método principal invocado por el hook de desactivación.
+     * Hauptmethode, die vom Deaktivierungs-Hook aufgerufen wird.
      */
     public static function deactivate(): void {
         self::clear_scheduled_events();
@@ -522,12 +522,12 @@ class Enterprise_Order_Router_Deactivator {
     }
 
     /**
-     * Elimina las tareas programadas (WP-Cron) pertenecientes al plugin.
+     * Entfernt die zum Plugin gehörenden geplanten Aufgaben (WP-Cron).
      */
     private static function clear_scheduled_events(): void {
         $hook_name = 'enterprise_order_router_sync_event';
         
-        // Obtenemos la marca de tiempo del próximo evento programado
+        // Wir rufen den Zeitstempel des nächsten geplanten Events ab
         $timestamp = wp_next_scheduled( $hook_name );
         
         if ( $timestamp ) {
@@ -536,9 +536,9 @@ class Enterprise_Order_Router_Deactivator {
     }
 
     /**
-     * Limpia las reglas de reescritura.
-     * A diferencia de la activación, aquí SÍ podemos y debemos hacer flush directamente,
-     * ya que al recargar la página el código del plugin ya no estará disponible.
+     * Leert die Rewrite Rules.
+     * Im Gegensatz zur Aktivierung können und sollten wir hier den Flush direkt ausführen,
+     * da beim nächsten Laden der Seite der Code des Plugins nicht mehr verfügbar sein wird.
      */
     private static function flush_rewrite_rules(): void {
         flush_rewrite_rules( false );
@@ -547,75 +547,75 @@ class Enterprise_Order_Router_Deactivator {
 
 ```
 
-### La rutina de desinstalación: Tabula Rasa
+### Die Deinstallationsroutine: Tabula Rasa
 
-La desinstalación ocurre cuando el usuario hace clic en "Borrar" desde el panel de plugins. Este es el momento de aplicar el principio de *Tabula Rasa*: el plugin debe eliminar absolutamente todo rastro de su existencia en la base de datos. No hacerlo genera la temida "basura de base de datos" (*database bloat*), que degrada el rendimiento del sitio a largo plazo y puede comprometer el cumplimiento de normativas de privacidad (como el RGPD).
+Die Deinstallation erfolgt, wenn der Benutzer im Plugin-Menü auf „Löschen“ klickt. Dies ist the Moment, um das Prinzip der *Tabula Rasa* anzuwenden: Das Plugin muss absolut jede Spur seiner Existenz in der Datenbank löschen. Geschieht dies nicht, entsteht die gefürchtete „Datenbank-Vermüllung“ (*database bloat*), die die Performance der Website langfristig beeinträchtigt und den Datenschutz (wie die DSGVO) gefährden kann.
 
-#### Por qué usar `uninstall.php` y no un Hook
+#### Warum uninstall.php statt eines Hooks verwendet werden sollte
 
-Aunque WordPress ofrece la función `register_uninstall_hook()`, el estándar de la industria y la convención oficial recomiendan encarecidamente utilizar un archivo llamado `uninstall.php` ubicado en la raíz del plugin.
+Obwohl WordPress die Funktion `register_uninstall_hook()` anbietet, empfiehlt der Industriestandard und die offizielle Konvention dringend die Verwendung einer Datei namens `uninstall.php` im Root-Verzeichnis des Plugins.
 
-¿La razón? `uninstall.php` se ejecuta en un proceso aislado y evita cargar todo el código de tu plugin. Además, previene problemas de referencias a objetos o dependencias que podrían fallar durante la eliminación.
+Der Grund? `uninstall.php` wird in einem isolierten Prozess ausgeführt und verhindert das Laden deines gesamten Plugin-Codes. Zudem beugt sie Problemen mit Objektreferenzen oder Abhängigkeiten vor, die beim Löschen fehlschlagen könnten.
 
-#### Implementación segura de `uninstall.php`
+#### Sichere Implementierung der uninstall.php
 
-El archivo `uninstall.php` debe ser blindado. Si un atacante logra acceder a este archivo directamente, podría desencadenar un borrado masivo de la base de datos. La protección se logra verificando la constante `WP_UNINSTALL_PLUGIN`, que WordPress solo define de forma interna durante el proceso legítimo de borrado.
+Die Datei `uninstall.php` muss geschützt werden. Wenn es einem Angreifer gelingt, diese Datei direkt aufzurufen, könnte er ein massives Löschen der Datenbank auslösen. Der Schutz wird durch die Überprüfung der Konstante `WP_UNINSTALL_PLUGIN` realisiert, die WordPress nur intern während des legitimen Löschvorgangs definiert.
 
-A continuación, la estructura de un archivo de desinstalación exhaustivo:
+Nachfolgend ist die Struktur einer vollständigen Deinstallationsdatei dargestellt:
 
 ```php
 <?php
 /**
- * Fichero de desinstalación. 
- * Se ejecuta automáticamente al borrar el plugin desde el administrador.
+ * Deinstallationsdatei. 
+ * Wird beim Löschen des Plugins aus dem Admin-Bereich automatisch ausgeführt.
  */
 
-// 1. Clausura de seguridad crítica
+// 1. Kritische Sicherheitsprüfung
 if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
     header( 'HTTP/1.0 403 Forbidden' );
-    exit( 'Acceso directo denegado.' );
+    exit( 'Direkter Zugriff verweigert.' );
 }
 
 /**
- * 2. Purga de opciones globales
+ * 2. Bereinigung globaler Optionen
  */
 delete_option( 'enterprise_order_router_settings' );
 delete_option( 'enterprise_order_router_db_version' );
 
-// Eliminación para entornos Multisite (si aplica)
+// Löschen für Multisite-Umgebungen (falls zutreffend)
 if ( is_multisite() ) {
     delete_site_option( 'enterprise_order_router_network_settings' );
 }
 
 /**
- * 3. Purga de Custom Post Types y Metadatos asociados
- * Se utiliza $wpdb para borrar de forma masiva y eficiente, en lugar de 
- * iterar con wp_delete_post() si el volumen de datos es industrial.
+ * 3. Bereinigung von Custom Post Types und zugehörigen Metadaten
+ * Wir nutzen $wpdb für ein effizientes und massives Löschen, statt per 
+ * wp_delete_post() zu iterieren, wenn das Datenvolumen sehr hoch ist.
  */
 global $wpdb;
 
-// Eliminar metadatos asociados a los posts de tipo 'orders'
+// Metadaten löschen, die zu Beiträgen vom Typ 'orders' gehören
 $wpdb->query( "
     DELETE pm FROM {$wpdb->postmeta} pm
     LEFT JOIN {$wpdb->posts} wp ON wp.ID = pm.post_id
     WHERE wp.post_type = 'orders'
 " );
 
-// Eliminar los posts y revisiones del tipo 'orders'
+// Beiträge und Revisionen des Typs 'orders' löschen
 $wpdb->query( "
     DELETE FROM {$wpdb->posts}
     WHERE post_type = 'orders'
 " );
 
 /**
- * 4. Eliminación de Tablas Personalizadas (Si el plugin creó esquemas propios)
+ * 4. Löschen von benutzerdefinierten Tabellen (falls das Plugin eigene Schemata erstellt hat)
  */
 $table_logs = $wpdb->prefix . 'enterprise_router_logs';
 $wpdb->query( "DROP TABLE IF EXISTS {$table_logs}" );
 
 /**
- * 5. Purga de Transitorios en Base de Datos
- * Elimina cualquier caché persistente (Transients API) que el plugin haya generado
+ * 5. Bereinigung von Transients in der Datenbank
+ * Entfernt alle persistenten Caches (Transients API), die das Plugin generiert hat
  */
 $wpdb->query( "
     DELETE FROM {$wpdb->options} 
@@ -625,31 +625,31 @@ $wpdb->query( "
 
 ```
 
-La inclusión de rutinas de desinstalación profundas no solo es una buena práctica de ingeniería de software, sino que es un requisito explícito si planeas publicar tu código en el repositorio oficial de WordPress (como se abordará en el Capítulo 16) o si desarrollas para clientes corporativos con auditorías de código estrictas.
+Die Integration gründlicher Deinstallationsroutinen ist nicht nur Best Practice im Software Engineering, sondern eine explizite Anforderung, wenn du deinen Code im offiziellen WordPress-Verzeichnis veröffentlichen möchtest (wie in Kapitel 16 behandelt) oder für Unternehmenskunden mit strengen Code-Audits entwickelst.
 
-## 2.5 Estándares de código en WordPress
+## 2.5 WordPress-Coding-Standards
 
-El ecosistema de WordPress es uno de los proyectos de código abierto más grandes del mundo, con miles de contribuidores y un mercado de plugins inmenso. Para mantener la coherencia, legibilidad y facilidad de mantenimiento en esta escala, la comunidad ha establecido los **WordPress Coding Standards (WPCS)**.
+Das WordPress-Ökosystem ist eines der größten Open-Source-Projekte der Welt, mit Tausenden von Mitwirkenden und einem riesigen Plugin-Markt. Um Konsistenz, Lesbarkeit und Wartbarkeit in diesem Maßstab zu gewährleisten, hat die Community die **WordPress Coding Standards (WPCS)** etabliert.
 
-Si vienes de otros frameworks o ecosistemas PHP modernos, notarás que WordPress diverge significativamente de los estándares PSR (como PSR-12 o PER Coding Style). En el desarrollo profesional de plugins, ignorar estas convenciones es una señal de código *amateur* y garantizará el rechazo si intentas publicar en el repositorio oficial o realizar una auditoría de código corporativa.
+Wenn du von anderen PHP-Frameworks oder modernen PHP-Umgebungen kommst, wirst du feststellen, dass WordPress erheblich von den PSR-Standards (wie PSR-12 oder dem PHP Standard Recommendation Style) abweicht. In der professionellen Plugin-Entwicklung ist das Ignorieren dieser Konventionen ein Zeichen von *Amateur-Code* und führt garantiert zur Ablehnung, falls du im offiziellen Verzeichnis veröffentlichen willst oder ein Code-Audit ansteht.
 
-### Diferencias clave con los estándares modernos (PSR)
+### Hauptunterschiede zu modernen Standards (PSR)
 
-Mientras que el mundo de PHP estandarizó los espacios y el formato *CamelCase*, WordPress mantiene su propia herencia estilística. Estas son las reglas inquebrantables del WPCS:
+Während die PHP-Welt Spaces und die *CamelCase*-Formatierung standardisiert hat, behält WordPress sein eigenes stilistisches Erbe bei. Dies sind die unumstößlichen Regeln des WPCS:
 
-#### 1. Indentación y espaciado (Tabs, no espacios)
+#### 1. Einrückung und Abstände (Tabs, keine Spaces)
 
-WordPress utiliza **tabulaciones reales** para la indentación de bloques de código, no espacios. Los espacios solo se utilizan para la alineación horizontal dentro de una misma línea (mid-line alignment). Además, WPCS exige un espaciado "generoso" dentro de paréntesis, corchetes y definiciones de arrays.
+WordPress verwendet **echte Tabulatoren** für die Einrückung von Codeblöcken, keine Leerzeichen. Leerzeichen werden nur für die horizontale Ausrichtung innerhalb einer Zeile (mid-line alignment) verwendet. Darüber hinaus verlangt WPCS einen „großzügigen“ Abstand innerhalb von Klammern, eckigen Klammern und Array-Definitionen.
 
 ```php
-// ❌ INCORECTO (Estilo PSR / Moderno)
+// ❌ FALSCH (PSR-Style / Modern)
 function procesar_datos($id, $datos=[]) {
     if($id === 12) {
         return ['status'=>'ok'];
     }
 }
 
-// ✅ CORRECTO (Estilo WordPress)
+// ✅ RICHTIG (WordPress-Style)
 function procesar_datos( $id, $datos = [] ) {
     if ( 12 === $id ) {
         return [ 'status' => 'ok' ];
@@ -658,31 +658,31 @@ function procesar_datos( $id, $datos = [] ) {
 
 ```
 
-#### 2. Convenciones de nomenclatura (Snake Case)
+#### 2. Namenskonventionen (Snake Case)
 
-Las variables, funciones y nombres de métodos deben estar completamente en minúsculas y separar las palabras con guiones bajos (*snake_case*). Las clases deben usar palabras capitalizadas separadas por guiones bajos (*Upper_Snake_Case*).
+Variablen, Funktionen und Methodennamen müssen vollständig in Kleinbuchstaben geschrieben und Wörter mit Unterstrichen (*snake_case*) getrennt werden. Klassen müssen großgeschriebene Wörter verwenden, die ebenfalls durch Unterstriche getrennt sind (*Upper_Snake_Case*).
 
 ```php
-// ❌ INCORRECTO
+// ❌ FALSCH
 class orderRouter {
     public function calculateTotal( $orderItems ) { ... }
 }
 
-// ✅ CORRECTO
+// ✅ RICHTIG
 class Order_Router {
     public function calculate_total( $order_items ) { ... }
 }
 
 ```
 
-#### 3. Condiciones Yoda (Yoda Conditions)
+#### 3. Yoda-Bedingungen (Yoda Conditions)
 
-Una de las reglas más polémicas pero obligatorias en el núcleo de WordPress. En las comparaciones lógicas, la constante, el literal o la variable inmutable debe colocarse siempre a la izquierda de la condición.
+Eine der umstrittensten, aber obligatorischen Regeln im WordPress-Core. Bei logischen Vergleichen muss die Konstante, das Literal oder die unveränderliche Variable immer auf der linken Seite des Vergleichs stehen.
 
-El propósito de esto es evitar errores fatales silenciosos por una asignación accidental (escribir `=` en lugar de `==`). Si intentas asignar un valor a un número entero o booleano, PHP lanzará un error de sintaxis de inmediato, salvándote en tiempo de desarrollo.
+Der Zweck besteht darin, stumme, fatale Fehler durch eine versehentliche Zuweisung (Schreiben von `=` statt `==`) zu verhindern. Wenn du versuchst, einer Zahl oder einem Boolean einen Wert zuzuweisen, wirft PHP sofort einen Syntaxfehler und rettet dich in der Entwicklungszeit.
 
 ```php
-// ❌ INCORRECTO (Propenso a errores si omites un '=': $user_id = 1)
+// ❌ FALSCH (Fehleranfällig, falls du ein '=' vergisst: $user_id = 1)
 if ( $user_id === 1 ) {
     // ...
 }
@@ -691,7 +691,7 @@ if ( $estado == 'completado' ) {
     // ...
 }
 
-// ✅ CORRECTO (Condición Yoda)
+// ✅ RICHTIG (Yoda-Bedingung)
 if ( 1 === $user_id ) {
     // ...
 }
@@ -702,63 +702,63 @@ if ( 'completado' === $estado ) {
 
 ```
 
-### Documentación y Bloques de Comentarios (PHPDoc)
+### Dokumentation und Kommentarblöcke (PHPDoc)
 
-El código no está completo si no está documentado según los estándares de documentación en línea de WordPress. Cada clase, propiedad, función y método debe ir precedido por un bloque de comentarios formateado (*DocBlock*).
+Der Code ist erst vollständig, wenn er nach den WordPress-Richtlinien dokumentiert ist. Jeder Klasse, Eigenschaft, Funktion und Methode muss ein formatierter Kommentarblock (*DocBlock*) vorangestellt werden.
 
-Esto no solo ayuda a otros desarrolladores, sino que es vital para la generación automática de documentación y para que los IDEs modernos proporcionen autocompletado inteligente.
+Dies hilft nicht nur anderen Entwicklern, sondern ist auch entscheidend für die automatische Generierung der Dokumentation und damit moderne IDEs intelligentes Autovervollständigen anbieten können.
 
 ```php
 /**
- * Procesa el pago de una orden y actualiza su estado.
+ * Verarbeitet die Zahlung einer Bestellung und aktualisiert ihren Status.
  *
- * Esta función se encarga de conectar con la pasarela de pago configurada,
- * deducir el importe y realizar el cambio de estado en la base de datos.
+ * Diese Funktion verbindet sich mit dem konfigurierten Payment-Gateway,
+ * bucht den Betrag ab und führt den Statuswechsel in der Datenbank durch.
  *
  * @since 1.0.0
  *
- * @param int   $order_id El ID del post (CPT) de la orden.
- * @param float $amount   El monto total a procesar.
- * @return bool           True en caso de éxito, false en caso de fallo en la transacción.
+ * @param int   $order_id Die ID des Beitrags (CPT) der Bestellung.
+ * @param float $amount   Der zu verarbeitende Gesamtbetrag.
+ * @return bool           True bei Erfolg, false bei Fehlschlagen der Transaktion.
  */
 public function process_order_payment( int $order_id, float $amount ): bool {
-    // Lógica del método...
+    // Methodenlogik...
 }
 
 ```
 
-Es crucial notar el uso de etiquetas estandarizadas como `@since` (para indicar en qué versión se introdujo la función), `@param` (listando tipo, nombre y descripción alineados horizontalmente) y `@return`.
+Beachte die Verwendung von standardisierten Tags wie `@since` (um anzugeben, in welcher Version die Funktion eingeführt wurde), `@param` (Typ, Name und Beschreibung horizontal ausgerichtet) und `@return`.
 
-### Automatización: PHP_CodeSniffer
+### Automatisierung: PHP_CodeSniffer
 
-Memorizar todas las reglas del WPCS es ineficiente. El estándar de la industria es automatizar esta validación integrando **PHP_CodeSniffer (PHPCS)** en tu entorno de desarrollo local y en tus procesos de Integración Continua (CI).
+Es ist ineffizient, alle Regeln des WPCS auswendig zu lernen. Der Industriestandard besteht darin, diese Validierung zu automatisieren, indem du **PHP_CodeSniffer (PHPCS)** in deine lokale Entwicklungsumgebung und CI-Prozesse integrierst.
 
-Para implementar esto en tu proyecto mediante Composer, instalarías el paquete de reglas oficiales:
+Um dies über Composer in deinem Projekt zu implementieren, installierst du das offizielle Regelpaket:
 
 ```bash
 composer require --dev squizlabs/php_codesniffer wp-coding-standards/wpcs
 
 ```
 
-Un archivo de configuración `phpcs.xml.dist` en la raíz de tu plugin instruirá al *linter* sobre qué reglas aplicar. Las configuraciones más comunes incluyen:
+Eine Konfigurationsdatei `phpcs.xml.dist` im Root-Verzeichnis deines Plugins teilt dem *Linter* mit, welche Regeln anzuwenden sind. Die gängigsten Konfigurationen umfassen:
 
-* `WordPress-Core`: Verifica las reglas de formato, espaciado y estructura.
-* `WordPress-Docs`: Exige y valida el formato de los DocBlocks.
-* `WordPress-Extra`: Sugiere mejores prácticas y patrones de codificación.
+* `WordPress-Core`: Überprüft Formatierung, Abstände und Struktur.
+* `WordPress-Docs`: Fordert und validiert das Format von DocBlocks.
+* `WordPress-Extra`: Schlägt Best Practices und Codierungsmuster vor.
 
-Al ejecutar `vendor/bin/phpcs` en tu terminal, recibirás un informe detallado de las violaciones de formato. Muchas de ellas (como el espaciado o la alineación) pueden ser corregidas automáticamente ejecutando `vendor/bin/phpcbf` (PHP Code Beautifier and Fixer).
+Wenn du `vendor/bin/phpcs` in deinem Terminal ausführst, erhältst du einen detaillierten Bericht über Formatierungsfehler. Viele davon (wie Abstände oder Ausrichtung) können durch Ausführen von `vendor/bin/phpcbf` (PHP Code Beautifier and Fixer) automatisch behoben werden.
 
-### Armonizando WPCS con PHP moderno (8.1+)
+### Harmonisierung von WPCS mit modernem PHP (8.1+)
 
-Dado que este libro asume un desarrollo moderno (PHP 8.1+), existe una ligera fricción entre el código *legacy* que WordPress soporta y las características avanzadas de PHP. El estándar actual en el desarrollo empresarial de plugins es **respetar el formato WPCS (snake_case, tabs, Yoda), pero abrazar el tipado estricto de PHP**.
+Da dieses Buch von einer modernen Entwicklung (PHP 8.1+) ausgeht, gibt es leichte Reibungen zwischen dem Legacy-Code, den WordPress unterstützt, und den modernen Features von PHP. Der aktuelle Standard in der Enterprise-Plugin-Entwicklung besteht darin, **das WPCS-Format (snake_case, Tabs, Yoda) zu respektieren, aber die strikte Typisierung von PHP zu nutzen**.
 
 ```php
 <?php declare( strict_types=1 );
 
-// Aplicamos formato de WPCS...
+// Wir wenden das WPCS-Format an...
 class Enterprise_Data_Mapper {
 
-    // ...pero con propiedades tipadas, union types y return types de PHP 8.1+
+    // ...aber mit typisierten Eigenschaften, Union-Types und Return-Types aus PHP 8.1+
     private int $max_retries;
 
     public function __construct( int $max_retries = 3 ) {
@@ -772,12 +772,12 @@ class Enterprise_Data_Mapper {
 
 ```
 
-Esta combinación garantiza un código que se ve y se lee como código nativo de WordPress, pero que se ejecuta con la seguridad y la robustez del tipado estricto de la ingeniería de software contemporánea.
+Diese Kombination sorgt für Code, der sich wie nativer WordPress-Code liest und anfühlt, sich jedoch mit der Sicherheit und Robustheit der strikten Typisierung moderner Softwareentwicklung ausführen lässt.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-* **Cabeceras y Estructura:** El punto de entrada de un plugin es un bloque de comentarios estandarizado. Una arquitectura profesional requiere separar el código en directorios lógicos (`admin`, `public`, `includes`) y bloquear el acceso directo mediante la comprobación de la constante `ABSPATH`.
-* **Hooks (Actions y Filters):** Son la columna vertebral de la extensibilidad en WordPress. Las *Acciones* (`add_action`) permiten inyectar lógica secundaria sin retornar datos. Los *Filtros* (`add_filter`) permiten interceptar variables y mutarlas, y siempre requieren retornar el dato modificado.
-* **Activación:** La función `register_activation_hook` debe usarse para preparar el entorno (validar dependencias, configurar opciones iniciales, estructurar bases de datos). Las rutas (`flush_rewrite_rules`) deben purgarse de manera diferida, no directamente.
-* **Desactivación y Limpieza:** La desactivación suspende procesos (como el WP-Cron) pero mantiene los datos. La desinstalación, ejecutada mediante un archivo ciego `uninstall.php`, debe aplicar una política estricta de *Tabula Rasa*, limpiando tablas, opciones, opciones de red y metadatos para evitar basura en la base de datos.
-* **Estándares de Código:** WordPress utiliza sus propias reglas (WPCS), divergentes de los estándares PSR. Es obligatorio usar *snake_case*, tabulaciones para indentar y *Condiciones Yoda* para asignaciones seguras. Todo el proceso debe ser auditado automáticamente utilizando *PHP_CodeSniffer*.
+* **Header und Struktur:** Der Einstiegspunkt eines Plugins ist ein standardisierter Kommentarblock. Eine professionelle Architektur erfordert die Aufteilung des Codes in logische Verzeichnisse (`admin`, `public`, `includes`) und das Blockieren von Direktzugriffen durch Prüfen der Konstante `ABSPATH`.
+* **Hooks (Actions und Filters):** Sie sind das Rückgrat der Erweiterbarkeit in WordPress. *Actions* (`add_action`) ermöglichen das Einhängen von sekundärer Logik ohne Rückgabewerte. *Filter* (`add_filter`) erlauben das Abfangen und Mutieren von Variablen und erfordern stets die Rückgabe der modifizierten Daten.
+* **Aktivierung:** Die Funktion `register_activation_hook` sollte verwendet werden, um die Umgebung vorzubereiten (Abhängigkeiten validieren, initiale Optionen setzen, Datenbankstrukturen erstellen). Permalinks (`flush_rewrite_rules`) sollten verzögert und nicht direkt bereinigt werden.
+* **Deaktivierung und Bereinigung:** Die Deaktivierung pausiert Prozesse (wie WP-Cron), behält die Daten jedoch bei. Die Deinstallation, die über eine stumme `uninstall.php` ausgeführt wird, muss eine strikte *Tabula Rasa*-Politik anwenden und Tabellen, Optionen, Netzwerkoptionen und Metadaten löschen, um Datenbank-Vermüllung zu vermeiden.
+* **Coding-Standards:** WordPress verwendet eigene Regeln (WPCS), die von PSR-Standards abweichen. Es ist obligatorisch, *snake_case*, echte Tabs zur Einrückung und *Yoda-Bedingungen* für sichere Vergleiche zu verwenden. Der gesamte Prozess sollte automatisch mit *PHP_CodeSniffer* auditiert werden.

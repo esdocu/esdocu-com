@@ -1,49 +1,49 @@
-El control de acceso es el pilar de la seguridad de cualquier plugin. En este capítulo, desentrañaremos el sistema de roles y capacidades de WordPress, dejando atrás la dependencia de perfiles genéricos para adoptar una gestión basada puramente en acciones atómicas. Aprenderás a blindar tu código utilizando `current_user_can()`, a registrar roles personalizados adaptados a la lógica de negocio de tu proyecto y a asignar permisos propios con precisión quirúrgica. Dominar esta jerarquía es fundamental para garantizar que cada usuario interactúe únicamente con las funciones permitidas, creando extensiones fiables y profesionales.
+Die Zugriffskontrolle ist die Säule der Sicherheit jedes Plugins. In diesem Kapitel werden wir das WordPress-System für Rollen und Capabilities (Berechtigungen) entschlüsseln und die Abhängigkeit von generischen Profilen hinter uns lassen, um eine rein auf atomaren Aktionen basierende Verwaltung einzuführen. Du lernst, deinen Code mithilfe von `current_user_can()` abzusichern, benutzerdefinierte Rollen zu registrieren, die an die Geschäftslogik deines Projekts angepasst sind, und eigene Berechtigungen mit chirurgischer Präzision zuzuweisen. Das Beherrschen dieser Hierarchie ist grundlegend, um sicherzustellen, dass jeder Benutzer nur mit den erlaubten Funktionen interagiert, und um zuverlässige und professionelle Erweiterungen zu erstellen.
 
-## 12.1 El sistema de roles por defecto
+## 12.1 Das Standard-Rollensystem
 
 WordPress implementa un sistema de control de acceso basado en roles (RBAC - *Role-Based Access Control*) que se apoya fundamentalmente en dos conceptos interconectados: **Roles** (perfiles) y **Capabilities** (capacidades).
 
-Para desarrollar plugins seguros y bien integrados, es imperativo comprender que un **rol** no es más que una etiqueta o contenedor que agrupa un conjunto específico de **capacidades**. WordPress no evalúa inherentemente qué rol tiene un usuario para permitirle una acción, sino que verifica si el usuario posee la capacidad requerida para ejecutarla.
+Um sichere und gut integrierte Plugins zu entwickeln, ist es zwingend erforderlich zu verstehen, dass eine **Rolle** nichts anderes als ein Label oder Container ist, der eine bestimmte Gruppe von **Capabilities** zusammenfasst. WordPress prüft nicht von Natur aus, welche Rolle ein Benutzer hat, um ihm eine Aktion zu erlauben, sondern verifiziert, ob der Benutzer die für die Ausführung erforderliche Capability besitzt.
 
-### Los roles predeterminados
+### Die Standardrollen
 
-Una instalación estándar de WordPress (Single Site) incluye cinco roles por defecto. En instalaciones de red (Multisite), se añade un sexto rol jerárquicamente superior. A continuación, se detalla la estructura predeterminada de mayor a menor privilegio, junto con algunas de sus capacidades distintivas:
+Eine Standardinstallation von WordPress (Single Site) umfasst fünf Standardrollen. In Netzwerkinstallationen (Multisite) kommt eine sechste, hierarchisch übergeordnete Rolle hinzu. Im Folgenden wird die Standardstruktur von den höchsten zu den niedrigsten Rechten zusammen mit einigen ihrer charakteristischen Capabilities beschrieben:
 
-1. **Super Admin (Solo Multisite):** Tiene acceso absoluto a la administración de la red de sitios y sobreescribe cualquier comprobación de capacidad.
-2. **Administrator (Administrador):** Posee todas las capacidades dentro de un sitio individual. Es el único rol estándar que puede interactuar con el ecosistema de extensiones (`activate_plugins`, `install_themes`, `manage_options`).
-3. **Editor:** Tiene el control total sobre el contenido. Puede crear, editar, publicar y eliminar cualquier tipo de entrada o página, independientemente de quién sea el autor (`edit_others_posts`, `publish_pages`, `moderate_comments`).
-4. **Author (Autor):** Puede gestionar única y exclusivamente su propio contenido. Tiene la capacidad de redactar, subir archivos multimedia y publicar sus propias entradas (`publish_posts`, `upload_files`), pero no tiene acceso a páginas.
-5. **Contributor (Colaborador):** Puede redactar y gestionar sus propias entradas, pero carece del privilegio de publicarlas (`edit_posts`, `delete_posts`). Su contenido debe ser revisado por un Editor o Administrador. Tampoco puede subir archivos multimedia.
-6. **Subscriber (Suscriptor):** El rol más básico. Solo tiene la capacidad de leer contenido público y gestionar su propio perfil de usuario en el panel (`read`).
+1. **Super Admin (Nur Multisite):** Hat uneingeschränkten Zugriff auf die Verwaltung des Website-Netzwerks und überschreibt jede Capability-Prüfung.
+2. **Administrator:** Besitzt alle Capabilities innerhalb einer einzelnen Website. Dies ist die einzige Standardrolle, die mit dem Erweiterungs-Ökosystem interagieren kann (`activate_plugins`, `install_themes`, `manage_options`).
+3. **Editor (Redakteur):** Hat die volle Kontrolle über die Inhalte. Kann jede Art von Beitrag oder Seite erstellen, bearbeiten, veröffentlichen und löschen, unabhängig vom Autor (`edit_others_posts`, `publish_pages`, `moderate_comments`).
+4. **Author (Autor):** Kann einzig und allein seine eigenen Inhalte verwalten. Hat die Fähigkeit, eigene Beiträge zu verfassen, Mediendateien hochzuladen und zu veröffentlichen (`publish_posts`, `upload_files`), hat aber keinen Zugriff auf Seiten.
+5. **Contributor (Mitarbeiter):** Kann eigene Beiträge verfassen und verwalten, hat aber nicht das Recht, sie zu veröffentlichen (`edit_posts`, `delete_posts`). Seine Inhalte müssen von einem Editor oder Administrator überprüft werden. Kann auch keine Mediendateien hochladen.
+6. **Subscriber (Abonnent):** Die einfachste Rolle. Hat nur die Fähigkeit, öffentliche Inhalte zu lesen und das eigene Benutzerprofil im Dashboard zu verwalten (`read`).
 
-### Arquitectura de datos: Cómo se almacenan los roles
+### Datenarchitektur: Wie Rollen gespeichert werden
 
-A diferencia de otros sistemas de gestión de contenido, las definiciones de los roles y sus capacidades asociadas no están hardcodeadas en los archivos del núcleo de PHP para cada ejecución. Se almacenan de forma persistente en la base de datos.
+Im Unterscheid zu anderen Content-Management-Systemen sind die Definitionen der Rollen und ihre zugehörigen Capabilities nicht für jede Ausführung in den PHP-Core-Dateien fest verdrahtet. Sie werden dauerhaft in der Datenbank gespeichert.
 
-Específicamente, el esquema completo de roles se guarda en la tabla `wp_options` (o el prefijo equivalente configurado en el capítulo 5) bajo la clave de opción `wp_user_roles`. Almacenarlo en la base de datos permite que los plugins puedan modificar permanentemente estas estructuras (como veremos en la sección 12.3).
+Genauer gesagt wird das vollständige Rollenschema in der Tabelle `wp_options` (oder dem entsprechenden Präfix, das in Kapitel 5 konfiguriert wurde) unter dem Optionsschlüssel `wp_user_roles` gespeichert. Die Speicherung in der Datenbank ermöglicht es Plugins, diese Strukturen dauerhaft zu ändern (wie wir in Abschnitt 12.3 sehen werden).
 
-Cuando un usuario recibe un rol, este no se asigna mediante una columna separada en la tabla `wp_users`. En su lugar, se guarda en la tabla `wp_usermeta` bajo la clave `wp_capabilities`. El valor es un array serializado que generalmente contiene el nombre del rol como clave y un booleano como valor.
+Wenn einem Benutzer eine Rolle zugewiesen wird, geschieht dies nicht über eine separate Spalte in der Tabelle `wp_users`. Stattdessen wird sie in der Tabelle `wp_usermeta` unter dem Schlüssel `wp_capabilities` gespeichert. Der Wert ist ein serialisiertes Array, das in der Regel den Namen der Rolle als Schlüssel und einen booleschen Wert enthält.
 
 ```text
 +-------------------------------------------------------------+
-| Diagrama de Relación: Usuario -> Rol -> Capacidades         |
+| Beziehungsdiagramm: Benutzer -> Rolle -> Capabilities        |
 +-------------------------------------------------------------+
 
-[ Tabla wp_users ]        [ Tabla wp_usermeta ]
+[ Tabelle wp_users ]      [ Tabelle wp_usermeta ]
 +---------------+         +---------------------------------+
 | ID: 5         | ======= | user_id: 5                      |
 | user_login:   |         | meta_key: wp_capabilities       |
 | jdoe          |         | meta_value: a:1:{s:6:"editor";  |
 +---------------+         |                  b:1;}          |
-                          +---------------------------------+
-                                          |
-                                          V
-                          [ Tabla wp_options ]
+                           +---------------------------------+
+                                           |
+                                           V
+                          [ Tabelle wp_options ]
                           +---------------------------------+
                           | option_name: wp_user_roles      |
-                          | option_value: (Array con todas  |
-                          | las capacidades del rol Editor: |
+                          | option_value: (Array mit allen  |
+                          | Capabilities der Rolle Editor:  |
                           | - edit_posts: true              |
                           | - publish_posts: true           |
                           | - edit_others_posts: true...)   |
@@ -51,31 +51,31 @@ Cuando un usuario recibe un rol, este no se asigna mediante una columna separada
 
 ```
 
-### La clase global `WP_Roles`
+### Die globale Klasse `WP_Roles`
 
-WordPress gestiona todo este ecosistema en tiempo de ejecución a través de la clase `WP_Roles`. Durante el flujo de carga del núcleo (visto en el Capítulo 1), WordPress inicializa la variable global `$wp_roles`.
+WordPress verwaltet dieses gesamte Ökosystem zur Laufzeit über die Klasse `WP_Roles`. Während des Core-Ladeflusses (siehe Kapitel 1) initialisiert WordPress die globale Variable `$wp_roles`.
 
-Esta instancia es la responsable de extraer la opción `wp_user_roles` de la base de datos y proveer los métodos para interactuar con ella. Si bien manipularás las capacidades más adelante con funciones envoltura (*wrappers*), es útil saber cómo inspeccionar el sistema por defecto directamente a través de su API de clases.
+Diese Instanz ist dafür verantwortlich, die Option `wp_user_roles` aus der Datenbank zu laden und die Methoden bereitzustellen, um damit zu interagieren. Obwohl du die Capabilities später mit Wrapper-Funktionen manipulieren wirst, ist es nützlich zu wissen, wie man das Standardsystem direkt über die Klassen-API inspiziert.
 
-El siguiente bloque de código muestra cómo podrías recuperar y visualizar todos los roles registrados y sus capacidades asociadas utilizando la función `wp_roles()`, que actúa de forma segura sobre la global `$wp_roles`:
+Der folgende Codeblock zeigt, wie du alle registrierten Rollen und deren zugehörige Capabilities mithilfe der Funktion `wp_roles()` abrufen und visualisieren kannst, die sicher auf der globalen Variable `$wp_roles` agiert:
 
 ```php
 /**
- * Ejemplo: Inspeccionar los roles y capacidades del sistema.
- * Esto es útil para debuguear y entender la estructura subyacente.
+ * Beispiel: Die Rollen und Capabilities des Systems inspizieren.
+ * Dies ist nützlich für das Debugging und um die zugrunde liegende Struktur zu verstehen.
  */
 function devplugin_inspect_default_roles() {
-    // wp_roles() devuelve la instancia global de WP_Roles
+    // wp_roles() gibt die globale Instanz von WP_Roles zurück
     $roles_obj = wp_roles();
     
-    // Obtener el array de todos los roles registrados
+    // Das Array aller registrierten Rollen abrufen
     $all_roles = $roles_obj->roles;
     
-    // Iterar sobre los roles
+    // Über die Rollen iterieren
     foreach ( $all_roles as $role_slug => $role_details ) {
-        echo "<h3>Rol: " . esc_html( $role_details['name'] ) . " (" . esc_html( $role_slug ) . ")</h3>";
+        echo "<h3>Rolle: " . esc_html( $role_details['name'] ) . " (" . esc_html( $role_slug ) . ")</h3>";
         
-        // $role_details['capabilities'] es un array asociativo
+        // $role_details['capabilities'] ist ein assoziatives Array
         echo "<ul>";
         foreach ( $role_details['capabilities'] as $cap => $granted ) {
             if ( $granted ) {
@@ -88,198 +88,198 @@ function devplugin_inspect_default_roles() {
 
 ```
 
-Comprender que los roles son mutables y que residen en la base de datos es el primer paso vital. Como desarrollador, tu código casi nunca debe preguntar "¿El usuario actual es un Autor?". Si tu plugin añade una funcionalidad para exportar un PDF, tu lógica debe abstraerse de los roles predeterminados y evaluar en base a capacidades: "¿El usuario actual tiene la capacidad de `exportar_pdfs`?". Si confías ciegamente en el nombre del rol, tu plugin fallará o se volverá inseguro si otro administrador decide eliminar el rol "Autor" de su sitio, o si otro plugin altera drásticamente los permisos por defecto.
+Zu verstehen, dass Rollen veränderbar sind und in der Datenbank liegen, ist der erste lebenswichtige Schritt. Als Entwickler sollte dein Code fast nie fragen: „Ist der aktuelle Benutzer ein Autor?“. Wenn dein Plugin eine Funktionalität zum Exportieren eines PDFs hinzufügt, sollte deine Logik von den Standardrollen abstrahiert sein und auf Basis von Capabilities prüfen: „Hat der aktuelle Benutzer die Capability `exportar_pdfs`?“. Wenn du blind auf den Rollennamen vertraust, wird dein Plugin fehlschlagen oder unsicher werden, falls ein anderer Administrator beschließt, die Rolle „Autor“ von seiner Website zu entfernen, oder wenn ein anderes Plugin die Standardberechtigungen drastisch ändert.
 
-## 12.2 Comprobación de capacidades
+## 12.2 Überprüfung von Capabilities
 
-Como establecimos en la sección anterior, la regla de oro en la seguridad y el control de acceso en WordPress es **comprobar siempre capacidades, nunca roles**. Los roles pueden ser renombrados, modificados o eliminados por otros plugins, pero las capacidades representan la acción atómica que tu código está a punto de ejecutar.
+Wie im vorherigen Abschnitt festgestellt, lautet die goldene Regel für Sicherheit und Zugriffskontrolle in WordPress: **Überprüfe immer Capabilities, niemals Rollen**. Rollen können von anderen Plugins umbenannt, geändert oder gelöscht werden, aber die Capabilities repräsentieren die atomare Aktion, die dein Code gerade ausführen möchte.
 
-WordPress proporciona una API sencilla pero extremadamente potente para realizar estas comprobaciones en cualquier punto de la ejecución de tu plugin.
+WordPress bietet eine einfache, aber äußerst leistungsstarke API, um diese Überprüfungen an jedem Punkt der Ausführung deines Plugins durchzuführen.
 
-### La función principal: `current_user_can()`
+### Die Hauptfunktion: `current_user_can()`
 
-La herramienta más utilizada en el arsenal de un desarrollador de WordPress es `current_user_can()`. Esta función evalúa si el usuario que ha iniciado la sesión actual posee una capacidad específica. Devuelve un valor booleano (`true` o `false`).
+Das am häufigsten verwendete Werkzeug im Arsenal eines WordPress-Entwicklers ist `current_user_can()`. Diese Funktion prüft, ob der Benutzer der aktuellen Sitzung eine bestimmte Capability besitzt. Sie gibt einen booleschen Wert (`true` oder `false`) zurück.
 
-Su uso es obligatorio antes de procesar datos sensibles, renderizar páginas de opciones o permitir la ejecución de rutinas críticas.
+Ihre Verwendung ist zwingend erforderlich, bevor sensible Daten verarbeitet, Optionsseiten gerendert oder kritische Routinen ausgeführt werden.
 
 ```php
 /**
- * Ejemplo: Proteger la ejecución de una función crítica.
+ * Beispiel: Die Ausführung einer kritischen Funktion schützen.
  */
 function devplugin_borrar_datos_sensibles() {
-    // Verificamos si el usuario tiene el nivel de acceso necesario
+    // Wir überprüfen, ob der Benutzer die erforderliche Zugriffsebene hat
     if ( ! current_user_can( 'manage_options' ) ) {
-        // Si no tiene la capacidad, detenemos la ejecución y devolvemos un error
-        wp_die( __( 'No tienes permisos suficientes para realizar esta acción.', 'devplugin' ) );
+        // Wenn er die Capability nicht hat, stoppen wir die Ausführung und geben einen Fehler zurück
+        wp_die( __( 'Du hast nicht genügend Berechtigungen, um diese Aktion auszuführen.', 'devplugin' ) );
     }
 
-    // Lógica para borrar los datos...
+    // Logik zum Löschen der Daten...
 }
 
 ```
 
-Es importante destacar un "antipatrón" común: `current_user_can( 'administrator' )`. Aunque por razones de retrocompatibilidad WordPress permite pasar el nombre de un rol a esta función y devolverá `true` si el usuario tiene ese rol, **es una práctica fuertemente desaconsejada**. Rompe la abstracción del sistema de capacidades y hará que tu plugin sea incompatible con gestores de roles personalizados.
+Es ist wichtig, ein häufiges Anti-Pattern hervorzuheben: `current_user_can( 'administrator' )`. Obwohl WordPress aus Gründen der Abwärtskompatibilität erlaubt, den Namen einer Rolle an diese Funktion zu übergeben (und `true` gibt, wenn der Benutzer diese Rolle hat), **wird dringend davon abgeraten**. Es bricht die Abstraktion des Capability-Systems und macht dein Plugin inkompatibel mit benutzerdefinierten Rollenmanagern.
 
-### Comprobación en usuarios específicos: `user_can()`
+### Überprüfung bei bestimmten Benutzern: `user_can()`
 
-En ocasiones, tu plugin no necesita evaluar al usuario que está navegando, sino a un usuario específico de la base de datos (por ejemplo, al renderizar una lista de usuarios y mostrar un botón de "Editar" solo junto a aquellos que tienen ciertos privilegios).
+Gelegentlich muss dein Plugin nicht den aktuell surfenden Benutzer bewerten, sondern einen bestimmten Benutzer aus der Datenbank (z. B. beim Rendern einer Benutzerliste, um einen „Bearbeiten“-Button nur neben denjenigen anzuzeigen, die bestimmte Rechte haben).
 
-Para estos casos se utiliza `user_can( $user, $capability )`, donde `$user` puede ser un ID de usuario numérico o una instancia del objeto `WP_User`.
+Für diese Fälle wird `user_can( $user, $capability )` verwendet, wobei `$user` eine numerische Benutzer-ID oder eine Instanz des Objekts `WP_User` sein kann.
 
 ```php
 $user_id = 42;
 
 if ( user_can( $user_id, 'publish_posts' ) ) {
-    echo '<p>El usuario 42 es capaz de publicar contenido.</p>';
+    echo '<p>Der Benutzer 42 ist in der Lage, Inhalte zu veröffentlichen.</p>';
 }
 
 ```
 
-### Capacidades Primitivas vs. Capacidades Meta
+### Primitive Capabilities vs. Meta Capabilities
 
-Para dominar el sistema de permisos, es crucial entender la diferencia entre dos tipos de capacidades que WordPress maneja internamente:
+Um das Berechtigungssystem zu beherrschen, ist es entscheidend, den Unterschied zwischen zwei Arten von Capabilities zu verstehen, die WordPress intern verwaltet:
 
-1. **Capacidades Primitivas:** Son los permisos absolutos otorgados a un usuario y guardados en la base de datos. Por ejemplo, `edit_posts` (editar entradas), `manage_options` (gestionar opciones) o `upload_files` (subir archivos). Son genéricas y no dependen del contexto.
-2. **Capacidades Meta:** Son comprobaciones condicionales que dependen de un objeto específico. Por ejemplo, `edit_post` (en singular). No puedes simplemente comprobar si un usuario tiene `edit_post`; necesitas decirle *qué* post quiere editar, porque el usuario podría tener permiso para editar sus propios posts, pero no los de otro autor.
+1. **Primitive Capabilities:** Dies sind die absoluten Berechtigungen, die einem Benutzer erteilt und in der Datenbank gespeichert werden. Zum Beispiel `edit_posts` (Beiträge bearbeiten), `manage_options` (Optionen verwalten) oder `upload_files` (Dateien hochladen). Sie sind generisch und kontextunabhängig.
+2. **Meta Capabilities:** Dies sind bedingte Überprüfungen, die von einem bestimmten Objekt abhängen. Zum Beispiel `edit_post` (im Singular). Du kannst nicht einfach prüfen, ob un Benutzer `edit_post` hat; du musst angeben, *welchen* Beitrag er bearbeiten möchte, da der Benutzer zwar die Berechtigung haben könnte, seine eigenen Beiträge zu bearbeiten, nicht aber die eines anderen Autors.
 
-Cuando pasas una capacidad meta a `current_user_can()`, debes pasar el ID del objeto como segundo argumento.
+Wenn du eine Meta Capability an `current_user_can()` übergibst, musst du die ID des Objekts als zweites Argument mitgeben.
 
 ```php
 $post_id_a_editar = 150;
 
-// Correcto: Evaluando una capacidad meta con su contexto (el ID del post)
+// Richtig: Bewertung einer Meta Capability mit ihrem Kontext (der ID des Beitrags)
 if ( current_user_can( 'edit_post', $post_id_a_editar ) ) {
-    // El usuario puede editar la entrada 150
+    // Der Benutzer kann den Beitrag 150 bearbeiten
 }
 
 ```
 
-#### El flujo de evaluación (La función `map_meta_cap`)
+#### Der Bewertungsfluss (Die Funktion `map_meta_cap`)
 
-¿Cómo sabe WordPress si `edit_post` para el ID 150 debe devolver `true` o `false`? Lo hace a través de un proceso de mapeo o traducción.
+Wie weiß WordPress, ob `edit_post` für die ID 150 `true` oder `false` zurückgeben soll? Dies geschieht über einen Mapping- oder Übersetzungsprozess.
 
-WordPress utiliza internamente la función `map_meta_cap()` para traducir una "capacidad meta" en una o varias "capacidades primitivas" requeridas para ese objeto específico.
+WordPress verwendet intern die Funktion `map_meta_cap()``, um eine „Meta Capability“ in eine oder mehrere „primitive Capabilities“ zu übersetzen, die für dieses spezifische Objekt erforderlich sind.
 
 ```text
 +-----------------------------------------------------------------------+
-| Flujo de evaluación de una Capacidad Meta                             |
+| Bewertungsfluss einer Meta Capability                                 |
 +-----------------------------------------------------------------------+
 
-1. PETICIÓN: current_user_can( 'edit_post', 150 )
+1. ANFRAGE: current_user_can( 'edit_post', 150 )
        |
        v
-2. TRADUCCIÓN: map_meta_cap() inspecciona el Post 150.
+2. ÜBERSETZUNG: map_meta_cap() inspiziert den Beitrag 150.
        |
-       +-- ¿Quién es el autor del Post 150? -> (Ej: Usuario 5)
+       +-- Wer ist der Autor des Beitrags 150? -> (z. B. Benutzer 5)
        |
-       +-- ¿El usuario actual es el Usuario 5?
+       +-- Ist der aktuelle Benutzer der Benutzer 5?
        |      |
-       |      +-- SÍ: Devuelve requerimiento primitivo -> ['edit_posts']
+       |      +-- JA: Gibt primitives Erfordernis zurück -> ['edit_posts']
        |      |
-       |      +-- NO: Devuelve requerimiento primitivo -> ['edit_others_posts']
+       |      +-- NEIN: Gibt primitives Erfordernis zurück -> ['edit_others_posts']
        v
-3. EVALUACIÓN FINAL: 
-   El usuario actual, ¿tiene en su array de capacidades guardado 
-   en base de datos la capacidad primitiva resultante?
+3. ENDGÜLTIGE BEWERTUNG: 
+   Hat der aktuelle Benutzer die resultierende primitive Capability in 
+   seinem in der Datenbank gespeicherten Array?
        |
-       +-> Devuelve TRUE o FALSE.
+       +-> Gibt TRUE oder FALSE zurück.
 
 ```
 
-Este sistema de mapeo es extremadamente flexible y se utiliza exhaustivamente al desarrollar *Custom Post Types* (CPTs) complejos. Si tu plugin registra un CPT llamado `factura`, puedes definir capacidades meta como `edit_factura` y `read_factura`, y configurar cómo se mapean a las primitivas, permitiendo un control granular inmenso.
+Dieses Mapping-System ist extrem flexibel und wird bei der Entwicklung komplexer *Custom Post Types* (CPTs) intensiv genutzt. Wenn dein Plugin ein CPT namens `factura` (Rechnung) registriert, kannst du Meta Capabilities wie `edit_factura` und `read_factura` definieren und konfigurieren, wie sie auf die primitiven Berechtigungen abgebildet werden, was eine immense granulare Kontrolle ermöglicht.
 
-### Puntos estratégicos de comprobación en un plugin
+### Strategische Überprüfungspunkte in einem Plugin
 
-En el desarrollo de plugins, las comprobaciones de capacidades rara vez ocurren en el vacío. Existen "cuellos de botella" arquitectónicos donde siempre debes implementar estas validaciones:
+Bei der Entwicklung von Plugins finden Capability-Überprüfungen selten im luftleeren Raum statt. Es gibt architektonische Nadelöhre, an denen du diese Validierungen immer implementieren musst:
 
-1. **Registro de menús de administración:** Funciones como `add_menu_page()` o `add_submenu_page()` (vistas en el Capítulo 7) requieren explícitamente una capacidad como argumento. WordPress ocultará el menú si el usuario no la posee.
-2. **Callbacks de AJAX (Capítulo 9):** Los hooks `wp_ajax_*` son puntos ciegos si no los proteges. Aunque ocultes un botón en el front-end o en el admin, un usuario malintencionado puede enviar una petición POST directa a `admin-ajax.php`. Tu callback de PHP debe invocar `current_user_can()` en la primera línea.
-3. **Endpoints de la REST API (Capítulo 13):** Al registrar una ruta con `register_rest_route()`, el argumento `permission_callback` es el lugar exacto y obligatorio para retornar el resultado de una evaluación de capacidades.
+1. **Registrierung von Administrationsmenüs:** Funktionen wie `add_menu_page()` oder `add_submenu_page()` (behandelt in Kapitel 7) erfordern explizit eine Capability als Argument. WordPress blendet das Menü aus, wenn der Benutzer diese nicht besitzt.
+2. **AJAX-Callbacks (Kapitel 9):** Die Hooks `wp_ajax_*` sind tote Winkel, wenn du sie nicht schützt. Selbst wenn du einen Button im Frontend oder im Adminbereich ausblendest, kann ein böswilliger Benutzer eine direkte POST-Anfrage an `admin-ajax.php` senden. Dein PHP-Callback muss in der ersten Zeile `current_user_can()` aufrufen.
+3. **Endpunkte der REST-API (Kapitel 13):** Bei der Registrierung einer Route mit `register_rest_route()`, ist das Argument `permission_callback` der exakte und obligatorische Ort, um das Ergebnis einer Capability-Bewertung zurückzugeben.
 
-Utilizar `current_user_can()` de forma consistente asegura que la lógica de negocio de tu plugin respeta herméticamente la jerarquía y los permisos configurados por el administrador del sitio.
+Die konsistente Verwendung von `current_user_can()` stellt sicher, dass die Geschäftslogik deines Plugins die vom Website-Administrator konfigurierten Hierarchien und Berechtigungen hermetisch respektiert.
 
-## 12.3 Creación de roles personalizados
+## 12.3 Erstellung benutzerdefinierter Rollen
 
-A medida que tus plugins crecen en complejidad, es probable que los roles predeterminados de WordPress dejen de encajar con la lógica de negocio de tu proyecto. Si estás desarrollando un plugin de gestión escolar, asignar el rol de "Autor" a un profesor o de "Suscriptor" a un alumno puede resultar confuso semánticamente y limitante a nivel de arquitectura.
+Mit zunehmender Komplexität deiner Plugins passen die Standardrollen von WordPress wahrscheinlich nicht mehr zur Geschäftslogik deines Projekts. Wenn du ein Schulverwaltungs-Plugin entwickelst, kann es semantisch verwirrend und architektonisch einschränkend sein, einem Lehrer die Rolle „Autor“ oder einem Schüler die Rolle „Abonnent“ zuzuweisen.
 
-La solución es registrar roles personalizados que definan perfiles de usuario exactos para tu ecosistema.
+Die Lösung besteht darin, benutzerdefinierte Rollen zu registrieren, die genaue Benutzerprofile für dein Ökosystem definieren.
 
-### La función `add_role()`
+### Die Funktion `add_role()`
 
-WordPress proporciona la función `add_role()` para insertar un nuevo perfil en el sistema. Su firma es bastante directa y requiere tres parámetros:
+WordPress stellt die Funktion `add_role()` bereit, um ein neues Profil in das System einzufügen. Ihre Signatur ist recht direkt und erfordert drei Parameter:
 
-1. **`$role` (string):** El identificador interno o *slug* del rol (ej. `gestor_eventos`). Debe usar minúsculas y guiones bajos.
-2. **`$display_name` (string):** El nombre legible por humanos que aparecerá en la interfaz de administración (ej. "Gestor de Eventos"). Debería ser traducible.
-3. **`$capabilities` (array):** Un array asociativo donde las claves son los nombres de las capacidades y los valores son booleanos (`true` para conceder la capacidad, `false` para denegarla explícitamente).
+1. **`$role` (string):** Der interne Bezeichner oder *Slug* der Rolle (z. B. `gestor_eventos`). Muss Kleinbuchstaben und Unterstriche verwenden.
+2. **`$display_name` (string):** Der für Menschen lesbare Name, der in der Administrations-Oberfläche angezeigt wird (z. B. „Event-Manager“). Sollte übersetzbar sein.
+3. **`$capabilities` (array):** Ein assoziatives Array, bei dem die Schlüssel die Namen der Capabilities und die Werte Booleans sind (`true`, um die Fähigkeit zu gewähren, `false`, um sie explizit zu verweigern).
 
-### El error más común: El lugar de ejecución
+### Der häufigste Fehler: Der Ort der Ausführung
 
-Como vimos en la sección 12.1, los roles se guardan de forma persistente en la base de datos (en la tabla `wp_options`). Esto introduce una regla arquitectónica vital que separa a los desarrolladores novatos de los profesionales: **nunca debes registrar un rol en hooks que se ejecutan en cada carga de página**, como `init` o `admin_init`.
+Wie wir in Abschnitt 12.1 gesehen haben, werden Rollen dauerhaft in der Datenbank (in der Tabelle `wp_options`) gespeichert. Dies führt zu einer wichtigen architektonischen Regel, die Anfänger von professionellen Entwicklern unterscheidet: **Du solltest eine Rolle niemals in Hooks registrieren, die bei jedem Seitenaufruf ausgeführt werden**, wie `init` oder `admin_init`.
 
-Llamar a `add_role()` en cada petición obliga a WordPress a actualizar la base de datos innecesariamente, lo que penaliza el rendimiento y puede causar problemas de concurrencia.
+Der Aufruf von `add_role()` bei jeder Anfrage zwingt WordPress dazu, die Datenbank unnötig zu aktualisieren, was die Leistung beeinträchtigt und zu Parallelitätsproblemen führen kann.
 
-El lugar correcto para registrar un rol es la **rutina de activación** de tu plugin (cubierta en el Capítulo 2). De este modo, la escritura en la base de datos ocurre una única vez cuando el administrador activa la extensión.
+Der richtige Ort, um eine Rolle zu registrieren, ist die **Aktivierungsroutine** deines Plugins (behandelt in Kapitel 2). Auf diese Weise erfolgt das Schreiben in die Datenbank nur ein einziges Mal, wenn der Administrator die Erweiterung aktiviert.
 
 ```text
 +-------------------------------------------------------------+
-| Ciclo de vida correcto para la creación de un rol           |
+| Korrekter Lebenszyklus für die Erstellung einer Rolle       |
 +-------------------------------------------------------------+
 
-[ Administrador hace clic en "Activar Plugin" ]
+[ Administrator klickt auf „Plugin aktivieren“ ]
        |
        v
 [ register_activation_hook ] 
        |
        v
-[ Ejecuta: add_role() ] ----> Escribe en wp_options (UNA VEZ)
+[ Führt aus: add_role() ] ──> Schreibt in wp_options (EINMAL)
        |
        v
-[ Plugin activo ] 
-(El rol ya existe en la DB, no hay que volver a crearlo en 'init')
+[ Plugin aktiv ] 
+(Die Rolle existiert bereits in der DB, sie muss nicht in 'init' neu erstellt werden)
 
 ```
 
-### Implementación práctica en la activación
+### Praktische Implementierung bei der Aktivierung
 
-Veamos cómo estructurar el código para crear un rol llamado "Auditor", cuyo propósito sea poder leer todo el contenido y acceder al panel de administración, pero sin poder modificar absolutamente nada.
+Sehen wir uns an, wie der Code strukturiert wird, um eine Rolle namens „Auditor“ zu erstellen, deren Zweck es ist, alle Inhalte lesen und auf das Dashboard zugreifen zu können, ohne jedoch irgendetwas ändern zu dürfen.
 
 ```php
 /**
- * Callback de activación del plugin.
+ * Aktivierungs-Callback des Plugins.
  */
 function devplugin_activacion_crear_roles() {
-    // Definimos las capacidades iniciales del rol
+    // Wir definieren die initialen Capabilities der Rolle
     $capacidades_auditor = array(
-        'read'         => true,  // Permite acceder al escritorio (Dashboard)
-        'edit_posts'   => false, // Denegado explícitamente
-        'delete_posts' => false, // Denegado explícitamente
+        'read'         => true,  // Erlaubt den Zugriff auf das Dashboard
+        'edit_posts'   => false, // Explizit verweigert
+        'delete_posts' => false, // Explizit verweigert
     );
 
-    // Registramos el rol en la base de datos
+    // Wir registrieren die Rolle in der Datenbank
     add_role(
         'auditor_sistema',
         __( 'Auditor del Sistema', 'devplugin' ),
         $capacidades_auditor
     );
 }
-// Enganchamos la función a la activación del plugin
+// Wir hängen die Funktion an die Aktivierung des Plugins an
 register_activation_hook( __FILE__, 'devplugin_activacion_crear_roles' );
 
 ```
 
-Al utilizar `add_role()`, si el rol ya existe en la base de datos (por ejemplo, si el plugin fue desactivado y reactivado, y el rol no se eliminó), la función fallará silenciosamente y devolverá `null`, evitando sobrescribir las capacidades que un administrador haya podido modificar posteriormente.
+Wenn bei der Verwendung von `add_role()`, die Rolle bereits in der Datenbank existiert (z. B. wenn das Plugin deaktiviert und wieder aktiviert wurde und die Rolle nicht gelöscht wurde), schlägt die Funktion geräuschlos fehl und gibt `null` zurück. Dies verhindert das Überschreiben von Capabilities, die ein Administrator nachträglich geändert haben könnte.
 
-### Clonar un rol existente
+### Eine bestehende Rolle klonen
 
-En muchas ocasiones, no querrás escribir decenas de capacidades primitivas desde cero para un rol que es casi idéntico a uno predeterminado. Puedes aprovechar la función `get_role()` para extraer las capacidades de un rol existente y usarlas como base.
+In vielen Fällen möchtest du nicht Dutzende von primitiven Capabilities für eine Rolle, die fast identisch mit einer Standardrolle ist, von Grund auf neu schreiben. Du kannst die Funktion `get_role()` nutzen, um die Capabilities einer bestehenden Rolle zu extrahieren und sie als Basis zu verwenden.
 
 ```php
 function devplugin_activacion_clonar_editor() {
-    // Obtenemos el objeto del rol Editor
+    // Wir holen das Objekt der Rolle Editor
     $rol_editor = get_role( 'editor' );
     
     if ( null !== $rol_editor ) {
-        // Clonamos sus capacidades
+        // Wir klonen ihre Capabilities
         add_role(
             'editor_avanzado',
             __( 'Editor Avanzado', 'devplugin' ),
@@ -290,55 +290,55 @@ function devplugin_activacion_clonar_editor() {
 
 ```
 
-### Limpieza durante la desactivación o desinstalación
+### Bereinigung während der Deaktivierung oder Deinstallation
 
-Mantener limpia la base de datos es una señal de código profesional. Si tu plugin crea roles exclusivos, lo habitual es eliminarlos cuando el plugin se desinstala mediante `remove_role( $role )`.
+Die Datenbank sauber zu halten, ist ein Zeichen für professionellen Code. Wenn dein Plugin exklusive Rollen erstellt, ist es üblich, diese zu löschen, wenn das Plugin über `remove_role( $role )` deinstalliert wird.
 
-Dependiendo de la naturaleza de tu plugin, podrías decidir eliminar el rol en la desactivación (hook de desactivación) o preservarlo hasta que el usuario elimine el plugin por completo (archivo `uninstall.php`).
+Je nach Art deines Plugins kannst du dich entscheiden, die Rolle bei der Deaktivierung (Deaktivierungs-Hook) zu löschen oder sie aufzubewahren, bis der Benutzer das Plugin vollständig entfernt (Datei `uninstall.php`).
 
 ```php
 /**
- * Callback de desinstalación o desactivación.
+ * Deinstallations- oder Deaktivierungs-Callback.
  */
 function devplugin_limpiar_roles() {
-    // Elimina el rol de la base de datos
+    // Löscht die Rolle aus der Datenbank
     remove_role( 'auditor_sistema' );
 }
-// En un escenario real, esto iría en register_deactivation_hook o uninstall.php
+// In einem realen Szenario würde dies in register_deactivation_hook oder uninstall.php stehen
 
 ```
 
-*Nota de precaución:* Si eliminas un rol, los usuarios que lo tenían asignado no perderán su cuenta, pero se quedarán sin ningún rol válido en el sistema (sus capacidades previas desaparecen). Si tu plugin va a eliminar roles en la desinstalación, es una buena práctica reasignar esos usuarios a un rol predeterminado, como `subscriber`, antes de ejecutar `remove_role()`.
+*Vorsichtshinweis:* Wenn du eine Rolle löschst, verlieren die Benutzer, denen sie zugewiesen war, nicht ihr Konto, stehen jedoch ohne gültige Rolle im System da (ihre vorherigen Capabilities verschwinden). Wenn dein Plugin Rollen bei der Deinstallation löscht, ist es eine gute Praxis, diese Benutzer vor der Ausführung von `remove_role()` einer Standardrolle wie `subscriber` (Abonnent) neu zuzuweisen.
 
-## 12.4 Asignación de permisos propios
+## 12.4 Zuweisung eigener Berechtigungen
 
-Crear roles personalizados desde cero es útil para arquitecturas cerradas, pero en la inmensa mayoría de los plugins comerciales, el objetivo es integrarse con la estructura existente. Si tu plugin añade una nueva página de opciones o un *Custom Post Type* (CPT), lo ideal es definir **capacidades propias** (ej. `gestionar_ajustes_devplugin`, `edit_facturas`) y asignarlas selectivamente a los roles predeterminados que tengan sentido (como el Administrador y el Editor).
+Das Erstellen benutzerdefinierter Rollen von Grund auf ist für geschlossene Architekturen nützlich, aber bei der großen Mehrheit der kommerziellen Plugins besteht das Ziel darin, sich in die bestehende Struktur zu integrieren. Wenn dein Plugin eine neue Optionsseite oder einen *Custom Post Type* (CPT) hinzufügt, ist es ideal, **eigene Capabilities** (z. B. `gestionar_ajustes_devplugin`, `edit_facturas`) zu definieren und sie selektiv den Standardrollen zuzuweisen, für die dies sinnvoll ist (wie dem Administrator und dem Editor).
 
-### Inyección de capacidades a roles existentes
+### Injizieren von Capabilities in bestehende Rollen
 
-El proceso para añadir una capacidad a un rol existente se realiza mediante el método `add_cap()` de la clase `WP_Role`.
+Der Prozess zum Hinzufügen einer Capability zu einer bestehenden Rolle erfolgt über die Methode `add_cap()` der Klasse `WP_Role`.
 
-Al igual que ocurre con la creación de roles (sección 12.3), la asignación de capacidades modifica el array serializado guardado en la tabla `wp_options`. Por lo tanto, **esta operación debe ejecutarse exclusivamente durante la rutina de activación del plugin**, nunca en hooks de ejecución continua como `init`.
+Ebenso wie bei der Erstellung von Rollen (Abschnitt 12.3) verändert die Zuweisung von Capabilities das in der Tabelle `wp_options` gespeicherte serialisierte Array. Daher **darf diese Operation ausschließlich während der Aktivierungsroutine des Plugins ausgeführt werden**, niemals in Hooks mit kontinuierlicher Ausführung wie `init`.
 
-El siguiente patrón de código ilustra cómo inyectar permisos propios a los roles de Administrador y Editor cuando el plugin se activa:
+Das folgende Codemuster veranschaulicht, wie man beim Aktivieren des Plugins eigene Berechtigungen in die Rollen Administrator und Editor injiziert:
 
 ```php
 /**
- * Callback de activación: Asignar capacidades propias.
+ * Aktivierungs-Callback: Eigene Capabilities zuweisen.
  */
 function devplugin_activacion_asignar_capacidades() {
-    // 1. Asignar capacidad al Administrador
+    // 1. Capability dem Administrator zuweisen
     $rol_admin = get_role( 'administrator' );
     if ( $rol_admin ) {
-        // Le damos control total sobre el plugin
+        // Wir geben ihm die volle Kontrolle über das Plugin
         $rol_admin->add_cap( 'gestionar_ajustes_devplugin' );
         $rol_admin->add_cap( 'borrar_datos_devplugin' );
     }
 
-    // 2. Asignar capacidad limitada al Editor
+    // 2. Eingeschränkte Capability dem Editor zuweisen
     $rol_editor = get_role( 'editor' );
     if ( $rol_editor ) {
-        // El editor puede gestionar los ajustes, pero no borrar datos masivos
+        // Der Editor kann die Einstellungen verwalten, aber keine Massendaten löschen
         $rol_editor->add_cap( 'gestionar_ajustes_devplugin' );
     }
 }
@@ -346,15 +346,15 @@ register_activation_hook( __FILE__, 'devplugin_activacion_asignar_capacidades' )
 
 ```
 
-Es un error común asumir que el rol `administrator` recibe mágicamente cualquier capacidad nueva que inventes. Si usas `current_user_can('mi_capacidad_secreta')` y no se la has asignado explícitamente al administrador (o no la has mapeado a una capacidad nativa como `manage_options`), el propio administrador del sitio tendrá el acceso denegado.
+Es ist ein häufiger Fehler anzunehmen, dass die Rolle `administrator` magisch jede neue Capability erhält, die du dir ausdenkst. Wenn du `current_user_can('mi_capacidad_secreta')` verwendest und sie dem Administrator nicht explizit zugewiesen hast (oder sie auf eine native Capability wie `manage_options` abgebildet hast), wird selbst dem Administrator der Website der Zugriff verweigert.
 
-### Limpieza de capacidades en la desinstalación
+### Bereinigung von Capabilities bei der Deinstallation
 
-Del mismo modo que es tu responsabilidad añadir estas capacidades, debes ser un buen ciudadano del ecosistema y eliminarlas cuando tu plugin se elimine del sistema. Esto se logra iterando sobre los roles y utilizando el método hermano `remove_cap()`.
+Ebenso wie es in deiner Verantwortung liegt, diese Capabilities hinzuzufügen, solltest du ein guter Bürger des Ökosystems sein und sie entfernen, wenn dein Plugin aus dem System gelöscht wird. Dies wird erreicht, indem du über die Rollen iterierst und die Schwestermethode `remove_cap()` verwendest.
 
 ```php
 /**
- * Rutina de desinstalación (idealmente en uninstall.php)
+ * Deinstallationsroutine (idealerweise in uninstall.php)
  */
 function devplugin_desinstalacion_limpiar_capacidades() {
     $roles_a_limpiar = array( 'administrator', 'editor' );
@@ -372,59 +372,59 @@ function devplugin_desinstalacion_limpiar_capacidades() {
 
 ```
 
-### Asignación de permisos a usuarios específicos
+### Zuweisung von Berechtigungen an bestimmte Benutzer
 
-El sistema de roles y capacidades de WordPress tiene un nivel más de profundidad: las capacidades no solo se asignan a los roles, sino que pueden asignarse **directamente a un usuario individual**.
+Das System für Rollen und Capabilities in WordPress hat noch eine weitere Ebene Tiefe: Capabilities werden nicht nur Rollen zugewiesen, sondern können **direkt einem einzelnen Benutzer zugewiesen werden**.
 
-Cuando evaluamos a un usuario, WordPress construye sus permisos fusionando las capacidades del rol (o roles) que posee con las capacidades individuales que se le hayan asignado explícitamente en la tabla `wp_usermeta`.
+Wenn wir einen Benutzer bewerten, baut WordPress seine Berechtigungen auf, indem es die Capabilities der Rolle(n), die er besitzt, mit den individuellen Capabilities zusammenführt, die ihm explizit in der Tabelle `wp_usermeta` zugewiesen wurden.
 
 ```text
 +-----------------------------------------------------------------+
-| Resolución final de capacidades de un usuario                   |
+| Endgültige Auflösung der Capabilities eines Benutzers           |
 +-----------------------------------------------------------------+
 
-[ Capacidades del Rol ]  +  [ Capacidades del Usuario ] = [ Permisos Totales ]
-(Heredadas genéricamente)   (Asignadas individualmente)   (Evaluadas en ejecución)
+[ Capabilities der Rolle ]  +  [ Capabilities des Benutzers ] = [ Gesamtberechtigungen ]
+(Generisch geerbt)             (Individuell zugewiesen)         (Bei Ausführung bewertet)
 
-Ejemplo Práctico (Usuario ID: 15, Rol: Suscriptor):
-[ read: true ]           +  [ upload_files: true ]      = [ read: true, upload_files: true ]
+Praktisches Beispiel (Benutzer-ID: 15, Rolle: Abonnent):
+[ read: true ]              +  [ upload_files: true ]         = [ read: true, upload_files: true ]
 
 ```
 
-Esto es extremadamente potente para casos de uso excepcionales. Por ejemplo, si tienes 100 usuarios con el rol "Autor", pero quieres que solo uno de ellos (por ser el autor destacado del mes) pueda además publicar entradas sin revisión (`publish_posts`), no necesitas crear un rol nuevo llamado "Autor Destacado". Simplemente le asignas la capacidad a ese usuario en particular a través de la clase `WP_User`.
+Dies ist extrem leistungsstark für außergewöhnliche Anwendungsfälle. Wenn du beispielsweise 100 Benutzer mit der Rolle „Autor“ hast, aber möchtest, dass nur einer von ihnen (weil er der hervorgehobene Autor des Monats ist) zusätzlich Beiträge ohne Überprüfung veröffentlichen kann (`publish_posts`), musst du keine neue Rolle namens „Hervorgehobener Autor“ erstellen. Du weist die Capability einfach diesem speziellen Benutzer über die Klasse `WP_User` zu.
 
 ```php
 /**
- * Ejemplo: Otorgar un permiso especial a un usuario concreto.
- * Esto suele ejecutarse como respuesta a un formulario o acción en el admin.
+ * Beispiel: Einem bestimmten Benutzer eine Sonderberechtigung erteilen.
+ * Dies wird normalerweise als Reaktion auf ein Formular oder eine Aktion im Adminbereich ausgeführt.
  */
 function devplugin_promocionar_usuario_especifico( $user_id ) {
     $usuario = new WP_User( $user_id );
     
-    // Verificamos que el usuario exista
+    // Wir überprüfen, ob der Benutzer existiert
     if ( $usuario->exists() ) {
-        // Le otorgamos la capacidad independientemente de su rol
+        // Wir erteilen ihm die Capability unabhängig von seiner Rolle
         $usuario->add_cap( 'publish_posts' );
     }
 }
 
 /**
- * Ejemplo: Revocar un permiso especial a un usuario concreto.
+ * Beispiel: Einem bestimmten Benutzer eine Sonderberechtigung entziehen.
  */
 function devplugin_castigar_usuario_especifico( $user_id ) {
     $usuario = new WP_User( $user_id );
     
     if ( $usuario->exists() ) {
-        // Se puede usar remove_cap para quitar capacidades individuales,
-        // o false para denegar explícitamente una capacidad que su rol le da.
+        // Man kann remove_cap verwenden, um individuelle Capabilities zu entfernen,
+        // o false, um eine Capability, die seine Rolle ihm gibt, explizit zu verweigern.
         $usuario->add_cap( 'upload_files', false ); 
     }
 }
 
 ```
 
-Notarás el uso de `$usuario->add_cap( 'upload_files', false )`. Esto inserta la capacidad en el perfil del usuario pero con un valor booleano falso. En la resolución de conflictos de WordPress, **una capacidad denegada explícitamente a nivel de usuario siempre sobrescribe la misma capacidad concedida a nivel de rol**. Es la forma perfecta de "banear" a un usuario de realizar una acción específica sin alterar su rol principal ni afectar al resto de usuarios de su mismo nivel.
+Du wirst die Verwendung von `$usuario->add_cap( 'upload_files', false )` bemerken. Dies fügt die Capability in das Benutzerprofil ein, jedoch mit einem booleschen Falschwert. Bei der Konfliktlösung in WordPress **überschreibt eine auf Benutzerebene explizit verweigerte Capability immer dieselbe Capability, die auf Rollenebene gewährt wurde**. Dies ist der perfekte Weg, um einen Benutzer von einer bestimmten Aktion auszuschließen, ohne seine Hauptrolle zu ändern oder andere Benutzer derselben Stufe zu beeinträchtigen.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este capítulo hemos diseccionado el sistema de Control de Acceso Basado en Roles (RBAC) de WordPress, una pieza fundamental para garantizar la seguridad operativa y estructural de tus plugins. Hemos establecido que la regla inquebrantable es evaluar siempre capacidades (`current_user_can`) y nunca depender de los nombres de los roles. Comprendimos que tanto los roles como sus capacidades asociadas persisten en la base de datos, lo que nos obliga a interactuar con ellos mediante las funciones `add_role`, `remove_role`, `add_cap` y `remove_cap` exclusivamente en los ciclos de activación y desinstalación del plugin. Finalmente, hemos visto cómo el sistema permite una granularidad absoluta, permitiendo inyectar capacidades personalizadas a roles existentes o crear excepciones de permisos a nivel de usuario individual, facilitando la creación de flujos de trabajo altamente personalizados y seguros.
+In diesem Kapitel haben wir das rollenbasierte Zugriffskontrollsystem (RBAC) von WordPress analysiert, ein grundlegendes Element zur Gewährleistung der betrieblichen und strukturellen Sicherheit deiner Plugins. Wir haben festgestellt, dass die unumstößliche Regel darin besteht, immer Capabilities (`current_user_can`) zu bewerten und sich niemals auf die Namen der Rollen zu verlassen. Wir haben verstanden, dass sowohl Rollen als auch die ihnen zugeordneten Capabilities in der Datenbank verbleiben, was uns dazu zwingt, mit ihnen über die Funktionen `add_role`, `remove_role`, `add_cap` und `remove_cap` ausschließlich während der Aktivierungs- und Deinstallationszyklen des Plugins zu interagieren. Schließlich haben wir gesehen, wie das System eine absolute Granularität ermöglicht, indem es erlaubt, benutzerdefinierte Capabilities in bestehende Rollen zu injizieren oder Ausnahmeberechtigungen auf der Ebene einzelner Benutzer zu erstellen, was die Erstellung hochgradig personalisierter und sicherer Workflows erleichtert.

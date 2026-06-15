@@ -1,181 +1,181 @@
-En el desarrollo de plugins, es vital ofrecer un panel de control para que los usuarios personalicen su experiencia. Este capítulo aborda la persistencia de datos globales y la creación de interfaces de configuración nativas.
+Bei der Entwicklung von Plugins ist es entscheidend, ein Control Panel anzubieten, damit die Benutzer ihr Erlebnis personalisieren können. Dieses Kapitel befasst sich mit der Persistenz globaler Daten und der Erstellung nativer Konfigurationsoberflächen.
 
-Exploraremos cómo la Options API permite almacenar preferencias en la tabla `wp_options` de forma eficiente. Luego, profundizaremos en la Settings API, que abstrae la complejidad del renderizado de formularios, validando datos y gestionando la seguridad automáticamente. Al finalizar, serás capaz de construir paneles de ajustes profesionales y seguros, perfectamente integrados al ecosistema de WordPress.
+Wir werden untersuchen, wie die Options API es ermöglicht, Einstellungen effizient in der Tabelle `wp_options` zu speichern. Anschließend vertiefen wir uns in die Settings API, die die Komplexität des Renderings von Formularen abstrahiert, Daten validiert und die Sicherheit automatisch verwaltet. Am Ende wirst du in der Lage sein, professionelle und sichere Einstellungs-Panels zu erstellen, die sich nahtlos in das WordPress-Ökosystem integrieren.
 
-## 6.1 Uso de add_option y get_option
+## 6.1 Verwendung von add_option und get_option
 
-La API de Opciones (Options API) es el mecanismo estándar de WordPress para almacenar datos globales de un plugin o tema que no están vinculados a un tipo de contenido específico (como posts, usuarios o términos, que ya cubrimos en la API de Metadatos). Estos ajustes globales se almacenan de forma persistente en la tabla `wp_options` de la base de datos.
+Die Options API ist der Standardmechanismus von WordPress zum Speichern globaler Daten eines Plugins oder Themes, die nicht an einen bestimmten Inhaltstyp gebunden sind (wie Beiträge, Benutzer oder Begriffe, die wir bereits in der Metadata API behandelt haben). Diese globalen Einstellungen werden dauerhaft in der Tabelle `wp_options` der Datenbank gespeichert.
 
-A diferencia de la creación de tablas personalizadas (Capítulo 5), la API de Opciones maneja automáticamente la serialización de datos complejos (como arrays u objetos PHP) y se integra estrechamente con el sistema de caché de objetos (Object Cache) nativo de WordPress.
+Im Gegensatz zur Erstellung benutzerdefinierter Tabellen (Kapitel 5) übernimmt die Options API automatisch die Serialisierung komplexer Daten (wie PHP-Arrays oder -Objekte) und ist eng in das native Objekt-Cache-System (Object Cache) von WordPress integriert.
 
-### La tabla wp_options
+### Die Tabelle wp_options
 
-Para comprender cómo funcionan estas funciones, es útil visualizar la estructura simplificada de la tabla subyacente:
+Um zu verstehen, wie diese Funktionen arbeiten, ist es hilfreich, sich die vereinfachte Struktur der zugrunde liegenden Tabelle vorzustellen:
 
 ```text
 +-----------+--------------------+-------------------------+----------+
 | option_id | option_name        | option_value            | autoload |
 +-----------+--------------------+-------------------------+----------+
-| 1         | siteurl            | https://ejemplo.com     | yes      |
+| 1         | siteurl            | https://beispiel.de     | yes      |
 | 2         | mi_plugin_version  | 1.0.3                   | yes      |
 | 3         | mi_plugin_ajustes  | a:2:{s:5:"color"...     | no       |
 +-----------+--------------------+-------------------------+----------+
 
 ```
 
-El campo clave aquí es `autoload`. Si está configurado en `yes`, WordPress cargará esta opción en la memoria durante la inicialización del núcleo, en una sola consulta SQL agrupada. Esto es vital para el rendimiento: las opciones que se necesitan en cada carga de página deben tener `autoload` habilitado, mientras que los datos pesados o de uso esporádico deben establecerse en `no`.
+Das Schlüsselfeld hier ist `autoload`. Wenn es auf `yes` eingestellt ist, lädt WordPress diese Option während der Core-Initialisierung in einer einzigen gruppierten SQL-Abfrage in den Speicher. Dies ist entscheidend für die Performance: Optionen, die bei jedem Seitenaufruf benötigt werden, sollten `autoload` aktiviert haben, während umfangreiche oder selten genutzte Daten auf `no` gesetzt werden sollten.
 
-### Guardando datos: add_option() y update_option()
+### Daten speichern: add_option() und update_option()
 
-La función `add_option()` permite registrar una nueva configuración en la base de datos. Si la opción ya existe, la función retornará `false` y no sobreescribirá el valor existente.
+Die Funktion `add_option()` ermöglicht es, eine neue Einstellung in der Datenbank zu registrieren. Wenn die Option bereits existiert, gibt die Funktion `false` zurück und überschreibt den vorhandenen Wert nicht.
 
-**Sintaxis:**
+**Syntax:**
 
 ```php
 add_option( string $option, mixed $value = '', string $deprecated = '', string|bool $autoload = 'yes' )
 
 ```
 
-* `$option`: Nombre único de la opción (se recomienda usar un prefijo de tu plugin, ej: `miplugin_api_key`).
-* `$value`: El valor a guardar. Puede ser un string, entero, array u objeto.
-* `$deprecated`: Parámetro obsoleto, siempre se debe pasar una cadena vacía `''`.
-* `$autoload`: Define si se carga automáticamente (`'yes'` o `true`) o no (`'no'` o `false`).
+* `$option`: Eindeutiger Name der Option (es wird empfohlen, ein Präfix deines Plugins zu verwenden, z. B.: `miplugin_api_key`).
+* `$value`: Der zu speichernde Wert. Kann ein String, ein Integer, ein Array oder ein Objekt sein.
+* `$deprecated`: Veralteter Parameter, hier sollte immer ein leerer String `''` übergeben werden.
+* `$autoload`: Definiert, ob die Option automatisch geladen wird (`'yes'` oder `true`) oder nicht (`'no'` oder `false`).
 
-**Ejemplo de uso:**
+**Anwendungsbeispiel:**
 
 ```php
-// Guardar un valor simple
+// Einen einfachen Wert speichern
 add_option( 'miplugin_activacion_fecha', current_time( 'mysql' ), '', 'yes' );
 
-// Guardar un array (WordPress lo serializa automáticamente)
+// Ein Array speichern (WordPress serialisiert es automatisch)
 $configuracion_inicial = array(
     'modo_oscuro' => true,
     'limite_items' => 10,
-    'email_admin'  => 'admin@ejemplo.com'
+    'email_admin'  => 'admin@beispiel.de'
 );
 add_option( 'miplugin_configuracion', $configuracion_inicial, '', 'no' );
 
 ```
 
-En la práctica diaria del desarrollo de plugins, utilizarás `update_option()` con mayor frecuencia que `add_option()`.
+In der täglichen Praxis der Plugin-Entwicklung wirst du `update_option()` viel häufiger verwenden als `add_option()`.
 
-La función `update_option()` verifica primero si la opción existe. Si no existe, actúa internamente como `add_option()`. Si existe y el nuevo valor es diferente al almacenado, lo actualiza.
+Die Funktion `update_option()` prüft zuerst, ob die Option existiert. Wenn sie nicht existiert, verhält sie sich intern wie `add_option()`. Wenn sie existiert und der neue Wert sich vom gespeicherten unterscheidet, wird er aktualisiert.
 
 ```php
-// Actualiza el valor; si 'miplugin_api_key' no existe, la crea.
+// Aktualisiert den Wert; wenn 'miplugin_api_key' nicht existiert, wird sie erstellt.
 update_option( 'miplugin_api_key', 'NUEVA_CLAVE_12345', 'no' );
 
 ```
 
-### Recuperando datos: get_option()
+### Daten abrufen: get_option()
 
-Para acceder a la información almacenada, utilizamos `get_option()`. Esta función busca en la caché de memoria primero y, si no encuentra el dato, realiza una consulta a la base de datos (o la extrae del conjunto de datos precargados si tiene `autoload='yes'`).
+Um auf die gespeicherten Informationen zuzugreifen, verwenden wir `get_option()`. Diese Funktion sucht zuerst im Arbeitsspeicher-Cache. Wenn sie die Daten dort nicht findet, führt sie eine Abfrage in der Datenbank aus (oder ruft sie aus dem Pool der vorab geladenen Daten ab, wenn `autoload='yes'` gesetzt ist).
 
-**Sintaxis:**
+**Syntax:**
 
 ```php
 get_option( string $option, mixed $default_value = false )
 
 ```
 
-* `$option`: El nombre de la opción a recuperar.
-* `$default_value`: El valor que se retornará si la opción no existe en la base de datos. Esto es extremadamente útil para proveer configuraciones por defecto sin necesidad de guardarlas físicamente en la instalación.
+* `$option`: Der Name der abzurufenden Option.
+* `$default_value`: Der Wert, der zurückgegeben wird, wenn die Option in der Datenbank nicht existiert. Dies ist äußerst nützlich, um Standardkonfigurationen bereitzustellen, ohne sie physisch in der Installation speichern zu müssen.
 
-**Ejemplo de uso:**
+**Anwendungsbeispiel:**
 
 ```php
-// Recuperar un valor simple con un fallback
-$api_key = get_option( 'miplugin_api_key', 'clave_por_defecto' );
+// Einen einfachen Wert mit einem Fallback abrufen
+$api_key = get_option( 'miplugin_api_key', 'standard_schluessel' );
 
-// Recuperar un array (WordPress lo deserializa automáticamente)
+// Ein Array abrufen (WordPress deserialisiert es automatisch)
 $configuracion = get_option( 'miplugin_configuracion', array() );
 
 if ( ! empty( $configuracion['modo_oscuro'] ) ) {
-    // Aplicar estilos oscuros
+    // Dunkle Stile anwenden
 }
 
 ```
 
-### Eliminando datos: delete_option()
+### Daten löschen: delete_option()
 
-Para mantener una base de datos limpia, especialmente durante el proceso de desinstalación de un plugin (como vimos en el Capítulo 2), es obligatorio eliminar las opciones que ya no se necesiten mediante `delete_option()`.
+Um die Datenbank sauber zu halten, insbesondere während des Deinstallationsprozesses eines Plugins (wie wir in Kapitel 2 gesehen haben), ist es zwingend erforderlich, nicht mehr benötigte Optionen mittels `delete_option()` zu löschen.
 
 ```php
-// Elimina la opción de la base de datos y de la caché
+// Löscht die Option aus der Datenbank und aus dem Cache
 delete_option( 'miplugin_configuracion' );
 
 ```
 
-### Mejores prácticas y rendimiento
+### Best Practices und Performance
 
-1. **Agrupación en Arrays:** En lugar de crear 20 opciones distintas (`miplugin_color`, `miplugin_tamaño`, `miplugin_fuente`), almacena un único array asociativo (`miplugin_ajustes`). Esto reduce significativamente el número de registros en `wp_options` y hace que las operaciones de lectura/escritura sean más eficientes.
-2. **Uso prudente de Autoload:** Un error común en plugins de baja calidad es dejar que todas sus opciones se guarden con `autoload='yes'` (el valor por defecto). Si tu plugin guarda un registro histórico grande o una caché temporal en la tabla de opciones, asegúrate de forzar `autoload='no'` mediante `update_option( 'opcion', 'valor', 'no' )`. Un exceso de datos en autoload puede saturar la memoria PHP en cada petición del sitio.
-3. **Prefijos consistentes:** Siempre utiliza un prefijo único para tus opciones para evitar colisiones catastróficas con el núcleo de WordPress u otros plugins (ej. nunca uses algo genérico como `get_option('color_primario')`).
+1. **Gruppierung in Arrays:** Anstatt 20 verschiedene Optionen zu erstellen (`miplugin_color`, `miplugin_size`, `miplugin_font`), speichere ein einziges assoziatives Array (`miplugin_ajustes`). Dies reduziert die Anzahl der Einträge in `wp_options` erheblich und macht Lese- und Schreibvorgänge weitaus effizienter.
+2. **Vorsichtiger Umgang mit Autoload:** Ein häufiger Fehler bei qualitativ minderwertigen Plugins is es, alle Optionen mit `autoload='yes'` (dem Standardwert) speichern zu lassen. Wenn dein Plugin ein großes Verlaufsprotokoll oder einen temporären Cache in der Optionstabelle speichert, stelle sicher, dass du `autoload='no'` erzwingst, indem du `update_option( 'opcion', 'valor', 'no' )` verwendest. Zu viele Daten im Autoload können den PHP-Speicher bei jeder Anfrage der Website überlasten.
+3. **Konsistente Präfixe:** Verwende für deine Optionen immer ein eindeutiges Präfix, um katastrophale Kollisionen mit dem WordPress-Core oder anderen Plugins zu vermeiden (verwende z. B. niemals etwas Generisches wie `get_option('color_primario')`).
 
-## 6.2 La Settings API al detalle
+## 6.2 Die Settings API im Detail
 
-Mientras que la API de Opciones (vista en la sección anterior) nos proporciona los mecanismos básicos (CRUD) para guardar y recuperar datos de la base de datos, no nos dice nada sobre cómo construir la interfaz gráfica para que el usuario interactúe con esos datos. Aquí es donde entra en juego la **Settings API** (API de Ajustes).
+Während uns die Options API (die im vorherigen Abschnitt behandelt wurde) die grundlegenden Mechanismen (CRUD) zum Speichern und Abrufen von Daten aus der Datenbank bereitstellt, sagt sie nichts darüber aus, wie die grafische Benutzeroberfläche aufgebaut sein soll, über die der Benutzer mit diesen Daten interagiert. Hier kommt die **Settings API** (Einstellungs-API) ins Spiel.
 
-Introducida en WordPress 2.7, la Settings API es una capa de abstracción construida sobre la API de Opciones. Su propósito principal es estandarizar la creación de páginas de configuración en el panel de administración, automatizando las tareas más tediosas y críticas: la renderización de formularios, la validación de datos y la seguridad.
+Eingeführt mit WordPress 2.7 ist die Settings API eine Abstraktionsschicht, die auf der Options API aufbaut. Ihr Hauptzweck besteht darin, die Erstellung von Einstellungsseiten im Administrationsbereich zu standardisieren und dabei die mühsamsten und kritischsten Aufgaben zu automatisieren: das Rendern von Formularen, die Datenvalidierung und die Sicherheit.
 
-### Comparativa: Options API vs Settings API
+### Vergleich: Options API vs. Settings API
 
-Para entender su valor, es fundamental comprender dónde termina una y dónde empieza la otra.
+Um ihren Wert zu verstehen, ist es wichtig zu begreifen, wo die eine aufhört und die andere anfängt.
 
-| Característica | Options API (`add_option`) | Settings API (`register_setting`) |
+| Eigenschaft | Options API (`add_option`) | Settings API (`register_setting`) |
 | --- | --- | --- |
-| **Propósito** | Interacción directa con la base de datos. | Construcción de interfaces y gestión del flujo del formulario. |
-| **Seguridad (Nonces)** | Manual (debes generarlos y validarlos tú). | Automática (WordPress los gestiona en segundo plano). |
-| **Guardado de datos** | Manual (requiere capturar `$_POST` y sanitizar). | Automático (WordPress procesa el formulario y guarda). |
-| **Gestión de errores** | Manual. | Nativa (permite añadir mensajes de `add_settings_error`). |
+| **Zweck** | Direkte Interaktion mit der Datenbank. | Aufbau von Oberflächen und Verwaltung des Formularflusses. |
+| **Sicherheit (Nonces)** | Manuell (du musst sie selbst generieren und valideren). | Automatisch (WordPress verwaltet sie im Hintergrund). |
+| **Datenspeicherung** | Manuell (erfordert das Abfangen von `$_POST` und Bereinigen). | Automatisch (WordPress verarbeitet das Formular und speichert). |
+| **Fehlerbehandlung** | Manuell. | Nativ (ermöglicht das Hinzufügen von Nachrichten über `add_settings_error`). |
 
-### Arquitectura visual de la Settings API
+### Visuelle Architektur der Settings API
 
-La API organiza la información visualmente en una estructura jerárquica estricta. Todo formulario de configuración creado con esta API se compone de tres niveles:
+Die API organisiert die Informationen visuell in einer strengen hierarchischen Struktur. Jedes mit dieser API erstellte Einstellungsformular besteht aus drei Ebenen:
 
 ```text
-[ Página de Ajustes ] (Ej: Ajustes de Lectura o tu propia página)
+[ Einstellungsseite ] (z. B. Lese-Einstellungen oder deine eigene Seite)
  │
- ├── [ Sección ] (Agrupación lógica, ej: "Ajustes de Visualización")
+ ├── [ Bereich / Sektion ] (Logische Gruppierung, z. B. „Darstellungs-Einstellungen“)
  │    │
- │    ├── [ Campo ] (Input HTML: Color primario) ---> Vinculado a una Opción
- │    └── [ Campo ] (Input HTML: Activar modo oscuro) ---> Vinculado a una Opción
+ │    ├── [ Feld ] (HTML-Input: Primärfarbe) ---> Mit einer Option verknüpft
+ │    └── [ Feld ] (HTML-Input: Dark Mode aktivieren) ---> Mit einer Option verknüpft
  │
- └── [ Sección ] (Agrupación lógica, ej: "Ajustes de API")
+ └── [ Bereich / Sektion ] (Logische Gruppierung, z. B. „API-Einstellungen“)
       │
-      └── [ Campo ] (Input HTML: Clave de API) ---> Vinculado a una Opción
+      └── [ Feld ] (HTML-Input: API-Schlüssel) ---> Mit einer Option verknüpft
 
 ```
 
-1. **Página de Ajustes (Options Page):** El contenedor principal (la etiqueta `<form>`). Puede ser una página existente de WordPress (como *Ajustes > Generales*) o una página nueva creada por tu plugin.
-2. **Secciones (Settings Sections):** Bloques temáticos dentro de la página. Permiten agrupar campos relacionados bajo un mismo subtítulo, facilitando la lectura al usuario.
-3. **Campos (Settings Fields):** Los elementos interactivos individuales (cuadros de texto, menús desplegables, casillas de verificación). Cada campo está directamente enlazado a un registro de la base de datos (una opción).
+1. **Einstellungsseite (Options Page):** Der Hauptcontainer (das `<form>`-Tag). Es kann eine bestehende WordPress-Seite sein (wie *Einstellungen > Allgemein*) oder eine neue, von deinem Plugin erstellte Seite.
+2. **Bereiche / Sektionen (Settings Sections):** Thematische Blöcke innerhalb der Seite. Sie ermöglichen es, verwandte Felder unter einer gemeinsamen Zwischenüberschrift zu gruppieren, was dem Benutzer das Lesen erleichtert.
+3. **Felder (Settings Fields):** Die einzelnen interaktiven Elemente (Textfelder, Dropdown-Menüs, Checkboxen). Jedes Feld ist direkt mit einem Eintrag in der Datenbank (einer Option) verknüpft.
 
-### Beneficios del "Flujo Blanco" (Whitelisting)
+### Vorteile des „Whitelisting“-Verfahrens (Erlaubnisliste)
 
-El mayor aporte de la Settings API a la seguridad de un plugin es su sistema de "lista blanca".
+Der größte Beitrag der Settings API zur Sicherheit eines Plugins ist ihr „Whitelisting“-System.
 
-Cuando construyes un formulario HTML estándar y lo envías, debes escribir código para interceptar ese envío, verificar qué campos llegaron, comprobar su validez y luego usar `update_option()` para cada uno.
+Wenn du ein standardmäßiges HTML-Formular erstellst und absendest, musst du Code schreiben, um diesen Absendevorgang abzufangen, zu prüfen, welche Felder übermittelt wurden, deren Gültigkeit zu validieren und dann für jedes Feld einzeln `update_option()` aufzurufen.
 
-Con la Settings API, utilizas la función `register_setting()` para decirle a WordPress: *"Voy a utilizar una opción llamada `miplugin_opciones`. Por favor, hazte cargo de ella"*.
+Mit der Settings API verwendest du die Funktion `register_setting()`, um WordPress mitzuteilen: *„Ich werde eine Option namens `miplugin_opciones` verwenden. Bitte kümmere dich darum.“*
 
-A partir de ese momento, WordPress incluye tu opción en una lista blanca. Cuando el formulario se envía hacia el archivo interno `options.php` de WordPress, el núcleo verifica si los datos entrantes pertenecen a una opción registrada. Si es así, verifica los *nonces* de seguridad, aplica las funciones de sanitización que hayas definido y guarda los datos en la base de datos automáticamente, redirigiendo al usuario de vuelta con un mensaje de "Ajustes guardados".
+Ab diesem Moment setzt WordPress deine Option auf eine Erlaubnisliste (Whitelist). Wenn das Formular an die interne WordPress-Datei `options.php` gesendet wird, prüft der Core, ob die eingehenden Daten zu einer registrierten Option gehören. Wenn ja, überprüft er die Sicherheits-*Nonces*, wendet die von dir definierten Bereinigungsfunktionen an und speichert die Daten automatisch in der Datenbank, woraufhin der Benutzer mit der Meldung „Einstellungen gespeichert“ zurückgeleitet wird.
 
-Esta delegación de responsabilidades es lo que hace que la Settings API sea el estándar indiscutible para el desarrollo de interfaces de configuración en WordPress, permitiéndote concentrarte en la lógica de negocio y el diseño, en lugar de en la plomería del protocolo HTTP y la seguridad de los formularios.
+Diese Delegation von Aufgaben macht die Settings API zum unbestrittenen Standard für die Entwicklung von Konfigurationsoberflächen in WordPress. So kannst du dich auf deine Geschäftslogik und das Design konzentrieren, anstatt dich um das Abfangen von HTTP-Protokollen und die Sicherheit von Formularen kümmern zu müssen.
 
-## 6.3 Registro de secciones y campos
+## 6.3 Registrierung von Sektionen und Feldern
 
-Para implementar la arquitectura visual y de seguridad que discutimos en la sección anterior, WordPress proporciona tres funciones principales. Estas funciones deben ejecutarse siempre dentro del hook `admin_init`, ya que los ajustes solo necesitan registrarse cuando un usuario accede al panel de administración o cuando se envía un formulario a `options.php`.
+Um die im vorherigen Abschnitt besprochene visuelle und sicherheitsrelevante Architektur zu implementieren, stellt WordPress drei Hauptfunktionen bereit. Diese Funktionen müssen immer innerhalb des Hooks `admin_init` ausgeführt werden, da die Einstellungen nur registriert werden müssen, wenn ein Benutzer auf den Administrationsbereich zugreift oder wenn ein Formular an die `options.php` gesendet wird.
 
-Las tres funciones trabajan en conjunto para tejer la red entre tu base de datos y tu interfaz:
+Die drei Funktionen arbeiten zusammen, um die Verknüpfung zwischen deiner Datenbank und deiner Oberfläche herzustellen:
 
-1. **`register_setting()`:** Autoriza (añade a la lista blanca) el nombre de la opción en la base de datos y define cómo debe validarse.
-2. **`add_settings_section()`:** Crea un bloque agrupador visual en la página.
-3. **`add_settings_field()`:** Registra un campo de formulario individual y lo asigna a una sección específica.
+1. **`register_setting()`:** Autorisiert (setzt auf die Whitelist) den Optionsnamen in der Datenbank und definiert, wie er validiert werden soll.
+2. **`add_settings_section()`:** Erstellt einen visuellen Gruppierungsblock auf der Seite.
+3. **`add_settings_field()`:** Registriert ein einzelnes Formularfeld und weist es einer bestimmten Sektion zu.
 
-### 1. Autorización de la opción: register_setting()
+### 1. Autorisierung der Option: register_setting()
 
-Antes de pintar nada en pantalla, debes decirle a WordPress qué opción vas a guardar. Si omites este paso, al enviar tu formulario recibirás un error de permisos.
+Bevor du etwas auf dem Bildschirm ausgibst, musst du WordPress mitteilen, welche Option du speichern wirst. Wenn du diesen Schritt auslässt, erhältst du beim Absenden des Formulars einen Berechtigungsfehler.
 
 ```php
 register_setting( 
@@ -186,13 +186,13 @@ register_setting(
 
 ```
 
-* **`$option_group`:** Un identificador interno para el grupo de opciones. Lo usarás más adelante en la función `settings_fields()` al construir el formulario (Capítulo 6.4).
-* **`$option_name`:** El nombre exacto de la opción que se guardará en la tabla `wp_options` (el mismo que usarías en `get_option()`).
-* **`$args`:** Un array de argumentos. El más importante aquí es `sanitize_callback`, donde pasas el nombre de la función que limpiará los datos antes de guardarlos.
+* **`$option_group`:** Eine interne Kennung für die Optionsgruppe. Du wirst sie später in der Funktion `settings_fields()` beim Erstellen des Formulars verwenden (Kapitel 6.4).
+* **`$option_name`:** Der genaue Name der Option, die in der Tabelle `wp_options` gespeichert wird (derselbe Name, den du in `get_option()` verwendest).
+* **`$args`:** Ein Array mit Argumenten. Das wichtigste Argument hier ist `sanitize_callback`, an das du den Namen der Funktion übergibst, die die Daten vor dem Speichern bereinigt.
 
-### 2. Creación de secciones: add_settings_section()
+### 2. Erstellung von Sektionen: add_settings_section()
 
-Las secciones actúan como contenedores lógicos para tus campos. Una página de ajustes puede tener múltiples secciones.
+Die Sektionen fungieren als logische Container für deine Felder. Eine Einstellungsseite kann mehrere Sektionen haben.
 
 ```php
 add_settings_section( 
@@ -204,14 +204,14 @@ add_settings_section(
 
 ```
 
-* **`$id`:** El identificador único de la sección (HTML `id`).
-* **`$title`:** El título (HTML `<h2>` o `<h3>`) que se mostrará sobre los campos.
-* **`$callback`:** Función que imprime contenido descriptivo justo debajo del título y antes de los campos. Si no necesitas descripción, puedes pasar `__return_empty_string`.
-* **`$page`:** El slug de la página de ajustes donde debe aparecer esta sección.
+* **`$id`:** Die eindeutige Kennung der Sektion (HTML-`id`).
+* **`$title`:** Der Titel (HTML-`<h2>` oder `<h3>`), der über den Feldern angezeigt wird.
+* **`$callback`:** Funktion, die einen beschreibenden Text direkt unter dem Titel und vor den Feldern ausgibt. Wenn du keine Beschreibung benötigst, kannst du `__return_empty_string` übergeben.
+* **`$page`:** Der Slug der Einstellungsseite, auf der diese Sektion erscheinen soll.
 
-### 3. Creación de campos: add_settings_field()
+### 3. Erstellung von Feldern: add_settings_field()
 
-Esta función enlaza un elemento de la interfaz (como un `<input>`) con la sección y la página correspondientes.
+Diese Funktion verknüpft ein Element der Benutzeroberfläche (like ein `<input>`) mit der entsprechenden Sektion und Seite.
 
 ```php
 add_settings_field( 
@@ -225,91 +225,91 @@ add_settings_field(
 
 ```
 
-* **`$id`:** El atributo `id` del campo.
-* **`$title`:** La etiqueta (HTML `<label>`) que aparecerá a la izquierda del campo.
-* **`$callback`:** La función encargada de hacer el `echo` del HTML del campo de formulario (el `<input>`, `<select>`, etc.).
-* **`$page`:** El slug de la página (debe coincidir con el de la sección).
-* **`$section`:** El ID de la sección (`$id` de `add_settings_section`) a la que pertenece este campo.
-* **`$args`:** Argumentos extra que se pasarán a la función `$callback`. Es ideal para pasar el atributo `name` o clases CSS personalizadas.
+* **`$id`:** Das `id`-Attribut des Felds.
+* **`$title`:** Das Label (HTML-`<label>`), das links vom Feld erscheint.
+* **`$callback`:** Die Funktion, die für die Ausgabe (per `echo`) des HTML-Codes des Formularfelds (das `<input>`, `<select>`, etc.) zuständig ist.
+* **`$page`:** Der Slug der Seite (muss mit dem Slug der Sektion übereinstimmen).
+* **`$section`:** Die ID der Sektion (`$id` aus `add_settings_section`), zu der dieses Feld gehört.
+* **`$args`:** Zusätzliche Argumente, die an die `$callback`-Funktion übergeben werden. Ideal, um das HTML-Attribut `name` oder benutzerdefinierte CSS-Klassen zu übergeben.
 
-### El flujo de conexiones (El Pegamento)
+### Der Verbindungsfluss (Der Kleber)
 
-El mayor desafío al aprender la Settings API es entender cómo estas funciones se relacionan mediante strings (identificadores). Observa este diagrama de relaciones:
+Die größte Herausforderung beim Erlernen der Settings API besteht darin, zu verstehen, wie diese Funktionen über Strings (Identifikatoren) miteinander verknüpft sind. Betrachte dieses Beziehungsdiagramm:
 
 ```text
-[ Base de Datos ]                   [ Interfaz / Renderizado ]
+[ Datenbank ]                       [ Oberfläche / Rendering ]
       |                                        |
 register_setting( 'grupo_A', 'opcion_X' )      |
                                                |
-                          add_settings_section( 'seccion_1', ..., 'mi_pagina' )
-                                                      ^                ^
-                                                      |                |
-                          add_settings_field( ..., 'mi_pagina', 'seccion_1' )
+                           add_settings_section( 'seccion_1', ..., 'mi_pagina' )
+                                                       ^                ^
+                                                       |                |
+                           add_settings_field( ..., 'mi_pagina', 'seccion_1' )
 
 ```
 
-El campo busca la sección (`seccion_1`) y la página (`mi_pagina`) para saber dónde dibujarse. Más tarde, el formulario completo utilizará el `grupo_A` para saber a qué `opcion_X` enviar los datos.
+Der campo sucht die Sektion (`seccion_1`) und die Seite (`mi_pagina`), um zu wissen, wo es sich zeichnen soll. Später verwendet das gesamte Formular die Gruppe `grupo_A`, um zu wissen, an welche Option `opcion_X` die Daten gesendet werden sollen.
 
-### Ejemplo de implementación completa
+### Beispiel einer vollständigen Implementierung
 
-A continuación, uniendo todo dentro del hook `admin_init`:
+Im Folgenden führen wir alles innerhalb des Hooks `admin_init` zusammen:
 
 ```php
 /**
- * Inicializa y registra todos los ajustes de nuestro plugin
+ * Initialisiert und registriert alle Einstellungen unseres Plugins
  */
 function miplugin_registrar_ajustes() {
     
-    // 1. Registrar la opción (Lista blanca)
+    // 1. Die Option registrieren (Erlaubnisliste / Whitelist)
     register_setting(
-        'miplugin_opciones_grupo',      // Grupo de opciones
-        'miplugin_configuracion',       // Nombre en wp_options
+        'miplugin_opciones_grupo',      // Optionsgruppe
+        'miplugin_configuracion',       // Name in wp_options
         array(
             'sanitize_callback' => 'miplugin_sanitizar_datos',
             'default'           => array( 'api_key' => '' )
         )
     );
 
-    // 2. Registrar la Sección
+    // 2. Den Bereich (Sektion) registrieren
     add_settings_section(
-        'miplugin_seccion_api',         // ID de la sección
-        'Ajustes de Conexión API',      // Título visible
-        'miplugin_seccion_api_cb',      // Callback de descripción
-        'miplugin_pagina_ajustes'       // Slug de la página contenedora
+        'miplugin_seccion_api',         // ID der Sektion
+        'API-Verbindungseinstellungen',  // Sichtbarer Titel
+        'miplugin_seccion_api_cb',      // Callback für die Beschreibung
+        'miplugin_pagina_ajustes'       // Slug der Einstellungsseite
     );
 
-    // 3. Registrar el Campo
+    // 3. Das Feld registrieren
     add_settings_field(
-        'miplugin_campo_apikey',        // ID del campo
-        'Clave de API',                 // Etiqueta del campo (<label>)
-        'miplugin_renderizar_apikey',   // Callback que pinta el <input>
-        'miplugin_pagina_ajustes',      // Slug de la página contenedora
-        'miplugin_seccion_api'          // ID de la sección a la que pertenece
+        'miplugin_campo_apikey',        // ID des Felds
+        'API-Schlüssel',                 // Feld-Label (<label>)
+        'miplugin_renderizar_apikey',   // Callback, der das <input> ausgibt
+        'miplugin_pagina_ajustes',      // Slug der Einstellungsseite
+        'miplugin_seccion_api'          // ID der Sektion, zu der es gehört
     );
 }
 add_action( 'admin_init', 'miplugin_registrar_ajustes' );
 
 /**
- * Callbacks de renderizado (Las "vistas")
+ * Render-Callbacks (Die „Views“)
  */
 
-// Descripción de la sección
+// Beschreibung der Sektion
 function miplugin_seccion_api_cb() {
-    echo '<p>Ingresa tus credenciales para conectar con el servicio externo.</p>';
+    echo '<p>Gib deine Zugangsdaten ein, um dich mit dem externen Dienst zu verbinden.</p>';
 }
 
-// Renderizado del input
+// Rendern des Inputs
 function miplugin_renderizar_apikey() {
-    // Obtenemos los valores actuales de la base de datos
+    // Wir rufen die aktuellen Werte aus der Datenbank ab
     $opciones = get_option( 'miplugin_configuracion' );
     $api_key  = isset( $opciones['api_key'] ) ? esc_attr( $opciones['api_key'] ) : '';
     
-    // Nota que el atributo 'name' debe ser exacto: nombre_opcion[clave_array]
+    // Beachte, dass das 'name'-Attribut exakt lauten muss: options_name[array_key]
     echo '<input type="text" id="miplugin_campo_apikey" name="miplugin_configuracion[api_key]" value="' . $api_key . '" class="regular-text" />';
 }
 
 /**
- * Función de sanitización (Seguridad)
+ * Bereinigungsfunktion (Sicherheit)
  */
 function miplugin_sanitizar_datos( $input ) {
     $sanitizado = array();
@@ -323,42 +323,42 @@ function miplugin_sanitizar_datos( $input ) {
 
 ```
 
-Es crucial notar cómo se construye el atributo `name` en la función de renderizado: `name="miplugin_configuracion[api_key]"`. Como estamos guardando nuestros ajustes en un array bajo una única opción (una mejor práctica vista en 6.1), el atributo `name` de HTML debe reflejar esa estructura de array para que WordPress lo serialice correctamente al procesar la petición.
+Es ist wichtig zu beachten, wie das `name`-Attribut in der Render-Funktion aufgebaut ist: `name="miplugin_configuracion[api_key]"`. Da wir unsere Einstellungen in einem Array unter einer einzigen Option speichern (eine in 6.1 beschriebene Best Practice), muss das HTML-`name`-Attribut diese Array-Struktur widerspiegeln, damit WordPress es bei der Verarbeitung der Anfrage korrekt serialisiert.
 
-## 6.4 Renderizado de formularios
+## 6.4 Rendern von Formularen
 
-Una vez que hemos definido nuestra opción, secciones y campos en el *backend* mediante el hook `admin_init` (como vimos en la sección 6.3), el último paso es construir la interfaz gráfica. Necesitamos imprimir el formulario HTML en la página de administración de nuestro plugin.
+Sobald wir unsere Option, Sektionen und Felder im *Backend* über den Hook `admin_init` definiert haben (wie wir in Abschnitt 6.3 gesehen haben), besteht der letzte Schritt darin, die grafische Benutzeroberfläche aufzubauen. Wir müssen das HTML-Formular auf der Administrationsseite unseres Plugins ausgeben.
 
-La belleza de la Settings API es que reduce el renderizado de un formulario complejo a unas pocas líneas de código, manejando internamente los bucles y la inyección de medidas de seguridad.
+Das Schöne an der Settings API ist, dass sie das Rendern eines komplexen Formulars auf wenige Zeilen Code reduziert und die Schleifen sowie die Implementierung von Sicherheitsmaßnahmen intern verwaltet.
 
-### La anatomía de la vista
+### Die Anatomie des Views
 
-La función *callback* responsable de mostrar tu página de ajustes (la que definiste al usar funciones como `add_menu_page` o `add_options_page` que veremos en el Capítulo 7) debe contener una estructura HTML muy específica para que la Settings API funcione correctamente.
+Die *Callback*-Funktion, die für die Anzeige deiner Einstellungsseite verantwortlich ist (diejenige, die du bei der Verwendung von Funktionen wie `add_menu_page` o `add_options_page` definiert hast, welche wir in Kapitel 7 behandeln werden), muss eine ganz bestimmte HTML-Struktur aufweisen, damit die Settings API korrekt funktioniert.
 
-El flujo básico requiere cuatro elementos esenciales:
+Der grundlegende Ablauf erfordert vier wesentliche Elemente:
 
-1. **El contenedor global:** La clase `<div class="wrap">` estándar de WordPress.
-2. **La etiqueta form:** Debe apuntar estrictamente al archivo interno `options.php`.
-3. **Seguridad y referencias:** La función `settings_fields()`.
-4. **Renderizado de secciones:** La función `do_settings_sections()`.
-5. **El botón de envío:** La función `submit_button()`.
+1. **Der globale Container:** Die Standard-WordPress-Klasse `<div class="wrap">`.
+2. **Das Formular-Tag:** Es muss zwingend auf die interne Datei `options.php` verweisen.
+3. **Sicherheit und Referenzen:** Die Funktion `settings_fields()`.
+4. **Rendern von Sektionen:** Die Funktion `do_settings_sections()`.
+5. **Der Senden-Button:** Die Funktion `submit_button()`.
 
-### Implementación del formulario
+### Implementierung des Formulars
 
-A continuación, se muestra cómo se construye la vista de la página, asumiendo que estamos utilizando los mismos identificadores registrados en el ejemplo de la lección anterior:
+Im Folgenden wird gezeigt, wie der View der Seite aufgebaut wird, unter der Annahme, dass wir dieselben Identifikatoren verwenden, die im Beispiel des vorherigen Abschnitts registriert wurden:
 
 ```php
 /**
- * Renderiza la página de configuración del plugin en el panel de control.
+ * Rendert die Konfigurationsseite des Plugins im Administrationsbereich.
  */
 function miplugin_renderizar_pagina_ajustes() {
     
-    // Verificación de seguridad básica (opcional pero recomendada)
+    // Grundlegende Sicherheitsüberprüfung (optional, aber empfohlen)
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
     }
 
-    // WordPress maneja automáticamente los mensajes de éxito/error aquí
+    // WordPress verwaltet Erfolgs-/Fehlermeldungen hier automatisch
     settings_errors( 'miplugin_mensajes' );
     ?>
     
@@ -368,16 +368,16 @@ function miplugin_renderizar_pagina_ajustes() {
         <form action="options.php" method="post">
             
             <?php
-            // 1. Imprime los campos ocultos de seguridad (Nonces) y la referencia al grupo
-            // Debe coincidir EXACTAMENTE con el $option_group de register_setting()
+            // 1. Gibt die versteckten Sicherheitsfelder (Nonces) und die Referenz zur Gruppe aus
+            // Muss EXAKT mit dem $option_group-Parameter aus register_setting() übereinstimmen
             settings_fields( 'miplugin_opciones_grupo' );
             
-            // 2. Imprime todas las secciones y campos registrados para esta página
-            // Debe coincidir EXACTAMENTE con el $page de add_settings_section/field()
+            // 2. Gibt alle für diese Seite registrierten Sektionen und Felder aus
+            // Muss EXAKT mit dem $page-Parameter aus add_settings_section/field() übereinstimmen
             do_settings_sections( 'miplugin_pagina_ajustes' );
             
-            // 3. Imprime el botón de "Guardar cambios"
-            submit_button( 'Guardar Configuración' );
+            // 3. Gibt den Button „Änderungen speichern“ aus
+            submit_button( 'Einstellungen speichern' );
             ?>
             
         </form>
@@ -388,24 +388,24 @@ function miplugin_renderizar_pagina_ajustes() {
 
 ```
 
-### Comprendiendo las funciones de renderizado
+### Die Render-Funktionen verstehen
 
-* **`settings_errors()`:** Cuando el formulario se envía a `options.php`, WordPress procesa los datos, actualiza la base de datos y redirige de vuelta a tu página. En esa redirección, adjunta variables en la URL indicando si hubo éxito o fallos. Esta función intercepta esas variables e imprime las notificaciones nativas de WordPress (las clásicas cajas verdes o rojas en la parte superior).
-* **`<form action="options.php">`:** Este es el motor del proceso. `options.php` es el archivo del núcleo de WordPress diseñado exclusivamente para recibir peticiones POST de la Settings API. Si cambias la acción a otra ruta, perderás toda la automatización y seguridad.
-* **`settings_fields( $grupo )`:** Esta función no imprime datos visibles. Inyecta varios `<input type="hidden">` cruciales:
-* `option_page`: Le dice a `options.php` qué grupo de opciones estás intentando guardar.
-* `action`: Define la acción interna (`update`).
-* `_wpnonce`: Inyecta el token de seguridad CSRF generado dinámicamente para proteger el formulario.
+* **`settings_errors()`:** Wenn das Formular an `options.php` gesendet wird, verarbeitet WordPress die Daten, aktualisiert die Datenbank und leitet den Benutzer zurück zu deiner Seite. Bei dieser Weiterleitung werden Variablen an die URL angehängt, die Erfolg oder Misserfolg anzeigen. Diese Funktion fängt diese Variablen ab und gibt die nativen WordPress-Benachrichtigungen aus (die klassischen grünen oder roten Boxen im oberen Bereich).
+* **`<form action="options.php">`:** Dies ist der Motor des gesamten Prozesses. `options.php` ist die Core-Datei von WordPress, die ausschließlich dafür konzipiert wurde, POST-Anfragen der Settings API entgegenzunehmen. Wenn du das Action-Attribut auf einen anderen Pfad änderst, verlierst du die gesamte Automatisierung und Sicherheit.
+* **`settings_fields( $grupo )`:** Diese Funktion gibt keine sichtbaren Daten aus. Sie schleust jedoch mehrere entscheidende `<input type="hidden">`-Felder ein:
+  * `option_page`: Teilt der `options.php` mit, welche Optionsgruppe du zu speichern versuchst.
+  * `action`: Definiert die interne Aktion (`update`).
+  * `_wpnonce`: Schleust das dynamisch generierte CSRF-Sicherheits-Token ein, um das Formular zu schützen.
 
-* **`do_settings_sections( $pagina )`:** Aquí es donde ocurre la magia visual. WordPress busca en memoria todas las secciones registradas para el *slug* `$pagina`. Para cada sección, imprime su título, ejecuta su callback de descripción, abre una tabla HTML (`<table class="form-table">`) e itera sobre todos los campos asociados a esa sección, ejecutando los callbacks individuales que construimos para renderizar los `<input>`.
+* **`do_settings_sections( $pagina )`:** Hier passiert die visuelle Magie. WordPress sucht im Arbeitsspeicher nach allen für den Slug `$pagina` registrierten Sektionen. Für jede Sektion gibt es den Titel aus, führt den Beschreibungs-Callback aus, öffnet eine HTML-Tabelle (`<table class="form-table">`) und durchläuft alle dieser Sektion zugewiesenen Felder, wobei die individuellen Callbacks ausgeführt werden, die wir für das Rendern der `<input>`-Felder erstellt haben.
 
-Con esta estructura, hemos completado el ciclo. Los datos fluyen desde la vista del usuario (el formulario renderizado), hacia el procesador nativo (`options.php`), atraviesan el filtro de seguridad y sanitización (`register_setting`), y terminan persistidos de forma segura en la base de datos listos para ser consumidos mediante `get_option()`.
+Mit dieser Struktur haben wir den Kreislauf geschlossen. Die Daten fließen vom View des Benutzers (dem gerenderten Formular) zum nativen Prozessor (`options.php`), durchlaufen den Sicherheits- und Bereinigungsfilter (`register_setting`) und werden schließlich sicher in der Datenbank gespeichert, wo sie über `get_option()` abgerufen werden können.
 
-## Resumen del capítulo
+## Kapitelzusammenfassung
 
-En este capítulo hemos explorado a fondo la gestión de datos globales y la creación de interfaces de configuración, un pilar fundamental en la arquitectura de cualquier plugin robusto:
+In diesem Kapitel haben wir die Verwaltung globaler Daten und die Erstellung von Konfigurationsoberflächen eingehend untersucht — eine grundlegende Säule in der Architektur jedes robusten Plugins:
 
-1. **La base de datos y la Options API:** Comprendimos el rol de la tabla `wp_options` y cómo funciones como `update_option()` y `get_option()` permiten guardar y recuperar datos independientemente del contenido. Destacamos la importancia del campo `autoload` para el rendimiento global del sitio y la buena práctica de agrupar ajustes en un único array serializado.
-2. **Transición a la Settings API:** Vimos cómo la API de Ajustes añade una capa de abstracción sobre las operaciones de base de datos, asumiendo la responsabilidad de la renderización del formulario, la gestión del flujo POST, la validación de *nonces* y el enrutamiento de errores a través de un sistema seguro de lista blanca.
-3. **Arquitectura de datos visuales:** Aprendimos el proceso en tres pasos mediante el hook `admin_init`: validar la entrada con `register_setting()`, estructurar visualmente con `add_settings_section()`, y vincular elementos interactivos con `add_settings_field()`.
-4. **Integración de la interfaz:** Finalmente, conectamos nuestro código de registro con la interfaz visual, delegando el procesamiento del formulario a `options.php` y renderizando los componentes de manera estandarizada utilizando `settings_fields()` y `do_settings_sections()`. Esto garantiza que los paneles de administración de tu plugin mantengan la consistencia visual y los estándares de seguridad exigidos por el ecosistema de WordPress.
+1. **Die Datenbank und die Options API:** Wir haben die Rolle der Tabelle `wp_options` verstanden und gelernt, wie Funktionen wie `update_option()` und `get_option()` das Speichern und Abrufen von Daten unabhängig vom Inhalt ermöglichen. Wir haben die Bedeutung des `autoload`-Feldes für die Gesamt-Performance der Website hervorgehoben und die Best Practice aufgezeigt, Einstellungen in einem einzigen serialisierten Array zu gruppieren.
+2. **Übergang zur Settings API:** Wir haben gesehen, wie die Einstellungs-API eine Abstraktionsschicht über die Datenbankoperationen legt und die Verantwortung für das Rendern des Formulars, die Verwaltung des POST-Ablaufs, die Validierung von *Nonces* und das Weiterleiten von Fehlern über ein sicheres Whitelisting-System übernimmt.
+3. **Visuelle Datenarchitektur:** Wir haben den dreistufigen Prozess über den Hook `admin_init` gelernt: Validieren der Eingabe mit `register_setting()`, visuelles Strukturieren mit `add_settings_section()` und Verknüpfen interaktiver Elemente mit `add_settings_field()`.
+4. **Integration der Benutzeroberfläche:** Schließlich haben wir unseren Registrierungscode mit der visuellen Oberfläche verknüpft, indem wir die Formularverarbeitung an `options.php` delegiert und die Komponenten standardisiert mithilfe von `settings_fields()` und `do_settings_sections()` gerendert haben. Dies stellt sicher, dass die Administrations-Panels deines Plugins die visuelle Konsistenz und die vom WordPress-Ökosystem geforderten Sicherheitsstandards wahren.

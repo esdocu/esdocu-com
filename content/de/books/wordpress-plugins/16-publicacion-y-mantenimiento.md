@@ -1,101 +1,101 @@
-Desarrollar un plugin robusto es solo la mitad del desafío; la verdadera prueba de fuego es compartirlo y mantenerlo vivo en el ecosistema global. En este capítulo final, dejaremos el entorno local para adentrarnos en el proceso de publicación oficial en el repositorio de WordPress.org.
+Die Entwicklung eines robusten Plugins ist nur die halbe Miete; die wahre Feuerprobe besteht darin, es zu teilen und im globalen Ökosystem lebendig zu halten. In diesem abschließenden Kapitel verlassen wir die lokale Umgebung, um in den offiziellen Veröffentlichungsprozess im Repository von WordPress.org einzusteigen.
 
-Aprenderás a sortear las estrictas directrices de revisión del equipo oficial, a estructurar un archivo `readme.txt` que posicione correctamente tu proyecto, y a dominar Subversion (SVN) como herramienta de despliegue. Finalmente, abordaremos el ciclo de vida post-lanzamiento: versionado semántico, redacción de changelogs y rutinas de actualización de datos.
+Du wirst lernen, die strengen Richtlinien des offiziellen Review-Teams zu meistern, eine `readme.txt`-Datei zu strukturieren, die dein Projekt korrekt positioniert, und Subversion (SVN) als finales Deployment-Werkzeug zu beherrschen. Schließlich widmen wir uns dem Lebenszyklus nach dem Release: semantische Versionierung, das Schreiben von Changelogs und Routinen zur Datenaktualisierung.
 
-## 16.1 Directrices del repositorio
+## 16.1 Richtlinien des Repositories
 
-Publicar un plugin en el repositorio oficial de WordPress.org no es un derecho automático; es un privilegio sujeto a un conjunto estricto de reglas mantenidas por el Equipo de Revisión de Plugins (Plugin Review Team). Estas directrices están diseñadas para garantizar la seguridad, la privacidad y la libertad de los millones de usuarios que confían en el ecosistema de WordPress.
+Die Veröffentlichung eines Plugins im offiziellen Repository von WordPress.org ist kein automatisches Recht; es ist ein Privileg, das an ein strenges Regelwerk geknüpft ist, welches vom Plugin-Review-Team gepflegt wird. Diese Richtlinien sollen die Sicherheit, die Privatsphäre und die Freiheit der Millionen von Benutzern gewährleisten, die dem WordPress-Ökosystem vertrauen.
 
-Antes de empaquetar tu código o preparar tu infraestructura de control de versiones, es imperativo auditar tu desarrollo contra estas políticas. Un incumplimiento resultará en el rechazo inmediato durante el proceso de revisión inicial o en la expulsión del repositorio si la infracción se detecta a posteriori.
+Bevor du deinen Code paketierst oder deine Versionskontroll-Infrastruktur vorbereitest, ist es zwingend erforderlich, deine Entwicklung anhand dieser Richtlinien zu überprüfen. Ein Verstoß führt zur sofortigen Ablehnung im ersten Review-Prozess oder zum Ausschluss aus dem Repository, falls der Verstoß erst im Nachhinein entdeckt wird.
 
-### 1. Licenciamiento y la regla del GPL
+### 1. Lizenzierung und die GPL-Regel
 
-El pilar fundamental del repositorio de WordPress es la licencia de software libre. Todo el código alojado en WordPress.org debe cumplir con esta premisa sin excepciones.
+Die tragende Säule des WordPress-Repositories ist die freie Software-Lizenz. Jeder auf WordPress.org gehostete Code muss diese Prämisse ausnahmslos erfüllen.
 
-* **Compatibilidad estricta con GPL:** Tu plugin debe estar licenciado bajo la GNU General Public License v2 (o posterior), o una licencia compatible con ella.
-* **Alcance a terceros:** Esta regla no aplica solo a tu código PHP. **Cualquier biblioteca, script de terceros, framework de CSS o incluso recursos multimedia** (imágenes, fuentes) incluidos en el directorio del plugin deben tener una licencia compatible con GPL. No puedes incluir dependencias propietarias o con derechos de autor restrictivos.
+* **Strikte GPL-Kompatibilität:** Dein Plugin muss unter der GNU General Public License v2 (oder höher) oder einer damit kompatiblen Lizenz lizenziert sein.
+* **Gültigkeit für Drittanbieter:** Diese Regel gilt nicht nur für deinen PHP-Code. **Jede Bibliothek, jedes Drittanbieter-Skript, jedes CSS-Framework oder sogar Multimedia-Ressourcen** (Bilder, Schriftarten), die im Plugin-Verzeichnis enthalten sind, müssen eine GPL-kompatible Lizenz haben. Du darfst keine proprietären oder urheberrechtlich eingeschränkten Abhängigkeiten einbinden.
 
-### 2. Nomenclatura y Marcas Registradas
+### 2. Namensgebung und Markenrechte
 
-El nombre de tu plugin es su carta de presentación, pero el equipo de revisión es sumamente estricto respecto a cómo puedes nombrarlo para evitar confusiones legales y engaños al usuario.
+Der Name deines Plugins ist seine Visitenkarte, aber das Review-Team ist äußerst streng bei der Namensgebung, um rechtliche Verwirrungen und Täuschungen der Benutzer zu vermeiden.
 
-* **Restricción de la palabra "WordPress":** No puedes usar "WordPress" en el nombre de tu plugin. Si necesitas hacer referencia al CMS, debes usar "WP" o formulaciones como "Mi Plugin para WordPress". (Ejemplo incorrecto: *WordPress SEO Backup*; Ejemplo correcto: *SEO Backup for WordPress* o *WP SEO Backup*).
-* **Marcas de terceros:** No puedes utilizar nombres de marcas registradas (como *Google, Twitter, WooCommerce*) a menos que poseas los derechos o utilices una nomenclatura de compatibilidad legítima (ej. *Addon for WooCommerce*, no *WooCommerce Addon*).
-* **Prohibición de secuestro de nombres (Squatting):** No puedes reservar nombres de plugins vacíos para usarlos en el futuro. Si el plugin es aprobado, debe tener código funcional.
+* **Einschränkung des Wortes „WordPress“:** Du darfst „WordPress“ nicht im Namen deines Plugins verwenden. Wenn du auf das CMS verweisen musst, solltest du „WP“ oder Formulierungen wie „Mein Plugin für WordPress“ verwenden. (Falsches Beispiel: *WordPress SEO Backup*; Richtiges Beispiel: *SEO Backup for WordPress* oder *WP SEO Backup*).
+* **Marken von Drittanbietern:** Du darfst keine eingetragenen Markennamen (wie *Google, Twitter, WooCommerce*) verwenden, es sei denn, du besitzt die Rechte daran oder nutzt eine legitime Kompatibilitätsbezeichnung (z. B. *Addon for WooCommerce*, nicht *WooCommerce Addon*).
+* **Verbot von Namensbesetzung (Squatting):** Du darfst keine leeren Plugin-Namen für die zukünftige Verwendung reservieren. Wenn das Plugin genehmigt wird, muss es funktionstüchtigen Code enthalten.
 
-### 3. Privacidad y Comunicación Externa (Phoning Home)
+### 3. Datenschutz und externe Kommunikation (Phoning Home)
 
-El repositorio protege celosamente la privacidad del usuario. Las comunicaciones no solicitadas hacia servidores externos son una de las principales causas de rechazo y expulsión.
+Das Repository schützt die Privatsphäre der Benutzer eifersüchtig. Unaufgeforderte Kommunikationen mit externen Servern gehören zu den Hauptursachen für Ablehnungen und Ausschlüsse.
 
-* **Rastreo por defecto prohibido:** Tu plugin no puede recolectar datos de uso del usuario (telemetría), información del servidor o listas de plugins activos sin el **consentimiento explícito, informado y proactivo** (Opt-In) del administrador. El Opt-Out (rastreo activado por defecto con opción a desactivarlo) está terminantemente prohibido.
-* **Dependencias de servicios externos (SaaS):** Si tu plugin actúa como un puente hacia un servicio externo (por ejemplo, una API de traducción o un CRM), debe indicarse claramente en la descripción. Además, cualquier transmisión de datos de usuarios hacia dicha API debe realizarse bajo el consentimiento del usuario y respetando normativas como el GDPR.
-* **Descarga de código remoto:** Está estrictamente prohibido ejecutar código o descargar ejecutables desde servidores de terceros después de la activación. Todo el código ejecutable PHP/JS debe estar contenido dentro del propio paquete del plugin en los servidores de WordPress.org.
+* **Tracking standardmäßig verboten:** Dein Plugin darf ohne die **explizite, informierte und proaktive Zustimmung** (Opt-In) des Administrators keine Nutzungsdaten (Telemetrie), Serverinformationen oder Listen aktiver Plugins erfassen. Opt-Out (standardmäßig aktiviertes Tracking mit der Option, es zu deaktivieren) ist strengstens untersagt.
+* **Abhängigkeiten von externen Diensten (SaaS):** Wenn dein Plugin als Brücke zu einem externen Dienst fungiert (z. B. einer Übersetzungs-API oder einem CRM), muss dies in der Beschreibung deutlich angegeben werden. Zudem muss jede Übertragung von Benutzerdaten an diese API mit Zustimmung des Benutzers und unter Einhaltung von Vorschriften wie der DSGVO (GDPR) erfolgen.
+* **Herunterladen von Remote-Code:** Es ist strengstens verboten, nach der Aktivierung Code auszuführen oder ausführbare Dateien von Servern Dritter herunterzuladen. Jeder ausführbare PHP-/JS-Code muss im Plugin-Paket selbst auf den Servern von WordPress.org enthalten sein.
 
-### 4. Prácticas de Código y Experiencia de Usuario
+### 4. Codepraktiken und Benutzererfahrung
 
-Aunque la revisión manual evalúa estándares de seguridad (como los vistos en el Capítulo 10), hay directrices operativas específicas para el repositorio:
+Obwohl bei der manuellen Überprüfung Sicherheitsstandards (wie in Kapitel 10 behandelt) bewertet werden, gibt es spezifische operative Richtlinien für das Repository:
 
-* **Prohibición de ofuscación:** Todo el código debe ser legible por humanos. Herramientas de ofuscación como `eval()`, `base64_decode()` aplicadas a lógicas complejas, o compresores que impidan la auditoría del código, causarán el rechazo automático. La minificación de archivos CSS y JS está permitida, pero se recomienda (y a veces se exige) proporcionar los archivos originales no minificados.
-* **Secuestro de la interfaz (Hijacking):** Tu plugin no debe alterar drásticamente la interfaz de usuario de WordPress. Esto incluye insertar anuncios invasivos en paneles de otros plugins, modificar menús del núcleo para forzar tu visibilidad, o impedir que el usuario descarte avisos (notices) de administración.
-* **Limitaciones de versiones "Pro":** El repositorio de WordPress.org es para software gratuito. Si tu plugin utiliza un modelo *Freemium* (ofreciendo una versión gratuita y vendiendo una versión premium externa), la versión gratuita alojada en el repositorio debe ser funcional por sí misma. No puede ser simplemente un "anuncio" que requiera un pago para realizar su función principal prometida.
+* **Verbot von Code-Verschleierung:** Der gesamte Code muss für Menschen lesbar sein. Verschleierungswerkzeuge (Obfuscation) wie `eval()`, `base64_decode()`, die auf komplexe Logiken angewendet werden, oder Kompressoren, die eine Code-Auditierung verhindern, führen zur automatischen Ablehnung. Die Minifizierung von CSS- und JS-Dateien ist erlaubt, es wird jedoch empfohlen (und manchmal verlangt), die nicht-minifizierten Originaldateien bereitzustellen.
+* **Hijacking der Benutzeroberfläche:** Dein Plugin darf die WordPress-Benutzeroberfläche nicht drastisch verändern. Dies schließt das Einfügen aufdringlicher Werbung in den Admin-Bereichen anderer Plugins, das Modifizieren von Core-Menüs zur erzwungenen Sichtbarkeit oder das Verhindern, dass der Benutzer Admin-Hinweise (Notices) ausblenden kann, ein.
+* **Einschränkungen für „Pro“-Versionen:** Das WordPress.org-Repository ist für kostenlose Software gedacht. Wenn dein Plugin ein *Freemium*-Modell verwendet (eine kostenlose Version anbietet und eine externe Premium-Version verkauft), muss die im Repository gehostete kostenlose Version in sich funktionsfähig sein. Es darf sich nicht lediglich um eine „Werbeanzeige“ handeln, die eine Zahlung erfordert, um ihre versprochene Hauptfunktion auszuführen.
 
-### Flujo de Auditoría de Directrices
+### Prüfungsablauf der Richtlinien
 
-A continuación, se ilustra el árbol de decisiones básico que aplica el equipo de revisión automatizado y manual (Plugin Check) antes de aprobar un desarrollo:
+Nachfolgend wird der grundlegende Entscheidungsbaum veranschaulicht, den das automatisierte und manuelle Review-Team (Plugin Check) vor der Genehmigung einer Entwicklung anwendet:
 
 ```text
 +-------------------------------------------------------------------+
-|               AUDITORÍA DE DIRECTRICES (PRE-SVN)                  |
+|                   RICHTLINIEN-AUDIT (PRE-SVN)                     |
 +-------------------------------------------------------------------+
                                |
                                v
-               [ ¿Cumple el código con GPLv2+? ]
-               / (Sí)                    (No) \
-              v                                v
-[ ¿Dependencias también GPL? ]          ( RECHAZO: Licencia inválida )
-        / (Sí)       (No) \
-       v                   v
-       |           ( RECHAZO: Conflicto de bibliotecas )
-       v
-[ ¿El nombre viola marcas registradas o usa "WordPress"? ]
-        \ (No)       (Sí) /
-         v               v
-         |         ( RECHAZO: Infracción de Trademark )
-         v
-[ ¿Realiza llamadas salientes (telemetría) sin Opt-In? ]
-        \ (No)       (Sí) /
-         v               v
-         |         ( RECHAZO: Violación de privacidad )
-         v
-[ ¿Contiene código ofuscado o descarga scripts remotos? ]
-        \ (No)       (Sí) /
-         v               v
-         |         ( BLOQUEO: Riesgo de seguridad crítico )
-         v
-[ APROBACIÓN: Pase a revisión de seguridad manual y creación de SVN ]
+               [ Entspricht der Code GPLv2+? ]
+               / (Ja)                    (Nein) \
+              v                                  v
+ [ Sind die Abhängigkeiten ebenfalls GPL? ]     ( ABLEHNUNG: Ungültige Lizenz )
+         / (Ja)       (Nein) \
+        v                   v
+        |           ( ABLEHNUNG: Bibliothekskonflikt )
+        v
+ [ Verletzt der Name Markenrechte o verwendet er „WordPress“? ]
+         \ (Nein)     (Ja) /
+          v               v
+          |         ( ABLEHNUNG: Markenrechtsverletzung )
+          v
+ [ Führt es ausgehende Anrufe (Telemetrie) ohne Opt-In durch? ]
+         \ (Nein)     (Ja) /
+          v               v
+          |         ( ABLEHNUNG: Datenschutzverletzung )
+          v
+ [ Enthält es verschleierten Code o lädt es Remote-Skripte herunter? ]
+         \ (Nein)     (Ja) /
+          v               v
+          |         ( SPERRE: Kritisches Sicherheitsrisiko )
+          v
+ [ GENEHMIGUNG: Weiterleitung zum manuellen Sicherheitsreview und SVN-Erstellung ]
 
 ```
 
-### 5. Documentación y Honestidad
+### 5. Dokumentation und Ehrlichkeit
 
-El repositorio exige honestidad en el marketing interno. Las prácticas de "Spam de SEO" (como repetir excesivamente palabras clave en la descripción) o la asignación de etiquetas irrelevantes para ganar visibilidad están penalizadas. El equipo de revisión puede modificar tu archivo *readme*, eliminar etiquetas de búsqueda abusivas o, en casos extremos, suspender temporalmente el plugin hasta que corrijas las tácticas promocionales engañosas.
+Das Repository verlangt Ehrlichkeit im internen Marketing. Praktiken des „SEO-Spamming“ (wie das übermäßige Wiederholen von Schlüsselwörtern in der Beschreibung) oder die Vergabe irrelevanter Tags zur Erhöhung der Sichtbarkeit werden bestraft. Das Review-Team kann deine *readme*-Datei ändern, missbräuchliche Such-Tags entfernen oder im Extremfall das Plugin vorübergehend sperren, bis du die irreführenden Werbetaktiken korrigierst.
 
-## 16.2 Preparación del archivo readme
+## 16.2 Vorbereitung der readme-Datei
 
-El archivo `readme.txt` es mucho más que un simple documento de texto para los desarrolladores; es el motor que genera la página de presentación de tu desarrollo en el directorio oficial de WordPress.org y la información que se muestra en el panel de administración de los usuarios.
+Die Datei `readme.txt` ist weit mehr als nur ein einfaches Textdokument für Entwickler; sie ist der motor, der die Präsentationsseite deines Plugins im offiziellen Verzeichnis von WordPress.org und die im Admin-Bereich der Benutzer angezeigten Informationen generiert.
 
-WordPress utiliza un analizador estricto (parser) para procesar este archivo. Si la sintaxis es incorrecta o faltan campos obligatorios, la página de tu plugin mostrará información errónea, advertencias de incompatibilidad o directamente no se actualizará, afectando drásticamente su adopción.
+WordPress verwendet einen strengen Parser, um diese Datei zu verarbeiten. Wenn die Syntax fehlerhaft ist oder Pflichtfelder fehlen, zeigt die Seite deines Plugins falsche Informationen oder Inkompatibilitätswarnungen an, oder sie wird gar nicht erst aktualisiert, was ihre Verbreitung drastisch beeinträchtigt.
 
-### Estructura y Sintaxis Básica
+### Struktur und grundlegende Syntax
 
-El archivo utiliza una variante específica de Markdown estructurada mediante niveles de encabezados (`===`, `==`, `=`). Todo plugin profesional debe incluir una plantilla base que cubra los metadatos esenciales, las dependencias y las pestañas de navegación del repositorio.
+Die Datei verwendet eine spezifische Markdown-Variante, die durch verschiedene Überschriftenebenen (`===`, `==`, `=`) strukturiert ist. Jedes professionelle Plugin sollte eine Basisvorlage enthalten, die die wesentlichen Metadaten, Abhängigkeiten und die Navigations-Tabs des Repositories abdeckt.
 
-A continuación, se muestra la anatomía estándar requerida para el archivo `readme.txt`:
+Nachfolgend wird der erforderliche Standardaufbau für die Datei `readme.txt` gezeigt:
 
 ```text
-=== Nombre Exacto de tu Plugin ===
-Contributors: tu_usuario_wp, otro_colaborador
-Tags: seguridad, firewall, login
+=== Genaue Bezeichnung deines Plugins ===
+Contributors: dein_wp_benutzername, anderer_mitwirkender
+Tags: sicherheit, firewall, login
 Requires at least: 5.8
 Tested up to: 6.4
 Stable tag: 1.0.0
@@ -103,137 +103,137 @@ Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Esta es la descripción corta. Debe tener un máximo de 150 caracteres y es lo que los usuarios leerán en los resultados de búsqueda dentro de su panel de WordPress.
+Dies ist die Kurzbeschreibung. Sie darf maximal 150 Zeichen lang sein und ist das, was Benutzer in den Suchergebnissen in ihrem WordPress-Dashboard lesen.
 
 == Description ==
 
-Esta es la descripción detallada. Aquí explicas qué hace tu plugin, por qué es útil y cualquier característica destacada. Puedes usar Markdown para estructurar este contenido con listas, negritas y enlaces.
+Dies ist die ausführliche Beschreibung. Hier erklärst du, was dein Plugin tut, warum es nützlich ist und welche Funktionen herausstechen. Du kannst Markdown verwenden, um diesen Inhalt mit Listen, Fettschrift und Links zu strukturieren.
 
-* Característica 1
-* Característica 2
+* Funktion 1
+* Funktion 2
 
 == Installation ==
 
-1. Sube la carpeta `mi-plugin` al directorio `/wp-content/plugins/`.
-2. Activa el plugin a través del menú 'Plugins' en WordPress.
-3. Ve a 'Ajustes > Mi Plugin' para configurarlo.
+1. Lade den Ordner `mein-plugin` in das Verzeichnis `/wp-content/plugins/` hoch.
+2. Aktiviere das Plugin über das Menü 'Plugins' in WordPress.
+3. Gehe zu 'Einstellungen > Mein Plugin', um es zu konfigurieren.
 
 == Frequently Asked Questions ==
 
-= ¿Es compatible con multisitio? =
-Sí, el plugin ha sido probado en entornos multisitio.
+= Ist es multisite-kompatibel? =
+Ja, das Plugin wurde in Multisite-Umgebungen getestet.
 
 == Screenshots ==
 
-1. Panel principal de configuración.
-2. Vista del widget en el frontend.
+1. Haupt-Konfigurations-Dashboard.
+2. Ansicht des Widgets im Frontend.
 
 == Changelog ==
 
 = 1.0.0 =
-* Lanzamiento inicial.
+* Initialer Release.
 
 ```
 
-### Análisis de los Metadatos Críticos
+### Analyse der kritischen Metadaten
 
-La sección superior del archivo (la cabecera) controla la lógica de distribución y la seguridad visual de tu plugin en el ecosistema. Errores aquí pueden provocar que WordPress marque tu plugin como "incompatible" con versiones recientes.
+Der obere Bereich der Datei (der Header) steuert die Distributionslogik und die visuelle Sicherheit deines Plugins im Ökosystem. Fehler an dieser Stelle können dazu führen, dass WordPress dein Plugin als „inkompatibel“ mit neueren Versionen kennzeichnet.
 
-* **Contributors:** Son los nombres de usuario (ID de WordPress.org) de los desarrolladores. Estas personas tendrán acceso de escritura en el repositorio SVN (si el propietario principal se los otorga) y aparecerán públicamente en la página del plugin.
-* **Tags:** Las palabras clave (separadas por comas) por las que los usuarios te encontrarán. **El límite estricto es de 5 etiquetas**. Si añades más, el repositorio las ignorará.
-* **Requires at least / Requires PHP:** Establecen los requisitos mínimos del sistema. Si un usuario intenta instalar tu plugin con una versión inferior a las declaradas aquí, WordPress bloqueará la instalación para prevenir errores fatales (Fatal Errors).
-* **Tested up to:** Este es el campo que debes actualizar religiosamente con cada nueva versión mayor de WordPress. Si no coincide con la versión actual del núcleo, aparecerá un temido aviso amarillo indicando: *"Este plugin no ha sido probado con tu versión actual de WordPress"*.
-* **Stable tag:** Indica qué versión del código debe descargar el usuario. Si usas la etiqueta `trunk`, los usuarios descargarán siempre el último código subido (no recomendado para producción). Lo ideal es apuntar a un número de versión específico (ej. `1.0.0`) que corresponda a una carpeta de etiqueta en tu repositorio SVN.
+* **Contributors:** Die Benutzernamen (WordPress.org-IDs) der Entwickler. Diese Personen erhalten Schreibzugriff auf das SVN-Repository (sofern der Hauptinhaber diesen gewährt) und werden öffentlich auf der Plugin-Seite aufgeführt.
+* **Tags:** Die Keywords (durch Kommas getrennt), über die Benutzer dein Plugin finden. **Das strikte Limit liegt bei 5 Tags**. Wenn du mehr hinzufügst, ignoriert das Repository diese.
+* **Requires at least / Requires PHP:** Legen die Mindestanforderungen des Systems fest. Wenn ein Benutzer versucht, dein Plugin mit einer niedrigeren als den hier angegebenen Versionen zu installieren, blockiert WordPress die Installation, um Fatal Errors (schwerwiegende Fehler) zu vermeiden.
+* **Tested up to:** Dieses Feld solltest du bei jedem neuen Major-Release von WordPress gewissenhaft aktualisieren. Wenn es nicht mit der aktuellen Core-Version übereinstimmt, erscheint ein gefürchteter gelber Warnhinweis: *„Dieses Plugin wurde noch nicht mit deiner aktuellen WordPress-Version getestet“*.
+* **Stable tag:** Gibt an, welche Version del Codes der Benutzer herunterladen soll. Wenn du das Tag `trunk` verwendest, laden Benutzer immer den zuletzt hochgeladenen Code herunter (nicht für Produktionsumgebungen empfohlen). Ideal ist es, auf eine spezifische Versionsnummer zu verweisen (z. B. `1.0.0`), die einem Tag-Ordner in deinem SVN-Repository entspricht.
 
-### Mapeo de la Interfaz del Repositorio
+### Mapping der Repository-Benutzeroberfläche
 
-Para comprender cómo el parser de WordPress.org transforma tu texto en una página web interactiva, observa el siguiente esquema de renderizado:
+Um zu verstehen, wie der Parser von WordPress.org deinen Text in eine interaktive Webseite verwandelt, betrachte das folgende Rendering-Schema:
 
 ```text
 +------------------------------------+       +---------------------------------------------+
-| Secciones en readme.txt            |       | Interfaz de Usuario en WordPress.org        |
+| Abschnitte in readme.txt           |       | Benutzeroberfläche auf WordPress.org        |
 +------------------------------------+       +---------------------------------------------+
-| === Mi Plugin ===                  | --->  | Título principal de la página (H1).         |
-| Descripción corta (150 chars).     | --->  | Subtítulo bajo el H1 / Snippet de búsqueda. |
-| Metadatos (Requires, Tested...).   | --->  | Barra lateral derecha (Información meta).   |
-| == Description ==                  | --->  | Pestaña "Detalles" (La vista por defecto).  |
-| == Installation ==                 | --->  | Pestaña "Instalación".                      |
-| == FAQ ==                          | --->  | Pestaña "Soporte" o sección de FAQ.         |
-| == Screenshots ==                  | --->  | Pestaña "Capturas de pantalla" (*).         |
-| == Changelog ==                    | --->  | Pestaña "Desarrollo" (Registro de cambios). |
+| === Mein Plugin ===                | --->  | Haupttitel der Seite (H1).                  |
+| Kurzbeschreibung (150 Zeichen).    | --->  | Untertitel unter H1 / Such-Snippet.         |
+| Metadaten (Requires, Tested...).   | --->  | Rechte Seitenleiste (Meta-Informationen).   |
+| == Description ==                  | --->  | Reiter „Details“ (Standardansicht).         |
+| == Installation ==                 | --->  | Reiter „Installation“.                      |
+| == FAQ ==                          | --->  | Reiter „Support“ oder FAQ-Bereich.          |
+| == Screenshots ==                  | --->  | Reiter „Screenshots“ (*).                   |
+| == Changelog ==                    | --->  | Reiter „Entwicklung“ (Changelog).           |
 +------------------------------------+       +---------------------------------------------+
 
 ```
 
-*(Nota sobre Screenshots: El texto introducido en esta sección del readme sirve como pie de foto para las imágenes físicas que subirás posteriormente a la carpeta `/assets/` de tu repositorio SVN, nombradas como `screenshot-1.png`, `screenshot-2.png`, etc.)*
+*(Hinweis zu Screenshots: Der in diesem Abschnitt der readme-Datei eingegebene Text dient als Bildunterschrift für die physischen Bilder, die du später in den Ordner `/assets/` deines SVN-Repositories hochlädst, benannt als `screenshot-1.png`, `screenshot-2.png` etc.)*
 
-### Validación Previa
+### Vorab-Validierung
 
-Antes de enviar tu código para la revisión oficial, es una práctica estándar pasar tu archivo por el validador oficial (`wordpress.org/plugins/developers/readme-validator/`). Esta herramienta procesará el archivo tal cual lo haría el repositorio real, permitiéndote detectar errores de formato en Markdown, etiquetas estables mal referenciadas o información de licencias incompleta antes de impactar en la página pública.
+Bevor du deinen Code zur offiziellen Überprüfung einreichst, ist es gängige Praxis, deine Datei durch den offiziellen Validator (`wordpress.org/plugins/developers/readme-validator/`) laufen zu lassen. Dieses Tool verarbeitet die Datei genauso wie das echte Repository, sodass du Formatierungsfehler in Markdown, falsch referenzierte stabile Tags oder unvollständige Lizenzinformationen erkennen kannst, bevor sie auf der öffentlichen Seite sichtbar werden.
 
-## 16.3 Gestión de versiones con SVN
+## 16.3 Versionsverwaltung mit SVN
 
-Aunque Git se ha consolidado como el estándar de la industria para el control de versiones, la infraestructura del repositorio de WordPress.org sigue operando sobre **Subversion (SVN)**. Este suele ser el mayor punto de fricción para los desarrolladores modernos.
+Obwohl sich Git als Branchenstandard für die Versionskontrolle etabliert hat, arbeitet die Repository-Infrastruktur von WordPress.org weiterhin mit **Subversion (SVN)**. Dies ist oft die größte Hürde für moderne Entwickler.
 
-Sin embargo, es fundamental entender un paradigma clave: **no estás obligado a desarrollar usando SVN**. La práctica recomendada es utilizar Git y GitHub/GitLab para tu flujo de trabajo diario y tratar a SVN estrictamente como el **mecanismo de despliegue final**.
+Es ist jedoch wichtig, ein zentrales Paradigma zu verstehen: **Du bist nicht verpflichtet, deine Entwicklung mit SVN durchzuführen**. Die empfohlene Praxis besteht darin, Git und GitHub/GitLab für deinen täglichen Workflow zu nutzen und SVN ausschließlich als **finalen Deployment-Mechanismus** zu behandeln.
 
-### La Estructura de Directorios SVN
+### Die SVN-Verzeichnisstruktur
 
-Cuando tu plugin es aprobado, WordPress.org genera un repositorio SVN vacío. Al clonarlo (hacer *checkout*), te encontrarás con una estructura de carpetas predefinida e inmutable que debes respetar escrupulosamente.
+Sobald dein Plugin genehmigt wurde, WordPress.org generiert ein leeres SVN-Repository. Wenn du es auscheckst (clonst), findest du eine vordefinierte und unveränderliche Ordnerstruktur vor, die du strikt einhalten musst.
 
 ```text
 mi-plugin-repositorio/
-├── assets/       # Banners, iconos de la cabecera y capturas de pantalla.
-├── branches/     # Ramas de desarrollo alternativas (Rara vez utilizado en WP).
-├── tags/         # Versiones publicadas e inmutables (ej. 1.0.0, 1.1.0).
-│   ├── 1.0.0/    # Copia exacta del código de la versión 1.0.0.
-│   └── 1.0.1/    # Copia exacta del código de la versión 1.0.1.
-└── trunk/        # El código base activo. Equivalente a 'main' o 'master' en Git.
+├── assets/       # Banners, Header-Icons und Screenshots.
+├── branches/     # Alternative Entwicklungszweige (in WP selten verwendet).
+├── tags/         # Veröffentlichte und unveränderliche Versionen (z. B. 1.0.0, 1.1.0).
+│   ├── 1.0.0/    # Exakte Kopie des Codes der Version 1.0.0.
+│   └── 1.0.1/    # Exakte Kopie des Codes der Version 1.0.1.
+└── trunk/        # Die aktive Codebasis. Äquivalent zu „main“ oder „master“ in Git.
 
 ```
 
-* **`trunk/`**: Aquí reside el código en desarrollo. Si en tu `readme.txt` configuraste `Stable tag: trunk`, los usuarios descargarán lo que haya en esta carpeta. **No se recomienda**; `trunk` debe ser un área de pruebas para la próxima versión.
-* **`tags/`**: Este directorio es sagrado. Cada subcarpeta aquí representa una versión oficial (relase). Cuando configuras `Stable tag: 1.0.0` en el readme, WordPress busca la carpeta `/tags/1.0.0/` y empaqueta su contenido como el archivo ZIP que descargarán los usuarios. **Nunca modifiques el código dentro de un tag existente**; si hay un error, debes lanzar una nueva versión (ej. 1.0.1).
-* **`assets/`**: Aloja los elementos visuales de la página del repositorio, ajenos al código del plugin. Aquí van archivos con nomenclaturas estrictas como `icon-256x256.png` o `banner-772x250.png`. No se incluyen en el ZIP que descarga el usuario, ahorrando peso.
+* **`trunk/`**: Hier liegt der Code in der Entwicklung. Wenn du in deiner `readme.txt` `Stable tag: trunk` konfiguriert hast, laden Benutzer immer den Inhalt dieses Ordners herunter. **Dies wird nicht empfohlen**; `trunk` sollte ein Testbereich für die nächste Version sein.
+* **`tags/`**: Dieses Verzeichnis ist heilig. Jeder Unterordner hier repräsentiert eine offizielle Version (Release). Wenn du in der readme `Stable tag: 1.0.0` konfigurierst, sucht WordPress nach dem Ordner `/tags/1.0.0/` und paketiert dessen Inhalt als ZIP-Datei, die Benutzer herunterladen. **Ändere niemals Code innerhalb eines bestehenden Tags**; bei Fehlern musst du eine neue Version herausbringen (z. B. 1.0.1).
+* **`assets/`**: Beherbergt die visuellen Elemente für die Repository-Seite, getrennt vom Plugin-Code. Hier liegen Dateien mit strengen Bezeichnungen wie `icon-256x256.png` oder `banner-772x250.png`. Sie sind nicht in der vom Benutzer heruntergeladenen ZIP-Datei enthalten, was Speicherplatz spart.
 
-### Flujo de Trabajo Manual: De Git a SVN
+### Manueller Workflow: Von Git zu SVN
 
-Si no utilizas automatizaciones, el proceso de publicar una nueva versión implica sincronizar tu código local con el repositorio SVN mediante la línea de comandos.
+Wenn du keine Automatisierungen verwendest, erfordert die Veröffentlichung einer neuen Version die manuelle Synchronisierung deines lokalen Codes mit dem SVN-Repository über die Befehlszeile.
 
-A continuación, se ilustra el ciclo de vida completo de un lanzamiento inicial (versión 1.0.0):
+Nachfolgend wird der vollständige Lebenszyklus eines initialen Releases (Version 1.0.0) veranschaulicht:
 
 ```bash
-# 1. Hacer checkout (clonar) tu nuevo repositorio SVN localmente
+# 1. Lokales Auschecken (Klonen) deines neuen SVN-Repositories
 svn co https://plugins.svn.wordpress.org/tu-plugin-slug mi-plugin-svn
 cd mi-plugin-svn
 
-# 2. Copiar tu código finalizado (desde tu repo Git) a la carpeta trunk
-# (Asegúrate de NO copiar la carpeta oculta .git ni archivos de desarrollo)
+# 2. Kopieren deines fertigen Codes (aus deinem Git-Repo) in den Ordner trunk
+# (Stelle sicher, dass du den versteckten Ordner .git und Entwicklungsdateien NICHT mitkopierst)
 cp -r /ruta/a/tu/git/* trunk/
 
-# 3. Informar a SVN de los nuevos archivos
+# 3. SVN über die neuen Dateien informieren
 svn add trunk/*
 
-# 4. Enviar (commit) los cambios al servidor en trunk
+# 4. Senden (Commit) der Änderungen an den Server im Ordner trunk
 svn ci -m "Lanzamiento inicial en trunk" --username tu_usuario_wp
 
-# 5. Crear la versión estable etiquetándola (Copiando trunk a tags)
+# 5. Erstellen der stabilen Version durch Tagging (Kopieren von trunk nach tags)
 svn cp https://plugins.svn.wordpress.org/tu-plugin-slug/trunk \
        https://plugins.svn.wordpress.org/tu-plugin-slug/tags/1.0.0 \
        -m "Etiquetando versión 1.0.0" --username tu_usuario_wp
 
 ```
 
-*Nota sobre `svn cp`: Al ejecutar la copia directamente sobre las URLs remotas (como en el paso 5), la operación se realiza directamente en el servidor de WordPress, lo cual es instantáneo y evita tener que descargar y volver a subir todo el código.*
+\*Hinweis zu `svn cp`: Da die Kopie direkt über die Remote-URLs ausgeführt wird (wie in Schritt 5), findet die Operation direkt auf dem WordPress-Server statt. Dies geschieht augenblicklich und vermeidet das Herunterladen und erneute Hochladen des gesamten Codes.\*
 
-### Mapeo de Versiones y Sincronización
+### Mapping von Versionen und Synchronisierung
 
-El ecosistema de WordPress cruza la información de varios archivos para determinar si una actualización debe ser notificada a los usuarios. Para que una nueva versión sea detectada e instalada correctamente, debes asegurar que **tres elementos coincidan perfectamente**:
+Das WordPress-Ökosystem vergleicht die Informationen aus mehreren Dateien, um zu ermitteln, ob Benutzer über ein Update benachrichtigt werden sollten. Damit eine neue Version korrekt erkannt und installiert wird, musst du sicherstellen, dass **drei Elemente perfekt übereinstimmen**:
 
 ```text
 +-----------------------+     +-----------------------+     +-----------------------+
-|  Archivo principal    |     |  Archivo readme.txt   |     |  Estructura SVN       |
-|  del plugin (.php)    |     |  en trunk/            |     |                       |
+|  Hauptdatei des       |     |  readme.txt-Datei     |     |  SVN-Struktur         |
+|  Plugins (.php)       |     |  in trunk/            |     |                       |
 +-----------------------+     +-----------------------+     +-----------------------+
 |                       |     |                       |     |                       |
 | Plugin Name: Mi Plug  |     | === Mi Plug ===       |     | /trunk/               |
@@ -243,128 +243,128 @@ El ecosistema de WordPress cruza la información de varios archivos para determi
 
 ```
 
-1. **(A) Consistencia de Versión:** La constante `Version` en la cabecera de tu archivo PHP principal debe coincidir con el registro en tu `readme.txt`.
-2. **(B) Resolución del Directorio:** El `Stable tag` indicado en tu `readme.txt` (ubicado dentro de `/trunk`) debe tener una carpeta equivalente con el mismo nombre exacto dentro del directorio `/tags/` de tu SVN.
+1. **(A) Versionskonsistenz:** Die Angabe `Version` im Header deiner Haupt-PHP-Datei muss mit dem Eintrag in deiner `readme.txt` übereinstimmen.
+2. **(B) Verzeichnisauflösung:** Das in deiner `readme.txt` (innerhalb von `/trunk`) angegebene `Stable tag` muss als gleichnamiger Ordner im Verzeichnis `/tags/` deines SVN existieren.
 
-### Automatización: Despliegue Continuo (CI/CD)
+### Automatisierung: Continuous Deployment (CI/CD)
 
-El manejo manual de SVN es propenso a errores humanos (olvidar actualizar la versión en un archivo o copiar archivos de desarrollo indeseados). En el desarrollo profesional moderno, se delega este proceso a canalizaciones de integración continua.
+Die manuelle Handhabung von SVN ist anfällig für menschliche Fehler (Vergessen, die Version in einer Datei zu aktualisieren, oder Mitkopieren unerwünschter Entwicklungsdateien). In der modernen professionellen Entwicklung delegiert man diesen Prozess an Continuous-Integration-Pipelines.
 
-Si utilizas GitHub, la herramienta más adoptada por la comunidad es la acción **`10up/action-wordpress-plugin-deploy`**. Al configurar este flujo de trabajo (Workflow), tu proceso se reduce a crear un "Release" en GitHub. La acción se encarga automáticamente de compilar los *assets*, ignorar archivos de desarrollo (como `node_modules` o `tests/`), hacer el *checkout* del SVN de WordPress.org, mover los archivos al `trunk`, crear el `tag` y hacer el *commit*, ocultando por completo la complejidad de Subversion.
+Wenn du GitHub verwendest, ist die von der Community am häufigsten genutzte GitHub Action **`10up/action-wordpress-plugin-deploy`**. Durch die Konfiguration dieses Workflows reduziert sich dein Prozess auf das Erstellen eines „Releases“ auf GitHub. Die Action kümmert sich automatisch darum, die *Assets* zu kompilieren, Entwicklungsdateien (wie `node_modules` oder `tests/`) zu ignorieren, das SVN von WordPress.org auszuchecken, die Dateien nach `trunk` zu verschieben, das `tag` zu erstellen und den *Commit* durchzuführen. Die Komplexität von Subversion wird dadurch vollständig verborgen.
 
-## 16.4 Actualizaciones y changelogs
+## 16.4 Updates und Changelogs
 
-Publicar la versión 1.0.0 de tu plugin es solo el comienzo del ciclo de vida del software. Mantener el plugin actualizado, comunicar los cambios de forma efectiva a los usuarios y gestionar las migraciones de datos internas son responsabilidades críticas para asegurar la longevidad de tu desarrollo en el ecosistema.
+Die Veröffentlichung der Version 1.0.0 deines Plugins ist erst der Anfang des Software-Lebenszyklus. Das Plugin aktuell zu halten, Änderungen effektiv an die Benutzer zu kommunizieren und interne Datenmigrationen zu verwalten, sind kritische Aufgaben, um die Langlebigkeit deiner Entwicklung im Ökosystem sicherzustellen.
 
-### El Mecanismo de Actualización del Núcleo
+### Der Update-Mechanismus des Cores
 
-Para gestionar el ciclo de actualizaciones correctamente, es vital comprender cómo WordPress descubre que existe una nueva versión de tu plugin. Este proceso no es en tiempo real, sino que está gestionado por el sistema de tareas programadas (WP-Cron) interactuando con la API del repositorio oficial.
+Um den Update-Zyklus korrekt zu verwalten, ist es wichtig zu verstehen, wie WordPress feststellt, ob eine neue Version deines Plugins vorliegt. Dieser Prozess erfolgt nicht in Echtzeit, sondern wird vom System der geplanten Aufgaben (WP-Cron) im Zusammenspiel mit der API des offiziellen Repositories gesteuert.
 
 ```text
 +----------------------+        +-----------------------------------+
-|  WordPress del       |        |  API de WordPress.org             |
-|  Usuario (Local)     |        |  (api.wordpress.org/plugins/...)  |
+|  WordPress des       |        |  API von WordPress.org            |
+|  Benutzers (Lokal)   |        |  (api.wordpress.org/plugins/...)  |
 +----------------------+        +-----------------------------------+
-| 1. Dispara WP-Cron   | -----> | 2. Envía array de plugins activos |
-|    (Cada 12 horas)   |        |    y sus versiones instaladas.    |
-|                      |        |                                   |
-| 5. Muestra "bubble"  | <----- | 4. Responde con metadatos de la   |
-|    de actualización  |        |    nueva versión y URL del .zip   |
+| 1. Löst WP-Cron aus  | -----> | 2. Sendet Array der aktiven       |
+|    (Alle 12 Stunden) |        |    Plugins und deren installierte |
+|                      |        |    Versionen.                     |
+| 5. Zeigt Update-     | <----- | 4. Antwortet mit Metadaten der    |
+|    „Bubble“ an       |        |    neuen Version und URL der .zip |
 +----------------------+        +-----------------------------------+
                                   |
-                                  | 3. La API consulta tu repositorio
+                                  | 3. Die API fragt dein Repository ab
                                   v
                         +-----------------------------------+
-                        | Repositorio SVN de tu Plugin      |
-                        | - Comprueba /trunk/readme.txt     |
-                        | - Lee el campo "Stable tag"       |
+                        | SVN-Repository deines Plugins     |
+                        | - Prüft /trunk/readme.txt         |
+                        | - Liest das Feld „Stable tag“ aus |
                         +-----------------------------------+
 
 ```
 
-Cuando configuras un nuevo `Stable tag` en tu `readme.txt` y subes la etiqueta (tag) correspondiente al SVN, la API de WordPress.org tarda unos minutos en procesar el cambio. A partir de ese momento, cualquier instalación de WordPress que realice su chequeo periódico (o un usuario que haga clic en "Buscar actualizaciones") detectará la nueva versión.
+Wenn du ein neues `Stable tag` in deiner `readme.txt` konfigurierst und das entsprechende Tag ins SVN hochlädst, benötigt die API von WordPress.org einige Minuten, um die Änderung zu verarbeiten. Ab diesem Moment erkennt jede WordPress-Installation, die ihre regelmäßige Überprüfung durchführt (oder ein Benutzer, der auf „Nach Updates suchen“ klickt), die neue Version.
 
-### Versionado Semántico (SemVer)
+### Semantische Versionierung (SemVer)
 
-WordPress recomienda encarecidamente adherirse a las prácticas de **Versionado Semántico** (Semantic Versioning). El número de versión debe estar estructurado en tres segmentos separados por puntos: `MAYOR.MENOR.PARCHE` (ej. `2.1.4`).
+WordPress empfiehlt dringend die Einhaltung der Praktiken der **semantischen Versionierung** (Semantic Versioning). Die Versionsnummer sollte in drei durch Punkte getrennte Segmente gegliedert sein: `MAJOR.MINOR.PATCH` (z. B. `2.1.4`).
 
-* **MAYOR (Major):** Cambios profundos en la arquitectura, rediseños completos de la interfaz o rupturas de compatibilidad hacia atrás (Breaking Changes). Los usuarios deben ser cautelosos al aplicar esta actualización.
-* **MENOR (Minor):** Nuevas características, funcionalidades o mejoras que son totalmente compatibles con la versión anterior.
-* **PARCHE (Patch):** Correcciones de errores (bugs), parches de seguridad o pequeñas refactorizaciones de código que no alteran la funcionalidad general.
+* **MAJOR (Hauptversion):** Tiefgreifende Änderungen in der Architektur, vollständige Redesigns der Benutzeroberfläche oder Brüche in der Abwärtskompatibilität (Breaking Changes). Benutzer sollten bei diesem Update vorsichtig sein.
+* **MINOR (Nebenversion):** Neue Funktionen, Features oder Verbesserungen, die vollständig abwärtskompatibel mit der vorherigen Version sind.
+* **PATCH (Fehlerbehebung):** Bugfixes, Sicherheitspatches oder kleinere Code-Refactorings, die die allgemeine Funktionalität nicht verändern.
 
-Mantener esta coherencia genera confianza. Si un administrador ve una actualización de `1.2.3` a `1.2.4`, asumirá que es segura de aplicar automáticamente. Si ve un salto a `2.0.0`, sabrá que debe probarla en un entorno de *staging* primero.
+Die Einhaltung dieser Logik schafft Vertrauen. Wenn ein Administrator ein Update von `1.2.3` auf `1.2.4` sieht, geht er davon aus, dass es sicher automatisch angewendet werden kann. Wenn er einen Sprung auf `2.0.0` sieht, weiß er, dass er das Update zuerst in einer *Staging*-Umgebung testen sollte.
 
-### El Arte del Changelog
+### Die Kunst des Changelogs
 
-El registro de cambios (Changelog) es la principal herramienta de comunicación entre tú y los usuarios (o los administradores de sistemas). Un buen changelog debe equilibrar el lenguaje técnico para los desarrolladores con beneficios claros para el usuario final.
+Das Änderungsprotokoll (Changelog) ist das wichtigste Kommunikationsmittel zwischen dir und den Benutzern (oder Systemadministratoren). Ein gutes Changelog sollte ein ausgewogenes Verhältnis zwischen Fachsprache für Entwickler und klaren Vorteilen für den Endbenutzer bieten.
 
-Dentro de tu archivo `readme.txt`, la sección `== Changelog ==` debe estructurarse utilizando el número de versión como encabezado de tercer nivel (`= X.Y.Z =`).
+Innerhalb deiner Datei `readme.txt` sollte der Abschnitt `== Changelog ==` unter Verwendung der Versionsnummer als Überschrift der dritten Ebene (`= X.Y.Z =`) strukturiert werden.
 
-**Prácticas recomendadas para el formato:**
+**Empfohlene Formatierungspraktiken:**
 
 ```text
 == Changelog ==
 
 = 2.1.0 =
-* Añadido: Soporte nativo para bloques de Gutenberg en CPTs.
-* Mejorado: Rendimiento de la consulta SQL en el panel principal (reducción del 30% en tiempo de carga).
-* Corregido: Error fatal que ocurría al guardar opciones sin permisos de administrador.
-* Eliminado: Soporte heredado para PHP 7.2.
+* Neu: Native Unterstützung für Gutenberg-Blöcke in CPTs.
+* Verbessert: Leistung der SQL-Abfrage im Haupt-Dashboard (30 % Reduzierung der Ladezeit).
+* Behoben: Fataler Fehler, der beim Speichern von Optionen ohne Administratorrechte auftrat.
+* Entfernt: Veralteter Support für PHP 7.2.
 
 = 2.0.1 =
-* Corregido: Vulnerabilidad XSS reflejada en el campo de búsqueda del frontend (Gracias a @security_researcher).
-* Parche: Ajuste menor en el CSS para pantallas móviles.
+* Behoben: Reflektierte XSS-Schwachstelle im Frontend-Suchfeld (Danke an @security_researcher).
+* Patch: Kleinerer CSS-Fix für mobile Bildschirme.
 
 ```
 
-*Nota: WordPress.org solo procesa y muestra correctamente listas con viñetas iniciadas por asteriscos (`*`). Clasificar cada línea con verbos de acción (Añadido, Mejorado, Corregido) facilita el escaneo rápido.*
+\*Hinweis: WordPress.org verarbeitet und zeigt Aufzählungspunkte nur dann korrekt an, wenn sie mit einem Sternchen (`*`) beginnen. Das Klassifizieren jeder Zeile mit aktiven Begriffen (Neu, Verbessert, Behoben) erleichtert das schnelle Erfassen.\*
 
-### Migraciones de Base de Datos en Actualizaciones
+### Datenbankmigrationen bei Updates
 
-Un desafío recurrente en plugins complejos es gestionar las actualizaciones de la estructura de datos cuando el usuario actualiza los archivos físicos del plugin. Sobrescribir los archivos `.php` (lo que hace WordPress durante una actualización) no altera automáticamente las tablas personalizadas o las opciones en la base de datos (`$wpdb`).
+Eine wiederkehrende Herausforderung bei komplexen Plugins besteht darin, die Aktualisierungen der Datenstruktur zu verwalten, wenn der Benutzer die physischen Dateien des Plugins aktualisiert. Das Überschreiben der `.php`-Dateien (was WordPress bei einem Update tut) ändert nicht automatisch benutzerdefinierte Tabellen oder Optionen in der Datenbank (`$wpdb`).
 
-Debes implementar una **rutina de actualización silenciosa**. Esto se logra comparando la versión instalada en la base de datos con la versión declarada en el código.
+Du musst eine **stille Update-Routine** implementieren. Dies wird erreicht, indem die in der Datenbank installierte Version mit der im Code deklarierten Version verglichen wird.
 
 ```php
 /**
- * Constante con la versión actual del código del plugin.
+ * Konstante mit der aktuellen Version des Plugin-Codes.
  */
 define( 'MI_PLUGIN_VERSION', '2.1.0' );
 
 /**
- * Hook que se dispara cada vez que WordPress carga, ideal para comprobar actualizaciones.
+ * Hook, der bei jedem Laden von WordPress ausgelöst wird – ideal zum Überprüfen auf Updates.
  */
 add_action( 'plugins_loaded', 'mi_plugin_comprobar_actualizacion' );
 
 function mi_plugin_comprobar_actualizacion() {
-    // Recuperar la versión registrada en la base de datos (por defecto '1.0.0' si no existe)
+    // Die in der Datenbank registrierte Version abrufen (standardmäßig '1.0.0', falls nicht vorhanden)
     $version_db = get_option( 'mi_plugin_version_db', '1.0.0' );
 
-    // Si la versión del código es superior a la de la BD, necesitamos actualizar
+    // Wenn die Codeversion höher ist als die in der DB, müssen wir updaten
     if ( version_compare( $version_db, MI_PLUGIN_VERSION, '<' ) ) {
         mi_plugin_ejecutar_migraciones( $version_db );
         
-        // Actualizar la opción en la base de datos para no repetir la migración
+        // Die Option in der Datenbank aktualisieren, um die Migration nicht zu wiederholen
         update_option( 'mi_plugin_version_db', MI_PLUGIN_VERSION );
     }
 }
 
 /**
- * Lógica condicional de migración.
+ * Bedingte Migrationslogik.
  */
 function mi_plugin_ejecutar_migraciones( $version_db ) {
     global $wpdb;
 
-    // Si el usuario actualiza desde una versión anterior a la 2.0.0
+    // Wenn der Benutzer von einer Version vor 2.0.0 aktualisiert
     if ( version_compare( $version_db, '2.0.0', '<' ) ) {
-        // Ejemplo: Modificar una tabla personalizada creada en el Capítulo 5
+        // Beispiel: Modifizieren einer in Kapitel 5 erstellten benutzerdefinierten Tabelle
         $tabla = $wpdb->prefix . 'mis_registros';
         $wpdb->query( "ALTER TABLE {$tabla} ADD COLUMN status VARCHAR(20) DEFAULT 'active';" );
     }
 
-    // Si actualiza desde una versión anterior a la 2.1.0
+    // Wenn der Benutzer von einer Version vor 2.1.0 aktualisiert
     if ( version_compare( $version_db, '2.1.0', '<' ) ) {
-        // Ejemplo: Migrar una vieja opción singular a un nuevo array de configuración
+        // Beispiel: Migrieren einer alten Einzeloption in ein neues Einstellungs-Array
         $vieja_opcion = get_option( 'mi_plugin_color_viejo' );
         if ( $vieja_opcion ) {
             $nueva_config = array( 'tema' => 'custom', 'color' => $vieja_opcion );
@@ -376,19 +376,19 @@ function mi_plugin_ejecutar_migraciones( $version_db ) {
 
 ```
 
-Este patrón garantiza que, sin importar si un usuario actualiza tu plugin desde la versión inmediata anterior o desde una versión de hace dos años, las migraciones de datos se ejecuten secuencialmente y su instalación quede perfectamente sincronizada con la nueva arquitectura del código.
+Dieses Muster stellt sicher, dass – unabhängig davon, ob ein Benutzer dein Plugin von der direkt vorherigen Version oder von einer Version vor zwei Jahren aktualisiert – die Datenmigrationen nacheinander ausgeführt werden und seine Installation perfekt mit der neuen Code-Architektur synchronisiert bleibt.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este capítulo final hemos cubierto los pasos esenciales para transicionar un desarrollo privado hacia el ecosistema público de WordPress.org:
+In diesem abschließenden Kapitel haben wir die wesentlichen Schritte für den Übergang einer privaten Entwicklung in das öffentliche Ökosystem von WordPress.org behandelt:
 
-1. **Directrices del repositorio:** Comprendimos las reglas inquebrantables impuestas por el equipo de revisión, destacando la necesidad absoluta de compatibilidad con la licencia GPLv2+, el respeto por las marcas registradas y las estrictas normativas de privacidad que prohíben la telemetría sin consentimiento o el rastreo oculto.
-2. **Preparación del archivo readme:** Analizamos la sintaxis Markdown requerida para estructurar la página pública del plugin, prestando especial atención a metadatos críticos como `Tested up to`, `Requires PHP` y el `Stable tag`, los cuales dictan la compatibilidad y disponibilidad de la descarga.
-3. **Gestión de versiones con SVN:** Desmitificamos Subversion (SVN) tratándolo como una herramienta exclusiva de despliegue. Repasamos la estructura inmutable de los directorios `/trunk`, `/tags` y `/assets`, y establecimos la importancia de alinear la constante de versión en PHP con el tag estable del SVN.
-4. **Actualizaciones y changelogs:** Finalmente, exploramos el flujo asíncrono de actualización que realiza el núcleo de WordPress. Aprendimos a estructurar un *changelog* efectivo y a implementar una rutina de migración en PHP impulsada por la función `version_compare()`, asegurando que las actualizaciones físicas de código vayan acompañadas de la correcta evolución del esquema de la base de datos.
+1. **Richtlinien des Repositories:** Wir haben die unumstößlichen Regeln des Review-Teams verstanden, insbesondere die absolute Notwendigkeit der Kompatibilität mit der GPLv2+-Lizenz, den Respekt vor Markenrechten und die strengen Datenschutzbestimmungen, die Telemetrie ohne Zustimmung oder verstecktes Tracking verbieten.
+2. **Vorbereitung der readme-Datei:** Wir haben die erforderliche Markdown-Syntax zur Strukturierung der öffentlichen Plugin-Seite analysiert, mit besonderem Augenmerk auf kritische Metadaten wie `Tested up to`, `Requires PHP` und das `Stable tag`, die die Kompatibilität und Verfügbarkeit des Downloads festlegen.
+3. **Versionsverwaltung mit SVN:** Wir haben Subversion (SVN) entmystifiziert und es als exklusives Deployment-Tool behandelt. Wir haben die unveränderliche Struktur der Verzeichnisse `/trunk`, `/tags` und `/assets` besprochen und die Wichtigkeit etabliert, die Versionskonstante in PHP mit dem stabilen Tag im SVN abzustimmen.
+4. **Updates und Changelogs:** Schließlich haben wir den asynchronen Update-Fluss des WordPress-Cores untersucht. Wir haben gelernt, ein effektives *Changelog* zu strukturieren und eine PHP-Migrationsroutine mithilfe der Funktion `version_compare()` zu implementieren, um sicherzustellen, dass physische Code-Updates mit der korrekten Weiterentwicklung des Datenbank-Schemas einhergehen.
 
-## Epílogo: El Futuro de tu Código
+## Epilog: Die Zukunft deines Codes
 
-Has llegado al final de este viaje. Ahora posees el conocimiento técnico para trascender de simple usuario a arquitecto de soluciones, dominando las APIs del núcleo, la seguridad, la manipulación de datos y la publicación oficial.
+Du bist am Ende dieser Reise angelangt. Jetzt besitzt du das technische Wissen, um vom einfachen Benutzer zum Lösungsarchitekten aufzusteigen, indem du Core-APIs, Sicherheit, Datenmanipulation und die offizielle Veröffentlichung beherrschst.
 
-El ecosistema de WordPress es dinámico y exige un aprendizaje continuo. Mantén la curiosidad, audita tus desarrollos frente a las nuevas versiones del núcleo y no dudes en contribuir a la comunidad de código abierto. Con estas bases sólidas, tienes en tus manos el poder de crear herramientas robustas que potencien miles de proyectos web a nivel global. ¡Mucho éxito en tus próximos desarrollos!
+Das WordPress-Ökosystem ist dynamisch und erfordert kontinuierliches Lernen. Bleibe neugierig, überprüfe deine Entwicklungen anhand neuer Core-Versionen und zögere nicht, zur Open-Source-Community beizutragen. Mit diesen soliden Grundlagen hast du die Macht in der Hand, robuste Werkzeuge zu schaffen, die Tausende von Webprojekten weltweit unterstützen. Viel Erfolg bei deinen zukünftigen Entwicklungen!

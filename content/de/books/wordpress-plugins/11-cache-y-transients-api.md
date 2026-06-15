@@ -1,150 +1,148 @@
-En el desarrollo profesional de plugins para WordPress, la optimización del rendimiento es una obligación. A medida que tus proyectos escalan, realizan consultas complejas a la base de datos o consumen APIs externas, el tiempo de respuesta del servidor se vuelve un factor crítico.
+Bei der professionellen Entwicklung von WordPress-Plugins ist die Leistungsoptimierung eine Pflicht. Wenn deine Projekte wachsen, komplexe Datenbankabfragen durchführen oder externe APIs anfragen, wird die Antwortzeit des Servers zu einem kritischen Faktor.
 
-En este capítulo desmitificaremos el ecosistema de caché nativo. Aprenderás a diferenciar las capas de caché de página, de objetos y de navegador. Dominarás la Transients API para almacenar resultados pesados de forma temporal y descubrirás cómo implementar estrategias de invalidación precisas mediante código. Prepárate para llevar la eficiencia de tus desarrollos al siguiente nivel.
+In diesem Kapitel werden wir das native Caching-Ökosystem entmystifizieren. Du lernst, zwischen Page-, Object- und Browser-Caching-Ebenen zu unterscheiden. Du wirst die Transients API beherrschen, um rechenintensive Ergebnisse temporär zu speichern, und du wirst entdecken, wie du präzise Invalidierungsstrategien über Code implementierst. Bereite dich darauf vor, die Effizienz deiner Entwicklungen auf die nächste Stufe zu heben.
 
-## 11.1 Diferencias de caché en WP
+## 11.1 Caching-Unterschiede in WP
 
-El ecosistema de WordPress es inherentemente dinámico: cada vez que un usuario solicita una página, el servidor debe cargar el núcleo, ejecutar decenas de plugins, interpretar el tema activo y realizar múltiples consultas a la base de datos para ensamblar el HTML final. Este proceso, aunque flexible, es costoso en términos de recursos y tiempo. Para mitigar esto, intervienen múltiples capas de caché.
+Das WordPress-Ökosystem ist von Natur aus dynamisch: Jedes Mal, wenn ein Benutzer eine Seite anfordert, muss der Server den Core laden, Dutzende von Plugins ausführen, das aktive Theme interpretieren und mehrere Datenbankabfragen durchführen, um das endgültige HTML zusammenzustellen. Dieser Prozess ist zwar flexibel, aber sehr ressourcen- und zeitaufwändig. Um dies zu mindern, kommen mehrere Caching-Ebenen ins Spiel.
 
-Como desarrollador de plugins, es fundamental comprender dónde y cómo opera cada tipo de caché. Ignorar estas capas es una de las principales causas de "bugs" difíciles de rastrear, como contenido que no se actualiza, *nonces* de seguridad que caducan prematuramente o scripts que cargan versiones antiguas.
+Als Plugin-Entwickler ist es fundamental zu verstehen, wo und wie jede Art von Cache arbeitet. Das Ignorieren dieser Ebenen ist eine der Hauptursachen für schwer auffindbare Bugs, wie z. B. Inhalte, die sich nicht aktualisieren, Sicherheits-Nonces, die vorzeitig ablaufen, oder Skripte, die veraltete Versionen laden.
 
-A continuación, analizaremos los principales tipos de caché que afectan a WordPress y cómo impactan en el desarrollo de plugins.
+### Architektur der Caching-Ebenen
 
-### Arquitectura de capas de caché
-
-Para visualizar el flujo de una petición y dónde actúa cada capa de caché, observa el siguiente esquema. Cuando una capa tiene éxito (un "hit"), la petición se devuelve inmediatamente, evitando que las capas inferiores se ejecuten.
+Um den Ablauf einer Anfrage zu visualisieren und zu sehen, wo die einzelnen Caching-Ebenen ansetzen, betrachte das folgende Schema. Wenn eine Ebene erfolgreich ist (ein „Hit“), wird die Anfrage sofort zurückgegeben, wodurch verhindert wird, dass die darunter liegenden Ebenen ausgeführt werden.
 
 ```text
-[Navegador del Usuario] 
+[Browser des Benutzers] 
       │
-      ├─> 1. Caché de Navegador / CDN (Archivos estáticos)
+      ├─> 1. Browser-Cache / CDN (Statische Dateien)
       │
-[Servidor Web]
+[Webserver]
       │
-      ├─> 2. Caché de Página (Varnish, Nginx, Plugins de caché)
-      │      (Si hay "Hit", se devuelve el HTML y WP NO se ejecuta)
+      ├─> 2. Page-Cache (Varnish, Nginx, Caching-Plugins)
+      │      (Bei „Hit“ wird HTML zurückgegeben und WP wird NICHT ausgeführt)
       │
-      v      (Si hay "Miss", arranca WordPress)
+      v      (Bei „Miss“ startet WordPress)
 [PHP / WordPress]
       │
-      ├─> 3. Caché de Opcode (OPcache)
+      ├─> 3. Opcode-Cache (OPcache)
       │
-      ├─> 4. Caché de Objetos (Memcached, Redis, o nativa volátil)
-      │      (Evita repetir cálculos pesados o consultas a la BD)
+      ├─> 4. Object-Cache (Memcached, Redis oder nativ flüchtig)
+      │      (Vermeidet wiederholte schwere Berechnungen oder DB-Abfragen)
       │
       v
-[Base de Datos MySQL/MariaDB]
+[MySQL/MariaDB-Datenbank]
 
 ```
 
-### 1. Caché de Página (Page Caching)
+### 1. Page-Cache (Page Caching)
 
-La caché de página guarda el resultado final de la ejecución de WordPress, es decir, el HTML estático. Puede estar gestionada por el servidor (como Varnish o FastCGI Cache) o por plugins de WordPress (como WP Rocket o W3 Total Cache).
+Der Page-Cache speichert das Endergebnis der WordPress-Ausführung, also das statische HTML. Er kann vom Server verwaltet werden (wie Varnish oder FastCGI Cache) oder von WordPress-Plugins (wie WP Rocket oder W3 Total Cache).
 
-* **Cómo impacta a tu plugin:** Si la página está en caché, **WordPress no se carga**. Ningún archivo de tu plugin se ejecuta, y ganchos como `init`, `wp`, o `template_redirect` son completamente ignorados para esa visita.
-* **Consideraciones de desarrollo:** Si tu plugin muestra contenido dinámico basado en el usuario (como un contador de visitas en tiempo real, un carrito de compras o un saludo personalizado), la caché de página mostrará el mismo contenido a todos. Para solucionarlo, debes usar cargas asíncronas mediante AJAX (visto en el Capítulo 9) o la REST API (visto en el Capítulo 13) para actualizar fragmentos del DOM después de que el HTML estático haya cargado.
+* **Wie sich dies auf dein Plugin auswirkt:** Wenn die Seite im Cache liegt, **wird WordPress nicht geladen**. Es wird keine Datei deines Plugins ausgeführt, und Hooks wie `init`, `wp` oder `template_redirect` werden für diesen Besuch komplett ignoriert.
+* **Entwicklungshinweise:** Wenn dein Plugin dynamische, benutzerbasierte Inhalte anzeigt (wie einen Echtzeit-Besucherzähler, einen Warenkorb oder eine personalisierte Begrüßung), zeigt der Page-Cache allen Benutzern denselben Inhalt an. Um dies zu lösen, musst du asynchrones Laden via AJAX (siehe Kapitel 9) oder die REST-API (siehe Kapitel 13) verwenden, um DOM-Fragmente zu aktualisieren, nachdem das statische HTML geladen wurde.
 
-### 2. Caché de Objetos (Object Caching)
+### 2. Object-Cache (Object Caching)
 
-A diferencia de la caché de página, la caché de objetos no almacena HTML, sino datos: resultados de consultas a la base de datos, arrays complejos o variables que requieren un alto coste de procesamiento. WordPress cuenta con la clase interna `WP_Object_Cache`.
+Im Gegensatz zum Page-Cache speichert der Object-Cache kein HTML, sondern Daten: Ergebnisse von Datenbankabfragen, komplexe Arrays oder Variablen, die einen hohen Verarbeitungsaufwand erfordern. WordPress verfügt über die interne Klasse `WP_Object_Cache`.
 
-Existen dos modalidades fundamentales que debes distinguir:
+Es gibt zwei grundlegende Modalitäten, die du unterscheiden musst:
 
-* **No persistente (Por defecto):** WordPress almacena objetos en memoria solo durante el ciclo de vida de **una única petición**. Si llamas a `get_post(10)` tres veces en el mismo flujo de carga, WordPress solo consultará la base de datos la primera vez; las otras dos las sacará de la memoria RAM de esa petición. Al terminar la carga de la página, esta caché se destruye.
-* **Persistente:** Mediante el uso de *Drop-ins* (`object-cache.php`) y tecnologías como **Redis** o **Memcached**, la caché de objetos sobrevive entre diferentes peticiones y diferentes usuarios.
-* **Consideraciones de desarrollo:** Debes programar asumiendo que un entorno de producción tendrá una caché de objetos persistente. Profundizaremos en cómo interactuar con esta API en la sección 11.4, pero el concepto clave es que nunca debes dar por sentado que una consulta directa a la base de datos te devolverá datos frescos si hay una caché persistente de por medio.
+* **Nicht persistent (Standard):** WordPress speichert Objekte nur während des Lebenszyklus **einer einzigen Anfrage** im Arbeitsspeicher. Wenn du `get_post(10)` dreimal im selben Ladefluss aufrufst, fragt WordPress die Datenbank nur beim ersten Mal ab; die anderen beiden Male holt es die Daten aus dem RAM-Speicher dieser Anfrage. Am Ende des Ladevorgangs der Seite wird dieser Cache gelöscht.
+* **Persistent:** Durch die Verwendung von *Drop-ins* (`object-cache.php`) und Technologien wie **Redis** oder **Memcached** übersteht der Object-Cache verschiedene Anfragen und unterschiedliche Benutzer.
+* **Entwicklungshinweise:** Du solltest bei der Programmierung davon ausgehen, dass eine Produktionsumgebung einen persistenten Object-Cache verwendet. Wir werden in Abschnitt 11.4 näher darauf eingehen, wie man mit dieser API interagiert, aber das Schlüsselkonzept ist, dass du niemals davon ausgehen solltest, dass eine direkte Datenbankabfrage dir frische Daten liefert, wenn ein persistenter Cache dazwischengeschaltet ist.
 
-### 3. Caché de Opcode (Opcode Caching)
+### 3. Opcode-Cache (Opcode Caching)
 
-PHP es un lenguaje interpretado. En cada petición, el código fuente en texto plano debe ser analizado, compilado a *bytecode* (Opcode) y luego ejecutado. La caché de Opcode (como **Zend OPcache**) almacena este código precompilado en la memoria compartida del servidor.
+PHP ist eine interpretierte Sprache. Bei jeder Anfrage muss der Quellcode im Klartext analysiert, in *Bytecode* (Opcode) kompiliert und dann ausgeführt werden. Der Opcode-Cache (wie **Zend OPcache**) speichert diesen vorkompilierten Code im gemeinsam genutzten Speicher des Servers.
 
-* **Impacto en el desarrollo:** Generalmente es transparente para ti como desarrollador. El código se ejecuta más rápido. Sin embargo, en entornos de desarrollo muy agresivos, si modificas un archivo `.php` y recargas inmediatamente, podrías no ver los cambios si el OPcache no está configurado para revalidar los timestamps de los archivos a tiempo.
+* **Auswirkungen auf die Entwicklung:** Dies ist für dich als Entwickler in der Regel transparent. Der Code wird schneller ausgeführt. In sehr aggressiven Entwicklungsumgebungen kann es jedoch vorkommen, dass du Änderungen an einer `.php`-Datei nach dem Neuladen nicht sofort siehst, wenn OPcache nicht so konfiguriert ist, dass die Zeitstempel der Dateien rechtzeitig neu validiert werden.
 
-### 4. Caché de Navegador y Edge (CDN)
+### 4. Browser- und Edge-Cache (CDN)
 
-Esta caché ocurre fuera del servidor principal. Los navegadores web y las Redes de Entrega de Contenido (CDN) almacenan recursos estáticos como hojas de estilo (`.css`), scripts (`.js`), imágenes y fuentes tipográficas.
+Dieses Caching findet außerhalb des Hauptservers statt. Webbrowser und Content Delivery Networks (CDN) speichern statische Ressourcen wie Stylesheets (`.css`), Skripte (`.js`), Bilder und Schriftarten.
 
-* **Cómo impacta a tu plugin:** Si actualizas tu plugin e incluyes un nuevo archivo JavaScript, pero mantienes el mismo nombre de archivo, es muy probable que los usuarios sigan ejecutando la versión antigua que tienen guardada en sus navegadores.
-* **Consideraciones de desarrollo:** Para evitar esto, es obligatorio utilizar correctamente el parámetro de **versión** en las funciones de encolado (revisadas en el Capítulo 7).
+* **Wie sich dies auf dein Plugin auswirkt:** Wenn du dein Plugin aktualisierst und eine neue JavaScript-Datei hinzufügst, aber denselben Dateinamen beibehältst, ist es sehr wahrscheinlich, dass Benutzer weiterhin die alte Version ausführen, die in ihren Browsern gespeichert ist.
+* **Entwicklungshinweise:** Um dies zu vermeiden, ist es zwingend erforderlich, den Parameter **version** in den Enqueue-Funktionen (behandelt in Kapitel 7) korrekt zu verwenden.
 
 ```php
-// Práctica incorrecta: sin versión, o forzando la versión global de WP
+// Falsche Praxis: keine Version oder Erzwingen der globalen WP-Version
 wp_enqueue_script( 'mi-plugin-script', plugin_dir_url( __FILE__ ) . 'assets/app.js', array(), null );
 
-// Práctica correcta: usar la versión del plugin o el filemtime del archivo
+// Richtige Praxis: Verwenden der Plugin-Version oder des filemtime der Datei
 $version = filemtime( plugin_dir_path( __FILE__ ) . 'assets/app.js' );
 wp_enqueue_script( 'mi-plugin-script', plugin_dir_url( __FILE__ ) . 'assets/app.js', array(), $version );
 
 ```
 
-### Tabla Comparativa para Desarrolladores
+### Vergleichstabelle für Entwickler
 
-Para resumir, aquí tienes una tabla de referencia rápida sobre qué debes tener en cuenta según la capa en la que te encuentres operando:
+Zusammenfassend findest du hier eine Schnellreferenztabelle darüber, worauf du je nach der Ebene, auf der du arbeitest, achten musst:
 
-| Capa de Caché | Lo que almacena | Riesgo principal para el plugin | Solución habitual |
+| Caching-Ebene | Was gespeichert wird | Hauptrisiko für das Plugin | Typische Lösung |
 | --- | --- | --- | --- |
-| **Página** | HTML estático de toda la URL | Lógica PHP ignorada, vistas estancadas para usuarios | Usar AJAX/REST para partes dinámicas |
-| **Objetos** | Datos y variables de PHP | Lectura de datos obsoletos en la BD | Uso correcto de invalidación de caché |
-| **Navegador** | Archivos JS, CSS, imágenes | Errores en la interfaz por JS/CSS antiguo | Versionado dinámico en `wp_enqueue_*` |
-| **Base de Datos** | Consultas SQL crudas (MySQL) | Rara vez problemático si usas la API de WP | Usar `$wpdb` correctamente |
+| **Page** | Statisches HTML der gesamten URL | PHP-Logik wird ignoriert, veraltete Ansichten für Benutzer | AJAX/REST für dynamische Teile nutzen |
+| **Object** | PHP-Daten und -Variablen | Lesen veralteter Daten in der DB | Korrekte Verwendung der Cache-Invalidierung |
+| **Browser** | JS-, CSS-Dateien, Bilder | UI-Fehler durch alte JS/CSS-Dateien | Dynamische Versionierung in `wp_enqueue_*` |
+| **Datenbank** | Rohe SQL-Abfragen (MySQL) | Selten problematisch, wenn du die WP-API nutzt | `$wpdb` korrekt verwenden |
 
-## 11.2 Almacenamiento con Transients
+## 11.2 Speichern mit Transients
 
-Las consultas complejas a la base de datos y, especialmente, las peticiones a APIs de terceros (como procesar un feed externo o consultar un servicio en la nube) son cuellos de botella clásicos en el rendimiento. Para mitigar este problema, WordPress proporciona la **Transients API**, un método estandarizado para almacenar datos en caché acompañados de un tiempo de expiración.
+Komplexe Datenbankabfragen und insbesondere Anfragen an APIs von Drittanbietern (wie das Verarbeiten eines externen Feeds oder das Abfragen eines Cloud-Dienstes) sind klassische Leistungsengpässe. Um dieses Problem zu mindern, bietet WordPress die **Transients API**, eine standardisierte Methode zur temporären Speicherung von Daten im Cache mit einer Ablaufzeit.
 
-En esencia, un *transient* (transitorio) es muy similar a una opción guardada mediante la Options API, pero con una diferencia vital: **tiene fecha de caducidad**.
+Im Wesentlichen ist ein *Transient* (flüchtiger Wert) einer Option sehr ähnlich, die über die Options-API gespeichert wird, aber mit einem entscheidenden Unterschied: **Er hat ein Ablaufdatum**.
 
-### ¿Dónde se guardan los Transients?
+### Wo werden Transients gespeichert?
 
-El comportamiento de la Transients API es inteligente y se adapta al entorno del servidor donde esté instalado tu plugin:
+Das Verhalten der Transients API is intelligent und passt sich der Serverumgebung an, in der dein Plugin installiert ist:
 
-1. **Sin caché de objetos persistente:** Si el servidor es básico, WordPress guarda los transients directamente en la tabla `wp_options` de la base de datos. Creará dos registros por cada transient: uno para el valor en sí y otro para el *timestamp* de expiración.
-2. **Con caché de objetos persistente:** Si el servidor tiene configurado Memcached o Redis (y el correspondiente *drop-in* `object-cache.php`), WordPress **no toca la base de datos**. Almacenará los transients directamente en la memoria RAM ultrarrápida del servidor, delegando la gestión de la expiración al propio motor de caché.
+1. **Ohne persistenten Object-Cache:** Wenn der Server einfach konfiguriert ist, speichert WordPress die Transients direkt in der Tabelle `wp_options` der Datenbank. Es werden zwei Einträge pro Transient erstellt: einer für den Wert selbst und ein anderer für den Ablauf-Zeitstempel (Timestamp).
+2. **Mit persistentem Object-Cache:** Wenn auf dem Server Redis oder Memcached (und das entsprechende *Drop-in* `object-cache.php`) konfiguriert ist, **rührt WordPress die Datenbank nicht an**. Es speichert die Transients direkt im ultraschnellen RAM-Speicher des Servers und delegiert die Verwaltung des Ablaufs an die Caching-Engine selbst.
 
-### La regla de oro: Nunca asumas que el Transient existe
+### Die grösste Regel: Gehe niemals davon aus, dass das Transient existiert
 
-Dado que los transients pueden ser almacenados en la memoria RAM y gestionados por sistemas como Redis, **pueden desaparecer antes de su fecha de caducidad**. Si el servidor necesita liberar memoria, expulsará los transients más antiguos.
+Da Transients im RAM gespeichert und von Systemen wie Redis verwaltet werden können, **können sie vor ihrem Ablaufdatum verschwinden**. Wenn der Server Speicherplatz freigeben muss, entfernt er die ältesten Transients.
 
-Por lo tanto, tu código jamás debe depender de la existencia de un transient para funcionar; siempre debe estar preparado para regenerar los datos si la consulta al transient devuelve `false`.
+Daher darf dein Code niemals von der Existenz eines Transients abhängen, um zu funktionieren; er muss immer darauf vorbereitet sein, die Daten neu zu generieren, wenn die Abfrage des Transients `false` zurückgibt.
 
 ```text
-Flujo lógico correcto para un Transient:
+Korrekter logischer Ablauf für ein Transient:
 
-   ¿Existe el Transient en caché?
+   Existiert das Transient im Cache?
                  │
            ┌─────┴─────┐
            │           │
-        SÍ (Hit)    NO (Miss / Caducado)
+        JA (Hit)    NEIN (Miss / Abgelaufen)
            │           │
            │           v
-           │      1. Ejecutar tarea pesada (Consulta DB / API Externa)
-           │      2. Guardar el resultado con set_transient()
+           │      1. Rechenintensive Aufgabe ausführen (DB-Abfrage / Externe API)
+           │      2. Ergebnis mit set_transient() speichern
            │           │
            v           v
-      [ Devolver los datos para su uso ]
+      [ Daten zur Verwendung zurückgeben ]
 
 ```
 
-### Funciones principales de la API
+### Die wichtigsten API-Funktionen
 
-La API se compone principalmente de tres funciones increíblemente sencillas de utilizar.
+Die API besteht im Wesentlichen aus drei unglaublich einfach zu verwendenden Funktionen.
 
-#### 1. Leer un transient: `get_transient()`
+#### 1. Ein Transient lesen: `get_transient()`
 
-Recibe el nombre del transient y devuelve su valor. Si el transient no existe o ya ha expirado, devuelve estrictamente el booleano `false`.
+Erwartet den Namen des Transients und gibt dessen Wert zurück. Wenn das Transient nicht existiert oder bereits abgelaufen ist, gibt sie strikt den booleschen Wert `false` zurück.
 
-*Nota de seguridad:* Debido a que devuelve `false` cuando falla, no debes guardar valores booleanos `false` dentro de un transient, ya que te será imposible distinguir si el valor es realmente `false` o si el transient simplemente ha expirado. Si necesitas almacenar estados booleanos, utiliza enteros (`1` o `0`).
+*Sicherheitshinweis:* Da die Funktion bei einem Fehlschlag `false` zurückgibt, solltest du keine booleschen `false`-Werte in einem Transient speichern, da du sonst nicht unterscheiden kannst, ob der Wert tatsächlich `false` ist oder ob das Transient einfach abgelaufen ist. Wenn du boolesche Zustände speichern musst, verwende stattdessen Ganzzahlen (`1` o `0`).
 
-#### 2. Guardar un transient: `set_transient()`
+#### 2. Ein Transient speichern: `set_transient()`
 
-Guarda el valor. Acepta tres parámetros:
+Speichert den Wert. Akzeptiert drei Parameter:
 
-* `$transient` (string): Nombre único de la clave (máximo 172 caracteres). Es vital usar prefijos únicos, igual que con las opciones.
-* `$value` (mixed): El dato a guardar. Puede ser un string, un array o un objeto (WordPress se encarga de serializarlo automáticamente).
-* `$expiration` (int): El tiempo de vida en **segundos**.
+* `$transient` (string): Eindeutiger Name des Schlüssels (maximal 172 Zeichen). Es ist wichtig, eindeutige Präfixe zu verwenden, genau wie bei den Optionen.
+* `$value` (mixed): Die zu speichernden Daten. Kann ein String, ein Array oder ein Objekt sein (WordPress kümmert sich automatisch um die Serialisierung).
+* `$expiration` (int): Die Lebensdauer in **Sekunden**.
 
-**Constantes de tiempo en WordPress:**
-Para evitar calcular los segundos mentalmente y hacer tu código más legible, WordPress incluye constantes globales que deberías utilizar siempre en el parámetro `$expiration`:
+**Zeitkonstanten in WordPress:**
+Um zu vermeiden, die Sekunden im Kopf berechnen zu müssen, und um deinen Code lesbarer zu machen, stellt WordPress globale Konstanten bereit, die du immer im Parameter `$expiration` verwenden solltest:
 
 * `MINUTE_IN_SECONDS` (60)
 * `HOUR_IN_SECONDS` (3600)
@@ -153,132 +151,132 @@ Para evitar calcular los segundos mentalmente y hacer tu código más legible, W
 * `MONTH_IN_SECONDS` (2592000)
 * `YEAR_IN_SECONDS` (31536000)
 
-#### 3. Eliminar un transient: `delete_transient()`
+#### 3. Ein Transient löschen: `delete_transient()`
 
-Borra el transient manualmente antes de que expire. Útil cuando sabes que los datos originales han cambiado y necesitas forzar una actualización (por ejemplo, al guardar un post).
+Löscht das Transient manuell vor dem Ablauf. Nützlich, wenn du weißt, dass sich die ursprünglichen Daten geändert haben und du eine Aktualisierung erzwingen musst (z. B. beim Speichern eines Beitrags).
 
-### Implementación del Patrón Estándar
+### Implementierung des Standardmusters
 
-El uso correcto de los transients requiere agrupar la comprobación y la generación en un solo bloque lógico. A continuación, se muestra el patrón de diseño definitivo que debes aplicar en tus plugins:
+Die korrekte Verwendung von Transients erfordert das Zusammenfassen von Prüfung und Generierung in einem einzigen logischen Block. Unten wird das definitive Designmuster gezeigt, das du in deinen Plugins anwenden solltest:
 
 ```php
 function mi_plugin_obtener_datos_complejos() {
-    // 1. Definimos el nombre de la clave (¡con prefijo!)
+    // 1. Wir definieren den Namen des Schlüssels (mit Präfix!)
     $transient_key = 'mi_plugin_usuarios_activos';
 
-    // 2. Intentamos obtener el dato
+    // 2. Wir versuchen, die Daten zu holen
     $datos = get_transient( $transient_key );
 
-    // 3. Comprobamos si falló (no existe o expiró)
+    // 3. Wir überprüfen, ob es fehlgeschlagen ist (existiert nicht oder abgelaufen)
     if ( false === $datos ) {
         
-        // 4. [TAREA PESADA] El transient no existe. Generamos los datos.
-        // Esto podría ser un loop de WP_Query, un procesamiento matemático o una API.
+        // 4. [RECHENINTENSIVE AUFGABE] Das Transient existiert nicht. Wir generieren die Daten.
+        // Dies könnte ein WP_Query-Loop, eine mathematische Berechnung oder eine API-Abfrage sein.
         $datos = mi_plugin_consultar_api_externa_lenta();
 
-        // 5. Guardamos el dato recién generado. 
-        // En este ejemplo, lo guardamos por 12 horas.
+        // 5. Wir speichern die neu generierten Daten. 
+        // In diesem Beispiel speichern wir sie für 12 Stunden.
         set_transient( $transient_key, $datos, 12 * HOUR_IN_SECONDS );
     }
 
-    // 6. Retornamos los datos, sin importar si vinieron del transient o se acaban de generar.
+    // 6. Wir geben die Daten zurück, unabhängig davon, ob sie aus dem Transient stammen oder gerade neu generiert wurden.
     return $datos;
 }
 
 ```
 
-### Transients de Red (Multisite)
+### Netzwerk-Transients (Multisite)
 
-Si estás desarrollando para una red *Multisite* (WPMU) y necesitas que un transient esté disponible para toda la red (en lugar de solo para el sitio específico dentro de la red donde se solicitó), WordPress proporciona una variante de las funciones anteriores:
+Wenn du für ein *Multisite*-Netzwerk (WPMU) entwickelst und möchtest, dass ein Transient für das gesamte Netzwerk verfügbar ist (und nicht nur für die spezifische Website innerhalb des Netzwerks, auf der es angefordert wurde), bietet WordPress eine variante der vorherigen Funktionen:
 
 * `get_site_transient()`
 * `set_site_transient()`
 * `delete_site_transient()`
 
-Estas funciones operan exactamente igual, pero si no hay caché de objetos configurada, guardarán los datos en la tabla `wp_sitemeta` en lugar de `wp_options`.
+Diese Funktionen arbeiten exakt genauso, aber wenn kein Object-Cache konfiguriert ist, speichern sie die Daten in der Tabelle `wp_sitemeta` statt in `wp_options`.
 
-## 11.3 Limpieza e invalidación
+## 11.3 Bereinigung und Invalidierung
 
-Existe una famosa cita en ingeniería de software atribuida a Phil Karlton: *"Solo hay dos cosas difíciles en Ciencias de la Computación: la invalidación de caché y nombrar cosas"*. En el desarrollo de plugins para WordPress, esta afirmación cobra un sentido absoluto.
+Es gibt ein berühmtes Zitat in der Softwareentwicklung, das Phil Karlton zugeschrieben wird: *„Es gibt nur zwei schwierige Dinge in der Informatik: Cache-Invalidierung und das Benennen von Dingen“*. Bei der Entwicklung von WordPress-Plugins gewinnt diese Aussage eine absolute Bedeutung.
 
-Dejar que la caché expire por tiempo (como vimos en la sección anterior con los *Transients*) es una estrategia pasiva. Sin embargo, si tu plugin muestra un listado de "Últimos productos" y el administrador publica uno nuevo, esperar 12 horas a que la caché expire ofrecerá una experiencia de usuario deficiente. Aquí es donde entra la **invalidación activa**.
+Deberías borrar este transient cada vez que un post se guarde, se actualice o se elimine.
 
-La invalidación activa consiste en purgar la caché programáticamente en el momento exacto en que los datos subyacentes cambian, garantizando que los usuarios siempre vean la información fresca sin sacrificar el rendimiento general.
+Die aktive Invalidierung besteht darin, den Cache programmgesteuert genau in dem Moment zu leeren, in dem sich die zugrunde liegenden Daten ändern. Dies garantiert, dass die Benutzer immer frische Informationen sehen, ohne die Gesamtleistung zu beeinträchtigen.
 
-### Invalidación basada en Eventos (Hooks)
+### Eventbasierte Invalidierung (Hooks)
 
-La arquitectura basada en eventos de WordPress hace que la invalidación de caché sea predecible. Debes identificar qué acciones (Actions) modifican los datos que tienes cacheados y enganchar tus funciones de limpieza a esos puntos específicos.
+Die eventbasierte Architektur von WordPress macht die Cache-Invalidierung vorhersehbar. Du musst identifizieren, welche Aktionen (Actions) die von dir gecachten Daten verändern, und deine Bereinigungsfunktionen an diese spezifischen Punkte anhängen.
 
-Supongamos que tienes un transient llamado `mi_plugin_lista_posts_destacados`. Deberías borrar este transient cada vez que un post se guarde, se actualice o se elimine.
+Angenommen, du hast ein Transient namens `mi_plugin_lista_posts_destacados`. Du solltest dieses Transient jedes Mal löschen, wenn ein Beitrag gespeichert, aktualisiert oder gelöscht wird.
 
 ```php
-// Función encargada de purgar los transients específicos del plugin
+// Funktion zur Bereinigung der spezifischen Transients des Plugins
 function mi_plugin_limpiar_cache_destacados( $post_id ) {
-    // Evitar limpiezas innecesarias durante autoguardados
+    // Unnötige Bereinigungen während des automatischen Speicherns vermeiden
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
         return;
     }
 
-    // Borrar el transient
+    // Das Transient löschen
     delete_transient( 'mi_plugin_lista_posts_destacados' );
 }
 
-// Enganchar la limpieza a las acciones que alteran el contenido
+// Die Bereinigung an Aktionen anhängen, die den Inhalt verändern
 add_action( 'save_post', 'mi_plugin_limpiar_cache_destacados' );
 add_action( 'deleted_post', 'mi_plugin_limpiar_cache_destacados' );
 
 ```
 
-### El problema de la invalidación masiva (y la solución del Versionado)
+### Das Problem der Masseninvalidierung (und die Lösung der Versionierung)
 
-A diferencia de las consultas SQL, la API de Transients no permite borrar múltiples registros usando comodines (no existe un `delete_transient( 'mi_plugin_*' )`). Si tu plugin genera cientos de transients dinámicos (por ejemplo, `mi_plugin_usuario_1`, `mi_plugin_usuario_2`, etc.), iterar sobre todos ellos para borrarlos es ineficiente y, en entornos con caché de objetos persistente, a menudo imposible sin conocer las claves exactas.
+Im Gegensatz zu SQL-Abfragen erlaubt die Transients-API das Löschen mehrerer Einträge mit Platzhaltern nicht (es gibt kein `delete_transient( 'mi_plugin_*' )`). Wenn dein Plugin Hunderte von dynamischen Transients generiert (z. B. `mi_plugin_usuario_1`, `mi_plugin_usuario_2` etc.), ist das Iterieren über all diese zum Löschen ineffizient und in Umgebungen mit persistentem Object-Cache oft unmöglich, ohne die genauen Schlüssel zu kennen.
 
-La solución profesional a este problema es el **Versionado de Caché**.
+Die professionelle Lösung für dieses Problem ist die **Cache-Versionierung**.
 
-En lugar de borrar los transients uno por uno, agregas un número de versión global al nombre de la clave del transient. Cuando necesitas invalidar todos los transients de tu plugin a la vez, simplemente incrementas ese número de versión. Los transients antiguos quedarán huérfanos y el motor de caché los expulsará eventualmente cuando expiren o necesite liberar memoria.
+Anstatt Transients einzeln zu löschen, fügst du dem Namen des Transient-Schlüssels eine globale Versionsnummer hinzu. Wenn du alle Transients deines Plugins auf einmal invalidieren musst, erhöhst du einfach diese Versionsnummer. Die alten Transients werden verwaisen, und die Caching-Engine wird sie schließlich entfernen, wenn sie ablaufen oder Speicherplatz freigegeben werden muss.
 
 ```text
-[Flujo de Versionado de Caché]
+[Ablauf der Cache-Versionierung]
 
-1. Opción global en BD: 'mi_plugin_cache_version' = "v1"
-2. Clave generada: 'mi_plugin_datos_usuario_7_v1'
-3. El administrador cambia una configuración global.
-4. El plugin actualiza 'mi_plugin_cache_version' a "v2".
-5. Siguiente petición busca: 'mi_plugin_datos_usuario_7_v2' -> (Miss!)
-6. Se regenera la caché con los nuevos datos.
+1. Globale Option in DB: 'mi_plugin_cache_version' = "v1"
+2. Generierter Schlüssel: 'mi_plugin_datos_usuario_7_v1'
+3. Der Administrator ändert eine globale Einstellung.
+4. Das Plugin aktualisiert 'mi_plugin_cache_version' auf "v2".
+5. Nächste Anfrage sucht nach: 'mi_plugin_datos_usuario_7_v2' -> (Miss!)
+6. Der Cache wird mit den neuen Daten neu generiert.
 
 ```
 
-**Implementación en código:**
+**Implementierung im Code:**
 
 ```php
 function mi_plugin_obtener_version_cache() {
     $version = get_option( 'mi_plugin_cache_version' );
     if ( ! $version ) {
-        $version = time(); // Usar un timestamp como versión inicial
+        $version = time(); // Einen Timestamp als initiale Version verwenden
         update_option( 'mi_plugin_cache_version', $version );
     }
     return $version;
 }
 
-// Para usar al guardar/leer datos:
+// Zur Verwendung beim Speichern/Lesen von Daten:
 $clave = 'mis_datos_' . mi_plugin_obtener_version_cache();
 set_transient( $clave, $datos, DAY_IN_SECONDS );
 
-// Para invalidar TODA la caché del plugin instantáneamente:
+// Um den gesamten Cache des Plugins sofort zu invalidieren:
 function mi_plugin_invalidar_toda_la_cache() {
     update_option( 'mi_plugin_cache_version', time() );
 }
 
 ```
 
-### Limpieza de la Caché de Página de Terceros
+### Bereinigung des Page-Caches von Drittanbietern
 
-Si tu plugin modifica la interfaz visual del front-end (por ejemplo, actualiza un banner global desde tus opciones), limpiar los *transients* no será suficiente si el sitio utiliza un plugin de caché de página (WP Rocket, W3 Total Cache, LiteSpeed, etc.), ya que estos sirven HTML estático.
+Wenn dein Plugin die visuelle Oberfläche des Frontends verändert (z. B. ein globales Banner über deine Optionen aktualisiert), reicht das Löschen der *Transients* nicht aus, wenn die Website ein Page-Caching-Plugin (WP Rocket, W3 Total Cache, LiteSpeed etc.) verwendet, da diese statisches HTML ausgeben.
 
-Los plugins de caché bien programados escuchan ganchos estándar como `clean_post_cache` o `save_post` para limpiar partes de su propia caché. Sin embargo, si tu plugin utiliza tablas personalizadas o configuraciones globales que no disparan estos ganchos nativos, tendrás que invocar la limpieza de página explícitamente.
+Gut programmierte Caching-Plugins hören auf Standard-Hooks wie `clean_post_cache` oder `save_post`, um Teile ihres eigenen Caches zu leeren. Wenn dein Plugin jedoch benutzerdefinierte Tabellen oder globale Einstellungen verwendet, die diese nativen Hooks nicht auslösen, musst du die Seitenbereinigung explizit aufrufen.
 
-Para mantener buenas prácticas, nunca asumas que un plugin de terceros está activo. Comprueba si su función de purga existe antes de llamarla:
+Um Best Practices einzuhalten, gehe niemals davon aus, dass ein Plugin eines Drittanbieters aktiv ist. Überprüfe, ob seine Purge-Funktion existiert, bevor du sie aufrufst:
 
 ```php
 function mi_plugin_purgar_cache_pagina() {
@@ -300,92 +298,92 @@ function mi_plugin_purgar_cache_pagina() {
 
 ```
 
-### El peligro de `wp_cache_flush()`
+### Die Gefahr von `wp_cache_flush()`
 
-Al trabajar con la caché de objetos (que detallaremos en la siguiente sección), existe una función central llamada `wp_cache_flush()`. Su propósito es vaciar completamente la memoria de la caché de objetos.
+Bei der Arbeit mit dem Object-Cache (den wir im nächsten Abschnitt im Detail besprechen werden) gibt es eine zentrale Funktion namens `wp_cache_flush()`. Ihr Zweck ist es, den gesamten Speicher des Object-Caches zu leeren.
 
-**Advertencia estricta:** Como desarrollador de plugins, **nunca debes llamar a `wp_cache_flush()` en un entorno de producción como respuesta a una acción del usuario (como guardar una configuración).
+**Strikte Warnung:** Als Plugin-Entwickler solltest du **niemals `wp_cache_flush()` in einer Produktionsumgebung als Reaktion auf eine Benutzeraktion (wie das Speichern einer Einstellung) aufrufen.**
 
-Hacerlo no solo borra la caché de tu plugin, sino la de todo el núcleo de WordPress, la de otros plugins y, en servidores compartidos mal configurados (donde Redis/Memcached no aísla por prefijos), podría borrar la caché de otros sitios web alojados en el mismo servidor. El resultado es un pico masivo de CPU y consultas a la base de datos (conocido como *Cache Stampede* o estampida de caché) que puede tumbar el servidor instantáneamente. Utiliza siempre borrados selectivos o la técnica de versionado.
+Dies löscht nicht nur den Cache deines Plugins, sondern den des gesamten WordPress-Cores, anderer Plugins und in schlecht konfigurierten Shared-Hosting-Servern (wo Redis/Memcached nicht nach Präfixen isoliert) möglicherweise auch den Cache anderer Websites, die auf demselben Server gehostet werden. Das Ergebnis ist ein massiver Anstieg der CPU-Last und der Datenbankabfragen (bekannt als *Cache Stampede* oder Cache-Ansturm), der den Server sofort lahmlegen kann. Verwende immer selektives Löschen oder die Versionierungstechnik.
 
-## 11.4 Object Cache a nivel de código
+## 11.4 Object Cache auf Codeebene
 
-La API de Caché de Objetos (`Object Cache API`) es el motor interno que sustenta gran parte del rendimiento de WordPress. A diferencia de los *Transients*, que están diseñados para persistir por defecto (ya sea en la base de datos o en memoria), el Object Cache nativo es, en su estado puro, un sistema de almacenamiento en memoria RAM **no persistente**. Esto significa que los datos viven únicamente durante el ciclo de vida de la petición HTTP actual y se destruyen inmediatamente después de que el script PHP termina su ejecución.
+Die Object Cache API ist die interne Engine, die einen großen Teil der WordPress-Leistung stützt. Im Gegensatz zu *Transients*, die so konzipiert sind, dass sie standardmäßig bestehen bleiben (entweder in der Datenbank oder im Speicher), ist der native Object-Cache in seiner reinen Form ein **nicht persistentes** RAM-Speichersystem. Das bedeutet, dass die Daten nur während des Lebenszyklus der aktuellen HTTP-Anfrage existieren und sofort nach Beendigung der Ausführung des PHP-Skripts zerstört werden.
 
-Sin embargo, si el servidor cuenta con un sistema de caché persistente (como Redis o Memcached) y su respectivo archivo *drop-in* `object-cache.php` en el directorio `/wp-content/`, las mismas funciones de esta API pasan automáticamente a almacenar los datos de forma permanente entre peticiones. Tu código como desarrollador de plugins debe escribirse pensando en que el entorno puede cambiar de no persistente a persistente sin previo aviso.
+Wenn der Server jedoch über ein persistentes Caching-System (wie Redis oder Memcached) und dessen entsprechende *Drop-in*-Datei `object-cache.php` im Verzeichnis `/wp-content/` verfügt, speichern dieselben Funktionen dieser API die Daten automatisch dauerhaft zwischen den Anfragen. Dein Code als Plugin-Entwickler sollte so geschrieben werden, dass er davon ausgeht, dass sich die Umgebung ohne Vorankündigung von nicht persistent zu persistent ändern kann.
 
-### Funciones fundamentales de la API
+### Grundlegende API-Funktionen
 
-A nivel de código, interactuamos con la API mediante cuatro funciones principales. Todas ellas comparten una estructura jerárquica basada en una clave (`$key`) y un grupo (`$group`).
+Auf Codeebene interagieren wir mit die API über vier Hauptfunktionen. Alle teilen eine hierarchische Struktur, die auf einem Schlüssel (`$key`) und einer Gruppe (`$group`) basiert.
 
-#### 1. `wp_cache_set()` y `wp_cache_add()`
+#### 1. `wp_cache_set()` und `wp_cache_add()`
 
-Ambas funciones guardan datos en la memoria, pero su comportamiento ante datos preexistentes es crucialmente distinto:
+Beide Funktionen speichern Daten im Speicher, aber ihr Verhalten bei bereits vorhandenen Daten unterscheidet sich grundlegend:
 
-* `wp_cache_set( $key, $value, $group = '', $expire = 0 )`: Guarda el valor sin importar si la clave ya existe. Si ya existía, sobrescribe el valor anterior.
-* `wp_cache_add( $key, $value, $group = '', $expire = 0 )`: Solo guarda el valor **si la clave no existe previamente**. Si la clave ya existe, la función devuelve `false` y no modifica nada. Es ideal para evitar condiciones de carrera (*race conditions*).
+* `wp_cache_set( $key, $value, $group = '', $expire = 0 )`: Speichert den Wert, unabhängig davon, ob der Schlüssel bereits existiert. Wenn er bereits vorhanden war, überschreibt sie den vorherigen Wert.
+* `wp_cache_add( $key, $value, $group = '', $expire = 0 )`: Speichert den Wert nur dann, **wenn der Schlüssel zuvor nicht existiert**. Wenn der Schlüssel bereits vorhanden ist, gibt die Funktion `false` zurück und ändert nichts. Dies ist ideal, um Race Conditions (Wettlaufsituationen) zu vermeiden.
 
-*Nota sobre `$expire`:* Al igual que con los transients, se mide en segundos. Si no se utiliza un sistema de caché persistente de terceros, este parámetro se ignora por completo, ya que la memoria se vacía al terminar la petición.
+*Hinweis zu `$expire`:* Wird wie bei Transients in Sekunden gemessen. Wenn kein persistentes Caching-System von Drittanbietern verwendet wird, wird dieser Parameter vollständig ignoriert, da der Speicher am Ende der Anfrage geleert wird.
 
 #### 2. `wp_cache_get()`
 
-`wp_cache_get( $key, $group = '', $force = false, &$found = null )`: Recupera el valor almacenado bajo esa clave y grupo.
+`wp_cache_get( $key, $group = '', $force = false, &$found = null )`: Ruft den unter diesem Schlüssel und dieser Gruppe gespeicherten Wert ab.
 
 #### 3. `wp_cache_delete()`
 
-`wp_cache_delete( $key, $group = '' )`: Elimina de forma inmediata el objeto de la memoria.
+`wp_cache_delete( $key, $group = '' )`: Löscht das Objekt sofort aus dem Speicher.
 
-### El concepto de "Grupos" de Caché
+### Das Konzept der Cache-„Gruppen“
 
-El parámetro `$group` te permite compartimentar la caché de tu plugin. Evita colisiones de nombres con el núcleo de WordPress o con otros plugins. En lugar de crear una clave kilométrica como `mi_plugin_perfil_usuario_42`, puedes estructurarlo limpiamente:
+Der Parameter `$group` ermöglicht es dir, den Cache deines Plugins zu unterteilen. Dies verhindert Namenskollisionen mit dem WordPress-Core oder anderen Plugins. Anstatt einen kilometerlangen Schlüssel wie `mi_plugin_perfil_usuario_42` zu erstellen, kannst du es sauber strukturieren:
 
 ```php
-// Clave: 42, Grupo: mi_plugin_usuarios
+// Schlüssel: 42, Gruppe: mi_plugin_usuarios
 wp_cache_set( 42, $datos_usuario, 'mi_plugin_usuarios' );
 
 ```
 
-Además, algunos motores de caché persistente como Memcached o Redis aprovechan los grupos para permitir la invalidación o flushing selectivo de un grupo entero, optimizando masivamente la limpieza.
+Zudem nutzen einige persistente Caching-Engines wie Memcached oder Redis Gruppen, um eine selektive Invalidierung oder das Leeren einer ganzen Gruppe zu ermöglichen, was die Bereinigung massiv optimiert.
 
-### El patrón de verificación estricto: El parámetro `$found`
+### Das strikte Überprüfungsmuster: Der Parameter `$found`
 
-Un error crítico y muy común en desarrolladores intermedios es verificar la existencia de un objeto en caché evaluando directamente si el resultado de `wp_cache_get()` es equivalente a `false`:
+Ein kritischer und sehr häufiger Fehler bei fortgeschrittenen Entwicklern ist die Überprüfung der Existenz eines Objekts im Cache, indem direkt ausgewertet wird, ob das Ergebnis von `wp_cache_get()` gleich `false` ist:
 
 ```php
-// PRÁCTICA INCORRECTA
+// FALSCHE PRAXIS
 $resultado = wp_cache_get( 'estado_licencia', 'mi_plugin_grupo' );
 if ( false === $resultado ) {
-    // ¿La caché expiró o es que el estado real de la licencia es (bool) false?
+    // Ist der Cache abgelaufen oder ist der tatsächliche Status der Lizenz (bool) false?
 }
 
 ```
 
-Si el resultado legítimo de una consulta pesada a la base de datos o a una API es el valor booleano `false`, un string vacío `""` o el entero `0`, la comprobación tradicional fallará catastróficamente, obligando a tu plugin a repetir la tarea pesada en cada petición.
+Wenn das legitime Ergebnis einer rechenintensiven Datenbankabfrage oder API-Abfrage der boolesche Wert `false`, ein leerer String `""` o die Ganzzahl `0` ist, schlägt die traditionelle Überprüfung katastrophal fehl. Dies zwingt dein Plugin dazu, die rechenintensive Aufgabe bei jeder Anfrage zu wiederholen.
 
-Para solucionar esto, WordPress introdujo el cuarto parámetro por referencia llamado `$found`. Este parámetro se pasará a `true` si la clave existe en la caché (incluso si su valor es `false` o `null`), y a `false` si realmente hubo un *cache miss*.
+Um dies zu lösen, hat WordPress den vierten Parameter per Referenz namens `$found` eingeführt. Dieser Parameter wird auf `true` gesetzt, wenn der Schlüssel im Cache existiert (selbst wenn sein Wert `false` oder `null` ist), und auf `false`, wenn es sich tatsächlich um einen *Cache Miss* handelt.
 
-### Implementación Profesional del Object Cache
+### Professionelle Implementierung des Object-Caches
 
-A continuación, se detalla la estructura exacta que debes implementar para envolver operaciones costosas mediante Object Cache utilizando el parámetro `$found`:
+Im Folgenden wird die genaue Struktur beschrieben, die du implementieren solltest, um kostenintensive Operationen mittels Object-Cache unter Verwendung des Parameters `$found` zu kapseln:
 
 ```php
 function mi_plugin_obtener_metricas_avanzadas( $usuario_id ) {
     $cache_key   = 'metricas_' . $usuario_id;
     $cache_group = 'mi_plugin_informes';
-    $found       = false; // Variable que pasaremos por referencia
+    $found       = false; // Variable, die wir per Referenz übergeben werden
 
-    // Intentamos recuperar el valor y verificar su existencia real
+    // Wir versuchen, den Wert abzurufen und seine tatsächliche Existenz zu überprüfen
     $metricas = wp_cache_get( $cache_key, $cache_group, false, $found );
 
-    // Si $found es verdadero, la caché existe (Hit). Lo devolvemos directamente.
+    // Wenn $found wahr ist, existiert der Cache (Hit). Wir geben ihn direkt zurück.
     if ( $found ) {
         return $metricas;
     }
 
-    // Si llegamos aquí, es un Cache Miss. Ejecutamos la lógica pesada.
+    // Wenn wir hier ankommen, handelt es sich um einen Cache Miss. Wir führen die rechenintensive Logik aus.
     $metricas = mi_plugin_calculo_estructural_pesado( $usuario_id );
 
-    // Guardamos el resultado en la caché de objetos (expira en 1 hora si es persistente)
+    // Wir speichern das Ergebnis im Object-Cache (läuft in 1 Stunde ab, wenn er persistent ist)
     wp_cache_set( $cache_key, $metricas, $cache_group, HOUR_IN_SECONDS );
 
     return $metricas;
@@ -393,25 +391,25 @@ function mi_plugin_obtener_metricas_avanzadas( $usuario_id ) {
 
 ```
 
-### Cuándo usar Transients vs. Object Cache
+### Wann man Transients vs. Object-Cache verwendet
 
-Para cerrar la arquitectura de rendimiento de tu plugin, debes memorizar esta distinción técnica:
+Um die Leistungsarchitektur deines Plugins abzurunden, solltest du dir diese technische Unterscheidung merken:
 
 ```text
-¿Los datos deben sobrevivir de forma GARANTIZADA entre peticiones?
- ├── SÍ ──> ¿Son datos específicos de un usuario o dinámicos? ──> TRANSIENTS API
- └── NO ──> ¿Solo los necesitas durante la carga actual? ───────> OBJECT CACHE API
+Müssen die Daten GARANTIERT zwischen den Anfragen überleben?
+ ├── JA ──> Sind es benutzerspezifische oder dynamische Daten? ──> TRANSIENTS API
+ └── NEIN ─> Werden sie nur während des aktuellen Ladevorgangs benötigt? ─> OBJECT CACHE API
 
 ```
 
-* **Usa Transients:** Cuando consultes una API externa (como el tiempo meteorológico, cotizaciones, o validación de licencias remota) y necesites que el dato persista por horas de manera garantizada, incluso en el hosting compartido más económico sin Redis.
-* **Usa Object Cache:** Cuando realices consultas SQL personalizadas con `$wpdb` dentro del código de tu plugin que puedan repetirse múltiples veces en la misma petición, o para almacenar estructuras de datos en memoria que se beneficien drásticamente si el cliente cuenta con un entorno de alto rendimiento basado en Redis/Memcached.
+* **Verwende Transients:** Wenn du eine externe API abfragst (wie Wetterdaten, Wechselkurse oder Remote-Lizenzvalidierung) und sicherstellen musst, dass die Daten garantiert über Stunden hinweg erhalten bleiben – selbst auf dem günstigsten Shared Hosting ohne Redis.
+* **Verwende den Object-Cache:** Wenn du benutzerdefinierte SQL-Abfragen mit `$wpdb` im Code deines Plugins durchführst, die sich in derselben Anfrage mehrmals wiederholen können, oder um Datenstrukturen im Speicher abzurufen, die drastisch profitieren, wenn der Kunde eine Hochleistungsumgebung auf Basis von Redis/Memcached nutzt.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este capítulo hemos dominado las capas de optimización y gestión del rendimiento en el desarrollo de plugins profesionales para WordPress:
+In diesem Kapitel haben wir die Optimierungs- und Leistungsverwaltungsebenen bei der professionellen Entwicklung von WordPress-Plugins gemeistert:
 
-1. **Diferencias de caché en WP:** Aprendimos a mapear el ciclo de vida de una petición HTTP y cómo interactúan la caché de página (que bloquea la ejecución de PHP), la caché de objetos (interna de datos), el OPcache (precompilación de scripts) y el versionado de archivos estáticos en el navegador.
-2. **Almacenamiento con Transients:** Estudiamos la Transients API como mecanismo de persistencia temporal activa, comprendiendo su almacenamiento adaptativo (tabla `wp_options` o RAM) y el patrón correcto de rescate ante un *cache miss*.
-3. **Limpieza e invalidación:** Analizamos las estrategias para mantener la integridad de los datos mediante la purga reactiva ligada a hooks, los peligros globales de `wp_cache_flush()` y la técnica avanzada de versionado de claves de caché para invalidaciones masivas instantáneas.
-4. **Object Cache a nivel de código:** Desgranamos la API interna `WP_Object_Cache`, el uso estratégico de los grupos de caché y el patrón de desarrollo imperativo empleando el parámetro de comprobación estricta `$found` por referencia.
+1. **Caching-Unterschiede in WP:** Wir haben gelernt, den Lebenszyklus einer HTTP-Anfrage abzubilden und zu verstehen, wie Page-Cache (der die Ausführung von PHP blockiert), Object-Cache (intern für Daten), OPcache (Skript-Vorkompilierung) und die Versionierung statischer Dateien im Browser zusammenwirken.
+2. **Speichern mit Transients:** Wir haben die Transients API als Mechanismus zur aktiven temporären Persistenz untersucht, ihr adaptives Speichern (Tabelle `wp_options` oder RAM) verstanden und das korrekte Rettungsmuster bei einem *Cache Miss* gelernt.
+3. **Bereinigung und Invalidierung:** Wir haben die Strategien zur Wahrung der Datenintegrität durch reaktive Bereinigung im Zusammenhang mit Hooks, die globalen Gefahren von `wp_cache_flush()` und die fortgeschrittene Technik der Cache-Schlüssel-Versionierung für sofortige Masseninvalidierungen analysiert.
+4. **Object Cache auf Codeebene:** Wir haben die interne API `WP_Object_Cache`, die strategische Verwendung von Cache-Gruppen und das zwingende Entwicklungsmuster unter Verwendung des strikten Überprüfungsparameters `$found` per Referenz aufgeschlüsselt.

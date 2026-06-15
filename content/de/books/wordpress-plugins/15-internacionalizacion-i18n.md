@@ -1,83 +1,73 @@
-El desarrollo de un plugin profesional no termina cuando el código funciona en tu idioma nativo; el verdadero alcance global requiere una correcta internacionalización (i18n). En este capítulo, prepararás tu base de código para ser localizada a cualquier idioma utilizando el motor `gettext` de WordPress.
+Die Entwicklung eines professionellen Plugins endet nicht, wenn der Code in deiner Muttersprache funktioniert; die wahre globale Reichweite erfordert eine korrekte Internationalisierung (i18n). In diesem Kapitel wirst du deine Codebasis darauf vorbereiten, mithilfe der `gettext`-Engine von WordPress in jede beliebige Sprache lokalisiert zu werden.
 
-Exploraremos las funciones envoltura esenciales, el manejo dinámico de plurales y la desambiguación semántica mediante contexto. Finalmente, dominarás la carga eficiente del dominio de texto (*Text Domain*) y la extracción automatizada de cadenas mediante WP-CLI para generar los archivos de plantilla POT estándar de la industria.
+Wir werden die essenziellen Wrapper-Funktionen, die dynamische Pluralbehandlung und die semantische Begriffsklärung durch Kontext untersuchen. Schließlich wirst du das effiziente Laden des Textdomains (*Text Domain*) und die automatisierte Extraktion von Zeichenketten via WP-CLI beherrschen, um die branchenüblichen POT-Vorlagendateien zu generieren.
 
-## 15.1 Funciones de traducción básicas
+## 15.1 Grundlegende Übersetzungsfunktionen
 
-La internacionalización (i18n) en WordPress se fundamenta en el sistema de localización GNU `gettext`. Para que un plugin pueda ser traducido a cualquier idioma, todas las cadenas de texto estáticas legibles por el usuario final o el administrador deben pasar a través de funciones envoltura (*wrapper functions*) específicas. Estas funciones permiten que el motor de WordPress intercepte la cadena original (típicamente escrita en inglés) y devuelva su equivalente traducido basándose en los archivos de traducción activos.
+Die Internationalisierung (i18n) in WordPress basiert auf dem GNU-`gettext`-Lokalisierungssystem. Damit ein Plugin in eine beliebige Sprache übersetzt werden kann, müssen alle für den Endbenutzer oder den Administrator lesbaren statischen Textzeichenketten spezielle Wrapper-Funktionen (*wrapper functions*) durchlaufen. Diese Funktionen ermöglichen es der WordPress-Engine, die ursprüngliche Zeichenkette (normalerweise auf Englisch verfasst) abzufangen und das übersetzte Äquivalent basierend auf den aktiven Übersetzungsdateien zurückzugeben.
 
-### El concepto de Text Domain
+### Das Konzept des Textdomains
 
-Antes de aplicar cualquier función de traducción, es indispensable definir el *Text Domain* (dominio de texto). Este es un identificador único que WordPress utiliza para asociar las cadenas de texto con los archivos de traducción específicos de tu plugin, evitando colisiones con cadenas homónimas del núcleo o de otros componentes.
+Bevor du eine Übersetzungsfunktion anwendest, ist es unerlässlich, das *Text Domain* (Textdomain) zu definieren. Dies ist ein eindeutiger Bezeichner, den WordPress verwendet, um Textzeichenketten den spezifischen Übersetzungsdateien deines Plugins zuzuordnen. So werden Kollisionen mit gleichnamigen Zeichenketten des Cores oder anderer Komponenten vermieden.
 
-Por estándar de desarrollo, el *Text Domain* debe coincidir exactamente con el nombre de la carpeta del plugin (el *slug*). Por ejemplo, si tu plugin se aloja en `wp-content/plugins/mi-gestor-avanzado/`, tu dominio de texto será `mi-gestor-avanzado`.
+Als Entwicklungsstandard muss das *Text Domain* exakt mit dem Namen des Plugin-Ordners (dem *Slug*) übereinstimmen. Wenn sich dein Plugin beispielsweise in `wp-content/plugins/mi-gestor-avanzado/` befindet, lautet deine Textdomain `mi-gestor-avanzado`.
 
-A continuación se ilustra el flujo lógico que sigue una cadena de texto desde el código fuente hasta la pantalla del usuario:
+Nachfolgend wird der logische Fluss veranschaulicht, dem eine Textzeichenkette vom Quellcode bis zum Bildschirm des Benutzers folgt:
 
 ```text
-[ Código Fuente: __('Guardar', 'mi-gestor-avanzado') ]
+[ Quellcode: __('Guardar', 'mi-gestor-avanzado') ]
                          │
                          ▼
-           ¿Existe el archivo .mo del plugin?
+        Existiert die .mo-Datei des Plugins?
                          │
          ┌───────────────┴───────────────┐
-         ▼ SÍ                            ▼ NO
-¿Existe la traducción exacta?            │
+         ▼ JA                            ▼ NEIN
+   Existiert die exakte Übersetzung?     │
          │                               │
    ┌─────┴─────┐                         │
-   ▼ SÍ        ▼ NO                      │
-[Traducido] [Original]            [Original]
+   ▼ JA        ▼ NEIN                    │
+[Übersetzt] [Original]              [Original]
    │           │                         │
    └───────────┼─────────────────────────┘
                ▼
-   [ Retorno / Renderizado en Pantalla ]
+      [ Rückgabe / Bildschirm-Rendering ]
 
 ```
 
-### Las funciones base: `__()` y `_e()`
+### Die Basisfunktionen: `__()` und `_e()`
 
-Las dos herramientas elementales de la i18n en WordPress son `__()` y `_e()`. Ambas asumen la misma firma estructural, pero difieren críticamente en su comportamiento de salida.
+Die zwei elementaren Werkzeuge der i18n in WordPress sind `__()` und `_e()`. Beide haben dieselbe strukturelle Signatur, unterscheiden sich jedoch grundlegend in ihrem Ausgabeverhalten.
 
-#### 1. La función `__()`
+#### 1. Die Funktion `__()`
 
-Retorna la cadena traducida. Es la función que se debe emplear cuando el texto se va a asignar a una variable, a pasar como argumento a otra función, o a procesar antes de su salida.
+Gibt die übersetzte Zeichenkette zurück. Diese Funktion sollte verwendet werden, wenn der Text einer Variablen zugewiesen, als Argument an eine andere Funktion übergeben oder vor seiner Ausgabe verarbeitet werden soll.
 
-```php
-function __( $text, $domain = 'default' )
+#### 2. Die Funktion `_e()`
 
-```
+Gibt die übersetzte Zeichenkette direkt im Ausgabepuffer aus (`echo`). Es ist eine semantische Abkürzung für `echo __(...)`.
 
-#### 2. La función `_e()`
-
-Imprime directamente la cadena traducida en el búfer de salida (`echo`). Es un atajo semántico para `echo __(...)`.
-
-```php
-function _e( $text, $domain = 'default' )
-
-```
-
-#### Ejemplo de implementación en el ecosistema de un plugin
+#### Implementierungsbeispiel im Plugin-Ökosystem
 
 ```php
 <?php
 /**
- * Ejemplo de uso correcto de __() y _e() dentro de un metabox.
+ * Beispiel für die korrekte Verwendung von __() und _e() innerhalb einer Metabox.
  */
 
-// Uso de __() para pasar la cadena como argumento a otra función de WordPress
+// Verwendung von __() zur Übergabe der Zeichenkette als Argument an eine andere WordPress-Funktion
 add_meta_box(
     'mga_render_metabox',
-    __( 'Configuración Avanzada del Post', 'mi-gestor-avanzado' ), // Retorna el texto
+    __( 'Configuración Avanzada del Post', 'mi-gestor-avanzado' ), // Gibt den Text zurück
     'mga_callback_metabox',
     'post'
 );
 
 function mga_callback_metabox( $post ) {
-    // Uso de _e() para renderizar texto directamente en la interfaz del admin
+    // Verwendung von _e() zum direkten Rendern von Text in der Admin-Oberfläche
     ?>
     <p>
         <label for="mga_field_custom">
-            <?php _e( 'Introduce el identificador único:', 'mi-gestor-avanzado' ); // Imprime el texto ?>
+            <?php _e( 'Introduce el identificador único:', 'mi-gestor-avanzado' ); // Gibt den Text aus ?>
         </label>
     </p>
     <?php
@@ -85,91 +75,91 @@ function mga_callback_metabox( $post ) {
 
 ```
 
-### La regla de oro del análisis estático
+### Die goldene Regel der statischen Analyse
 
-El proceso de generación de catálogos de traducción (archivos POT/PO) se basa en herramientas de **análisis estático de código** (como `xgettext` o la CLI de WordPress). Estas utilidades leen los archivos PHP como cadenas de texto plano buscando llamadas a funciones de i18n; no ejecutan el código PHP.
+Der Prozess zur Generierung von Übersetzungskatalogen (POT-/PO-Dateien) basiert auf Werkzeugen zur **statischen Codeanalyse** (wie `xgettext` oder der WordPress-CLI). Diese Hilfsprogramme lesen die PHP-Dateien als Klartextzeichenketten und suchen nach Aufrufen von i18n-Funktionen; sie führen den PHP-Code nicht aus.
 
-Por lo tanto, es un error crítico pasar variables, constantes o llamadas a funciones como el texto original o el dominio de texto dentro de las funciones de traducción.
+Daher ist es un kritischer Fehler, Variablen, Konstanten oder Funktionsaufrufe als Originaltext oder Textdomain innerhalb der Übersetzungsfunktionen zu übergeben.
 
-#### Patrones de código incorrectos vs. correctos
+#### Fehlerhafte vs. korrekte Codemuster
 
 ```php
 <?php
-// INCORRECTO: El analizador estático no puede evaluar el valor de la variable.
+// FALSCH: Der statische Parser kann den Wert der Variable nicht auswerten.
 $mensaje = 'Operación completada con éxito.';
 _e( $mensaje, 'mi-gestor-avanzado' );
 
-// INCORRECTO: No se permiten constantes para el texto ni para el dominio.
+// FALSCH: Konstanten sind weder für den Text noch für die Domain zulässig.
 define( 'MGA_DOMAIN', 'mi-gestor-avanzado' );
 _e( 'Guardar cambios', MGA_DOMAIN );
 
-// CORRECTO: Ambas cadenas son literales de texto puro y duro.
+// RICHTIG: Beide Zeichenketten sind reine, feste Textliterale.
 _e( 'Operación completada con éxito.', 'mi-gestor-avanzado' );
 
 ```
 
-Si necesitas dinamicidad en los textos (por ejemplo, inyectar el nombre de un usuario o un contador), nunca concatenes variables directamente dentro o fuera de la función. Para resolver este escenario de forma internacionalizable, se deben combinar las funciones de traducción básicas con funciones de formateo de cadenas como `sprintf()` o `printf()`, lo cual mantiene el bloque de texto íntegro para los traductores.
+Wenn du Dynamik in den Texten benötigst (z. B. das Einfügen eines Benutzernamens oder eines Zählers), verknüpfe Variablen niemals direkt innerhalb oder außerhalb der Funktion. Um dieses Szenario internationalisierbar zu lösen, müssen die grundlegenden Übersetzungsfunktionen mit String-Formatierungsfunktionen wie `sprintf()` oder `printf()` kombiniert werden. Dies hält den Textblock für die Übersetzer intakt.
 
 ```php
 <?php
 /**
- * Manejo dinámico correcto de variables en cadenas estáticas
+ * Korrekte dynamische Handhabung von Variablen in statischen Zeichenketten
  */
 
 $usuario_activo = 'Alejandro';
 
-// INCORRECTO (Rompe la estructura gramatical en otros idiomas y fragmenta la traducción)
+// FALSCH (Bricht die grammatikalische Struktur in anderen Sprachen auf und fragmentiert die Übersetzung)
 echo __( 'Bienvenido de nuevo, ', 'mi-gestor-avanzado' ) . $usuario_activo;
 
-// CORRECTO (Mantiene la cadena unificada usando un marcador de posición)
+// RICHTIG (Hält die Zeichenkette durch die Verwendung eines Platzhalters einheitlich)
 printf(
-    /* translators: %s: Nombre del usuario actual */
+    /* translators: %s: Name des aktuellen Benutzers */
     __( 'Bienvenido de nuevo, %s.', 'mi-gestor-avanzado' ),
     $usuario_activo
 );
 
 ```
 
-*Nota de buenas prácticas:* El comentario inline `/* translators: ... */` colocado inmediatamente antes de la función sirve de metadato de asistencia. Las herramientas de extracción leerán este comentario y se lo mostrarán al traductor en su software de localización, permitiéndole entender qué información reemplazará al modificador `%s`.
+\*Best-Practice-Hinweis:\* Der Inline-Kommentar `/* translators: ... */` unmittelbar vor der Funktion dient als unterstützende Metadaten. Die Extraktionswerkzeuge lesen diesen Kommentar und zeigen ihn dem Übersetzer in seiner Lokalisierungssoftware an, sodass er versteht, welche Informationen den Modifikator `%s` ersetzen werden.
 
-## 15.2 Contexto y pluralización
+## 15.2 Kontext und Pluralbildung
 
-El idioma inglés es comparativamente simple en sus reglas gramaticales y cuenta con una gran cantidad de palabras homónimas (términos que se escriben igual pero tienen significados distintos). Cuando traducimos un plugin a idiomas con estructuras morfológicas más complejas o con diferentes declinaciones, las funciones básicas `__()` y `_e()` resultan insuficientes. Para resolver estos escenarios, WordPress proporciona funciones especializadas que manejan el contexto de las palabras y la pluralización dinámica.
+Die englische Sprache ist in ihren grammatikalischen Regeln vergleichsweise einfach und verfügt über eine große Anzahl homonymer Wörter (Begriffe, die gleich geschrieben werden, aber unterschiedliche Bedeutungen haben). Wenn wir ein Plugin in Sprachen mit komplexeren morphologischen Strukturen oder unterschiedlichen Deklinationsformen übersetzen, reichen die Basisfunktionen `__()` und `_e()` nicht aus. Um diese Szenarien zu lösen, bietet WordPress spezialisierte Funktionen an, die den Kontext von Wörtern und die dynamische Pluralbildung handhaben.
 
-### Desambiguación con Contexto: `_x()` y `_ex()`
+### Begriffsklärung mit Kontext: `_x()` und `_ex()`
 
-Un problema habitual en la internacionalización ocurre cuando una misma palabra en inglés requiere traducciones completamente distintas dependiendo de su función en la interfaz. El clásico ejemplo en WordPress es la palabra "Post". Puede referirse al sustantivo (una entrada del blog) o al verbo (la acción de publicar). En español, se traduciría como "Entrada" y "Publicar", respectivamente.
+Ein häufiges Problem bei der Internationalisierung tritt auf, wenn dasselbe englische Wort je nach seiner Funktion in der Benutzeroberfläche völlig unterschiedliche Übersetzungen erfordert. Das klassische Beispiel in WordPress ist das Wort „Post“. Es kann sich auf das Substantiv (ein Blogbeitrag) oder das Verb (die Aktion des Veröffentlichens) beziehen. Im Deutschen würde dies als „Beitrag“ bzw. „Veröffentlichen“ übersetzt.
 
-Si usamos simplemente `__( 'Post', 'mi-gestor-avanzado' )`, el traductor verá la cadena aislada y no sabrá qué variante elegir, forzando un único significado para ambas ubicaciones.
+Wenn wir einfach `__( 'Post', 'mi-gestor-avanzado' )` verwenden, sieht der Übersetzer die Zeichenkette isoliert und weiß nicht, welche Variante er wählen soll, was eine einzige Bedeutung für beide Stellen erzwingt.
 
-Para aportar esta semántica, utilizamos `_x()` (que retorna el valor) y `_ex()` (que lo imprime directamente). Su firma añade un parámetro adicional para el contexto:
+Um diese Semantik bereitzustellen, verwenden wir `_x()` (gibt den Wert zurück) und `_ex()` (gibt ihn direkt aus). Ihre Signatur fügt einen zusätzlichen Parameter für den Kontext hinzu:
 
 ```php
 function _x( $text, $context, $domain = 'default' )
 
 ```
 
-#### Ejemplo de uso de contexto
+#### Beispiel für die Verwendung von Kontext
 
 ```php
 <?php
-// Mismo texto original, pero con diferentes contextos para guiar al traductor
-$boton_submit  = _x( 'Post', 'Acción de publicar en el formulario', 'mi-gestor-avanzado' );
-$titulo_columna = _x( 'Post', 'Sustantivo, columna de la tabla', 'mi-gestor-avanzado' );
+// Derselbe Originaltext, aber mit unterschiedlichen Kontexten, um den Übersetzer zu leiten
+$boton_submit  = _x( 'Post', 'Aktion des Veröffentlichens im Formular', 'mi-gestor-avanzado' );
+$titulo_columna = _x( 'Post', 'Substantiv, Tabellenspalte', 'mi-gestor-avanzado' );
 
-// En la salida (HTML)
+// In der Ausgabe (HTML)
 echo '<button type="submit">' . esc_html( $boton_submit ) . '</button>';
 
 ```
 
-El analizador estático generará dos entradas distintas en el archivo `.pot`, permitiendo al equipo de traducción asignar valores separados en español ("Publicar" y "Entrada") sin que haya colisiones en el diccionario.
+Der statische Parser generiert zwei verschiedene Einträge in der `.pot`-Datei, sodass das Übersetzungsteam separate Werte im Deutschen („Veröffentlichen“ und „Beitrag“) zuweisen kann, ohne dass es zu Kollisionen im Wörterbuch kommt.
 
-### Pluralización dinámica: `_n()`
+### Dynamische Pluralbildung: `_n()`
 
-Un error frecuente entre desarrolladores es intentar manejar los plurales con una estructura condicional básica en PHP:
+Ein häufiger Fehler bei Entwicklern ist der Versuch, Plurale mit einer einfachen bedingten Struktur in PHP zu handhaben:
 
 ```php
-// INCORRECTO: No asumas que todos los idiomas tienen solo dos formas (1 o varios).
+// FALSCH: Gehe nicht davon aus, dass alle Sprachen nur zwei Formen haben (1 oder mehrere).
 if ( $count === 1 ) {
     $mensaje = sprintf( __( 'Tienes %d mensaje nuevo.', 'mi-gestor-avanzado' ), $count );
 } else {
@@ -178,168 +168,168 @@ if ( $count === 1 ) {
 
 ```
 
-Esta lógica condicional falla estrepitosamente a escala global. Mientras que el inglés o el español tienen dos formas plurales (singular para 1, plural para 0 o más de 1), otros idiomas tienen reglas drásticamente diferentes. El ruso tiene tres formas plurales basadas en la terminación numérica, el árabe tiene hasta seis formas, y el japonés no distingue entre singular y plural.
+Diese bedingte Logik scheitert auf globaler Ebene kläglich. Während das Englische, Spanische oder Deutsche zwei Pluralformen haben (Singular für 1, Plural für 0 oder mehr als 1), haben andere Sprachen drastisch unterschiedliche Regeln. Das Russische hat drei Pluralformen basierend auf der numerischen Endung, das Arabische hat bis zu sechs Formen und das Japanische unterscheidet überhaupt nicht zwischen Singular und Plural.
 
-Para delegar esta complejidad al motor de `gettext`, utilizamos la función `_n()`, la cual evalúa un número entero y determina qué cadena pasar al traductor basándose en las reglas gramaticales del idioma destino.
+Um diese Komplexität an die `gettext`-Engine zu delegieren, verwenden wir die Funktion `_n()`, die eine Ganzzahl auswertet und basierend auf den grammatikalischen Regeln der Zielsprache bestimmt, welche Zeichenkette an den Übersetzer übergeben wird.
 
 ```php
 function _n( $singular, $plural, $number, $domain = 'default' )
 
 ```
 
-#### Ejemplo de implementación correcta
+#### Beispiel für eine korrekte Implementierung
 
-Al igual que las cadenas con variables dinámicas, la función `_n()` retorna la plantilla de texto puro, la cual debe ser envuelta por `printf()` o `sprintf()` para inyectar el valor numérico:
+Ähnlich wie Zeichenketten mit dynamischen Variablen gibt die Funktion `_n()` die reine Textvorlage zurück, die von `printf()` oder `sprintf()` umschlossen werden muss, um den numerischen Wert einzufügen:
 
 ```php
 <?php
 $elementos_borrados = 4;
 
-// CORRECTO: Delegar la decisión de pluralización al motor i18n
+// RICHTIG: Die Entscheidung über die Pluralbildung an die i18n-Engine delegieren
 $mensaje = sprintf(
-    /* translators: %s: Número de elementos eliminados */
+    /* translators: %s: Anzahl der gelöschten Elemente */
     _n(
         'Se ha eliminado %s registro de la base de datos.', // Singular
         'Se han eliminado %s registros de la base de datos.', // Plural
-        $elementos_borrados,                                  // Evaluador
-        'mi-gestor-avanzado'                                  // Dominio
+        $elementos_borrados,                                  // Evaluator
+        'mi-gestor-avanzado'                                  // Domain
     ),
-    number_format_i18n( $elementos_borrados ) // Valor a inyectar (formateado según el idioma)
+    number_format_i18n( $elementos_borrados ) // Einzufügender Wert (entsprechend der Sprache formatiert)
 );
 
 echo esc_html( $mensaje );
 
 ```
 
-*Nota:* Observa el uso de `number_format_i18n()`. Cuando se inyectan números en la interfaz, es una buena práctica formatearlos con esta función nativa, ya que adapta los separadores de miles y decimales a la configuración regional del sitio (ej. `1,000.50` en inglés vs `1.000,50` en español europeo).
+\*Hinweis:\* Beachte die Verwendung von `number_format_i18n()`. Wenn Zahlen in die Benutzeroberfläche eingefügt werden, ist es eine gute Praxis, sie mit dieser nativen Funktion zu formatieren, da sie Tausender- und Dezimaltrennzeichen an die regionale Konfiguration der Website anpasst (z. B. `1,000.50` im Englischen vs. `1.000,50` im europäischen Spanisch oder Deutsch).
 
-### Combinando Contexto y Pluralización: `_nx()`
+### Kombination von Kontext und Pluralbildung: `_nx()`
 
-En interfaces complejas, es posible que necesites pluralización dinámica de un término que además posee múltiples significados (requiriendo contexto). Para esto existe `_nx()`, que fusiona ambos conceptos:
+In komplexen Benutzeroberflächen benötigst du möglicherweise eine dynamische Pluralbildung für einen Begriff, der zudem mehrere Bedeutungen hat (was Kontext erfordert). Hierfür gibt es `_nx()`, die beide Konzepte verschmilzt:
 
 ```php
 function _nx( $singular, $plural, $number, $context, $domain = 'default' )
 
 ```
 
-#### Matriz de funciones de internacionalización
+#### Matrix der Internationalisierungsfunktionen
 
-El siguiente esquema resume el uso de las funciones base según la necesidad específica del texto:
+Das folgende Schema fasst die Verwendung der Basisfunktionen basierend auf den spezifischen Anforderungen des Textes zusammen:
 
 ```text
-                      ¿Necesita Contexto de desambiguación?
-                              NO                  SÍ
+                      Benötigt Kontext zur Begriffsklärung?
+                               NEIN                 JA
                         ┌───────────────┐   ┌───────────────┐
-                     NO │ Retorno: __() │   │ Retorno: _x() │
- ¿Depende de un         │ Echo:   _e()  │   │ Echo:   _ex() │
- número dinámico?       └───────────────┘   └───────────────┘
+                     NEIN Rückgabe: __()│   │ Rückgabe: _x()│
+  Hängt von einer       │ Ausgabe:  _e()│   │ Ausgabe: _ex()│
+  dynamischen Zahl ab?  └───────────────┘   └───────────────┘
                         ┌───────────────┐   ┌───────────────┐
-                     SÍ │ Retorno: _n() │   │ Retorno: _nx()│
+                     JA │ Rückgabe: _n()│   │ Rückgabe:_nx()│
                         │ Echo: (N/A) * │   │ Echo: (N/A) * │
                         └───────────────┘   └───────────────┘
 
 ```
 
-** Las funciones de pluralización no tienen variantes directas de impresión (como `_ne()` que no existe), ya que por naturaleza casi siempre requieren estar anidadas dentro de un `printf()` para inyectar el número real que determinó el plural.*
+\* Die Pluralisierungsfunktionen haben keine direkten Ausgabe-Varianten (wie z. B. `_ne()`, das nicht existiert), da sie von Natur aus fast immer in einem `printf()` verschachtelt sein müssen, um die tatsächliche Zahl einzufügen, die den Plural bestimmt hat.\*
 
-## 15.3 Carga de dominios de texto
+## 15.3 Laden von Textdomains
 
-Utilizar las funciones de internacionalización vistas en las secciones anteriores (como `__()` o `_e()`) y definir un dominio de texto (*Text Domain*) es solo la mitad del proceso. Para que WordPress pueda devolver las cadenas traducidas, necesita saber en qué directorio físico se encuentran los catálogos compilados (los archivos `.mo`) que corresponden al idioma activo del sitio.
+Die Verwendung der in den vorherigen Abschnitten behandelten Internationalisierungsfunktionen (wie `__()` oder `_e()`) und die Definition einer Textdomain (*Text Domain*) ist nur die halbe Miete. Damit WordPress die übersetzten Zeichenketten zurückgeben kann, muss es wissen, in welchem physischen Verzeichnis sich die kompilierten Kataloge (die `.mo`-Dateien) befinden, die der aktiven Sprache der Website entsprechen.
 
-Este proceso de vinculación se denomina "carga del dominio de texto" y es un paso de configuración esencial en el ciclo de vida de un plugin.
+Dieser Verknüpfungsprozess wird als „Laden der Textdomain“ bezeichnet und ist ein wesentlicher Konfigurationsschritt im Lebenszyklus eines Plugins.
 
-### La función `load_plugin_textdomain()`
+### Die Funktion `load_plugin_textdomain()`
 
-La API de WordPress proporciona la función específica `load_plugin_textdomain()` para registrar la ruta donde residen tus traducciones.
+Die WordPress-API stellt die spezifische Funktion `load_plugin_textdomain()` bereit, um den Pfad zu registrieren, in dem sich deine Übersetzungen befinden.
 
 ```php
 load_plugin_textdomain( $domain, $deprecated, $plugin_rel_path );
 
 ```
 
-Sus parámetros son:
+Ihre Parameter sind:
 
-1. **`$domain`** *(string)*: El identificador único de tu plugin (el mismo que usas en todas las funciones de traducción y en la cabecera `Text Domain`).
-2. **`$deprecated`** *(false)*: Un argumento heredado de versiones antiguas de WordPress. Siempre debe pasarse como `false`.
-3. **`$plugin_rel_path`** *(string)*: La ruta relativa desde el directorio `wp-content/plugins` hasta la carpeta de traducciones de tu plugin.
+1. **`$domain`** *(string)*: Der eindeutige Bezeichner deines Plugins (derselbe, den du in allen Übersetzungsfunktionen und im Header unter `Text Domain` verwendest).
+2. **`$deprecated`** *(false)*: Ein veraltetes Argument aus älteren WordPress-Versionen. Muss immer als `false` übergeben werden.
+3. **`$plugin_rel_path`** *(string)*: Der relative Pfad vom Verzeichnis `wp-content/plugins` zum Übersetzungsordner deines Plugins.
 
-### Arquitectura de directorios recomendada
+### Empfohlene Verzeichnisarchitektur
 
-El estándar de la comunidad dicta que los archivos de traducción deben almacenarse en un subdirectorio llamado `/languages` (o en su defecto, `/lang`) dentro de la carpeta raíz del plugin.
+Der Community-Standard schreibt vor, dass Übersetzungsdateien in einem Unterverzeichnis namens `/languages` (oder alternativ `/lang`) im Stammordner des Plugins gespeichert werden sollten.
 
 ```text
 wp-content/plugins/mi-gestor-avanzado/
-├── mi-gestor-avanzado.php        (Archivo principal)
+├── mi-gestor-avanzado.php        (Hauptdatei)
 ├── readme.txt
 ├── includes/
-└── languages/                    (Directorio de traducciones)
-    ├── mi-gestor-avanzado.pot    (Plantilla base)
-    ├── mi-gestor-avanzado-es_ES.po (Traducción al español - editable)
-    └── mi-gestor-avanzado-es_ES.mo (Traducción al español - compilada)
+└── languages/                    (Übersetzungsverzeichnis)
+    ├── mi-gestor-avanzado.pot    (Basisvorlage)
+    ├── mi-gestor-avanzado-es_ES.po (Spanische Übersetzung - editierbar)
+    └── mi-gestor-avanzado-es_ES.mo (Spanische Übersetzung - kompiliert)
 
 ```
 
-*Nota sobre la nomenclatura:* Los archivos `.mo` y `.po` deben seguir estrictamente el patrón `dominio-locale.mo`. Por ejemplo, para el español de España será `mi-gestor-avanzado-es_ES.mo`, y para el francés `mi-gestor-avanzado-fr_FR.mo`.
+\*Hinweis zur Nomenklatur:\* Die `.mo`- und `.po`-Dateien müssen strikt dem Muster `domain-locale.mo` folgen. Für Deutsch (Deutschland) wäre dies beispielsweise `mi-gestor-avanzado-de_DE.mo` und für Französisch `mi-gestor-avanzado-fr_FR.mo`.
 
-### El Hook correcto: `plugins_loaded`
+### Der korrekte Hook: `plugins_loaded`
 
-La carga del dominio de texto no debe ejecutarse de forma aislada en el archivo principal del plugin. Debe engancharse en el momento preciso del ciclo de carga de WordPress: cuando todos los plugins han sido detectados pero antes de que se procese la interfaz de usuario o se envíen cabeceras.
+Das Laden der Textdomain sollte nicht isoliert in der Hauptdatei des Plugins ausgeführt werden. Es muss zum exakten Zeitpunkt im WordPress-Ladezyklus eingehängt werden: wenn alle Plugins erkannt wurden, aber bevor die Benutzeroberfläche verarbeitet oder Header gesendet werden.
 
-El hook adecuado para esto es **`plugins_loaded`**.
+Der geeignete Hook hierfür ist **`plugins_loaded`**.
 
-#### Ejemplo de implementación estándar
+#### Beispiel für eine Standardimplementierung
 
-Añade este bloque de código en tu archivo principal (o en la clase inicializadora de tu arquitectura):
+Füge diesen Codeblock in deine Hauptdatei (oder in die Initialisierungsklasse deiner Architektur) ein:
 
 ```php
 <?php
 /**
- * Inicializa la carga de traducciones del plugin
+ * Initialisiert das Laden der Plugin-Übersetzungen
  */
 function mga_cargar_textdomain() {
-    // Genera la ruta relativa dinámicamente
+    // Generiert den relativen Pfad dynamisch
     $ruta_relativa = dirname( plugin_basename( __FILE__ ) ) . '/languages';
 
-    // Carga los archivos .mo
+    // Lädt die .mo-Dateien
     load_plugin_textdomain(
         'mi-gestor-avanzado', 
         false, 
         $ruta_relativa 
     );
 }
-// Engancha la función en el momento óptimo
+// Hängt die Funktion zum optimalen Zeitpunkt ein
 add_action( 'plugins_loaded', 'mga_cargar_textdomain' );
 
 ```
 
-En este snippet, `plugin_basename( __FILE__ )` obtiene la ruta del archivo actual relativa al directorio de plugins (ej. `mi-gestor-avanzado/mi-gestor-avanzado.php`), y `dirname()` extrae solo la carpeta (`mi-gestor-avanzado`). Al concatenar `/languages`, construimos la ruta relativa exacta que requiere la función.
+In diesem Snippet, `plugin_basename( __FILE__ )` ermittelt den Pfad der aktuellen Datei relativ zum Plugins-Verzeichnis (z. B. `mi-gestor-avanzado/mi-gestor-avanzado.php`), und `dirname()` extrahiert nur den Ordner (`mi-gestor-avanzado`). Durch das Anhängen von `/languages` konstruieren wir den exakten relativen Pfad, den die Funktion benötigt.
 
-### JIT (Just-In-Time) y el Repositorio Oficial
+### JIT (Just-In-Time) und das offizielle Repository
 
-Es crucial entender cómo ha evolucionado WordPress. Desde la versión 4.6, el núcleo introdujo las traducciones *Just-In-Time* (JIT).
+Es ist wichtig zu verstehen, wie sich WordPress entwickelt hat. Seit Version 4.6 hat der Core *Just-In-Time*-Übersetzungen (JIT) eingeführt.
 
-Si tu plugin es público y está alojado en el repositorio oficial de WordPress.org, la comunidad lo traducirá a través de la plataforma colaborativa `translate.wordpress.org` (GlotPress). En este escenario, **WordPress descargará e instalará los paquetes de idioma automáticamente** en el directorio global seguro (`wp-content/languages/plugins/`) y los cargará en memoria solo cuando se encuentre la primera función de traducción.
+Wenn dein Plugin öffentlich ist und im offiziellen Repository auf WordPress.org gehostet wird, übersetzt es die Community über die kollaborative Plattform `translate.wordpress.org` (GlotPress). In diesem Szenario **lädt und installiert WordPress die Sprachpakete automatisch** im sicheren globalen Verzeichnis (`wp-content/languages/plugins/`) und lädt sie erst in den Speicher, wenn die erste Übersetzungsfunktion aufgerufen wird.
 
-Por lo tanto, si tu plugin reside en el repositorio oficial, la llamada a `load_plugin_textdomain()` se vuelve técnicamente redundante y opcional. Sin embargo, sigue siendo una práctica obligatoria si:
+Wenn sich dein Plugin also im offiziellen Repository befindet, wird der Aufruf von `load_plugin_textdomain()` technisch redundant und optional. Es bleibt jedoch eine obligatorische Praxis, wenn:
 
-1. Desarrollas un **plugin premium o privado** que no está en el repositorio de WP.org.
-2. Quieres proporcionar **traducciones por defecto** (fallback) empaquetadas directamente en el archivo `.zip` de tu plugin.
-3. Estás desarrollando en un entorno local y necesitas probar tus propios archivos `.mo` antes de su distribución.
+1. Du ein **Premium- oder privates Plugin** entwickelst, das nicht im WP.org-Repository vorhanden ist.
+2. Du **Standardübersetzungen** (Fallback) bereitstellen möchtest, die direkt in der `.zip`-Datei deines Plugins verpackt sind.
+3. Du in einer lokalen Umgebung entwickelst und deine eigenen `.mo`-Dateien vor der Verteilung testen musst.
 
-El orden de prioridad del núcleo siempre favorecerá las traducciones alojadas en `wp-content/languages/plugins/` (gestionadas por WP) sobre las que se encuentran en el directorio `/languages/` propio del plugin (cargadas vía código), garantizando que los usuarios siempre reciban las actualizaciones idiomáticas más recientes.
+Die Prioritätsreihenfolge des Cores bevorzugt immer Übersetzungen, die in `wp-content/languages/plugins/` abgelegt sind (von WP verwaltet), gegenüber denen im plugin-eigenen Verzeichnis `/languages/` (über Code geladen). Dies stellt sicher, dass die Benutzer immer die neuesten Sprach-Updates erhalten.
 
-## 15.4 Generación de archivos POT
+## 15.4 Generierung von POT-Dateien
 
-Una vez que todo el código fuente del plugin ha sido instrumentado con las funciones de internacionalización (`__()`, `_e()`, `_n()`, etc.), el siguiente paso lógico es extraer todas esas cadenas y consolidarlas en un catálogo unificado. Este catálogo maestro es el archivo **POT** (Portable Object Template).
+Sobald der gesamte Quellcode des Plugins mit den Internationalisierungsfunktionen (`__()`, `_e()`, `_n()` etc.) ausgestattet wurde, besteht der nächste logische Schritt darin, all diese Zeichenketten zu extrahieren und in einem einheitlichen Katalog zusammenzuführen. Dieser Master-Katalog ist die **POT**-Datei (Portable Object Template).
 
-El archivo POT no contiene traducciones; actúa exclusivamente como la plantilla base. Los traductores (o herramientas como Poedit y GlotPress) utilizan este archivo para generar los archivos `.po` (Portable Object, donde se guardan las traducciones legibles por humanos) y los archivos `.mo` (Machine Object, los binarios compilados que lee WordPress).
+Die POT-Datei contiene keine Übersetzungen; sie dient ausschließlich als Basisvorlage. Übersetzer (oder Werkzeuge wie Poedit und GlotPress) verwenden diese Datei, um die `.po`-Dateien (Portable Object, in denen die für Menschen lesbaren Übersetzungen gespeichert sind) und die `.mo`-Dateien (Machine Object, die von WordPress gelesenen kompilierten Binärdateien) zu generieren.
 
-### Anatomía de un archivo POT
+### Anatomie einer POT-Datei
 
-Un archivo POT es esencialmente un archivo de texto plano estructurado. Comienza con una cabecera de metadatos (información del plugin, equipo de traducción, codificación) seguida de una lista de todas las cadenas extraídas.
+Eine POT-Datei ist im Wesentlichen eine strukturierte Klartextdatei. Sie beginnt mit einem Metadaten-Header (Plugin-Informationen, Übersetzungsteam, Kodierung), gefolgt von einer Liste aller extrahierten Zeichenketten.
 
 ```text
-# Cabecera de metadatos
+# Metadaten-Header
 msgid ""
 msgstr ""
 "Project-Id-Version: Mi Gestor Avanzado 1.0.0\n"
@@ -349,18 +339,18 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-# Entrada estándar
+# Standard-Eintrag
 #: includes/class-mga-admin.php:45
 msgid "Configuración Avanzada del Post"
 msgstr ""
 
-# Entrada con contexto
+# Eintrag mit Kontext
 #: includes/class-mga-post-types.php:112
 msgctxt "Acción de publicar en el formulario"
 msgid "Post"
 msgstr ""
 
-# Entrada con pluralización
+# Eintrag mit Pluralbildung
 #: includes/class-mga-database.php:88
 msgid "Se ha eliminado %s registro de la base de datos."
 msgid_plural "Se han eliminado %s registros de la base de datos."
@@ -369,48 +359,48 @@ msgstr[1] ""
 
 ```
 
-*Nota:* Las referencias de archivo (`#: includes/...`) son vitales para los traductores, ya que les permiten buscar la línea de código exacta si necesitan contexto adicional sobre cómo se utiliza una cadena en la interfaz.
+\*Hinweis:\* Die Dateiverweise (`#: includes/...`) sind für Übersetzer von entscheidender Bedeutung, da sie es ihnen ermöglichen, die exakte Codezeile zu finden, wenn sie zusätzlichen Kontext zur Verwendung einer Zeichenkette in der Benutzeroberfläche benötigen.
 
-### Extracción profesional con WP-CLI
+### Professionelle Extraktion mit WP-CLI
 
-Históricamente, los desarrolladores dependían de configurar analizadores complejos en herramientas de escritorio como Poedit para buscar las funciones de WordPress. Hoy en día, el estándar absoluto en el ecosistema profesional es utilizar **WP-CLI** (la interfaz de línea de comandos de WordPress), que incluye un comando nativo para analizar código PHP y generar archivos POT con precisión absoluta.
+Historisch gesehen waren Entwickler darauf angewiesen, komplexe Parser in Desktop-Tools wie Poedit zu konfigurieren, um nach WordPress-Funktionen zu suchen. Heutzutage ist der absolute Standard im professionellen Ökosystem die Verwendung von **WP-CLI** (die Befehlszeilenschnittstelle von WordPress), die einen nativen Befehl zum Analysieren von PHP-Code und zur Generierung von POT-Dateien mit absoluter Präzision enthält.
 
-El comando base es `wp i18n make-pot`.
+Der Basisbefehl lautet `wp i18n make-pot`.
 
-#### Ejecución básica
+#### Einfache Ausführung
 
-Si te encuentras en la raíz del directorio de tu plugin, la ejecución más sencilla escanea toda la carpeta y genera el archivo en el directorio `/languages`:
+Wenn du dich im Stammverzeichnis deines Plugins befindest, scannt die einfachste Ausführung den gesamten Ordner und generiert die Datei im Verzeichnis `/languages`:
 
 ```bash
 wp i18n make-pot . languages/mi-gestor-avanzado.pot
 
 ```
 
-#### Ejecución avanzada (Exclusiones y Cabeceras)
+#### Fortgeschrittene Ausführung (Ausschlüsse und Header)
 
-En un entorno de desarrollo moderno, tu plugin probablemente contenga directorios que no deberían ser escaneados por el motor de i18n (por ejemplo, dependencias de Composer, paquetes de Node, o tests unitarios). Escanear estos directorios no solo ralentiza el proceso, sino que contamina tu archivo POT con cadenas de librerías de terceros.
+In einer modernen Entwicklungsumgebung enthält dein Plugin wahrscheinlich Verzeichnisse, die nicht von der i18n-Engine gescannt werden sollten (z. B. Composer-Abhängigkeiten, Node-Pakete oder Unit-Tests). Das Scannen dieser Verzeichnisse verlangsamt nicht nur den Prozess, sondern verunreinigt deine POT-Datei mit Zeichenketten aus Bibliotheken von Drittanbietern.
 
-Puedes optimizar la generación utilizando banderas (*flags*):
+Du kannst die Generierung mithilfe von Flags optimieren:
 
 ```bash
 wp i18n make-pot . languages/mi-gestor-avanzado.pot \
     --slug="mi-gestor-avanzado" \
     --domain="mi-gestor-avanzado" \
     --exclude="vendor,node_modules,tests,.github" \
-    --headers='{"Report-Msgid-Bugs-To":"https://github.com/tu-usuario/mi-gestor-avanzado/issues"}'
+    --headers='{"Report-Msgid-Bugs-To":"https://github.com/dein-benutzername/mi-gestor-avanzado/issues"}'
 
 ```
 
-* `--slug`: Define el slug del plugin.
-* `--domain`: Fuerza al extractor a recolectar solo las cadenas que coincidan con este text domain, ignorando errores tipográficos en el código donde pudieras haber olvidado el dominio.
-* `--exclude`: Una lista separada por comas de directorios a ignorar.
-* `--headers`: Inyecta o sobrescribe metadatos JSON directamente en la cabecera del POT.
+* `--slug`: Definiert den Slug des Plugins.
+* `--domain`: Zwingt den Extractor, nur Zeichenketten zu erfassen, die mit dieser Textdomain übereinstimmen, und ignoriert Tippfehler im Code, bei denen du die Domain vergessen haben könntest.
+* `--exclude`: Eine kommagetrennte Liste der zu ignorierenden Verzeichnisse.
+* `--headers`: Injiziert oder überschreibt JSON-Metadaten direkt im Header der POT-Datei.
 
-### Alternativas de automatización
+### Automatisierungsalternativen
 
-Si bien ejecutar el comando WP-CLI manualmente es efectivo, en arquitecturas profesionales la generación del POT debe formar parte de la canalización de compilación (*build pipeline*).
+Obwohl die manuelle Ausführung des WP-CLI-Befehls effektiv ist, sollte die Generierung der POT-Datei in professionellen Architekturen Teil der Build-Pipeline (*build pipeline*) sein.
 
-Si utilizas Node.js para compilar tus assets (CSS/JS), es una práctica estándar incluir la llamada a WP-CLI o a utilidades basadas en JavaScript (como `@wordpress/i18n` o tareas de `gulp-wp-pot`) dentro del archivo `package.json`:
+Wenn du Node.js verwendest, um deine Assets (CSS/JS) zu kompilieren, ist es Standardpraxis, den Aufruf von WP-CLI oder JavaScript-basierten Dienstprogrammen (wie `@wordpress/i18n` oder `gulp-wp-pot`-Tasks) in die Datei `package.json` aufzunehmen:
 
 ```json
 {
@@ -422,13 +412,13 @@ Si utilizas Node.js para compilar tus assets (CSS/JS), es una práctica estánda
 
 ```
 
-Al automatizar este paso en los scripts de compilación, garantizas que cada vez que empaquetas una nueva versión (*release*) del plugin, el archivo POT se regenera, evitando que los traductores trabajen con plantillas desactualizadas o que aparezcan cadenas "huérfanas" en la interfaz.
+Indem du diesen Schritt in den Build-Skripten automatisierst, stellst du sicher, dass die POT-Datei bei jeder Paketierung einer neuen Version (*Release*) des Plugins neu generiert wird. Dies verhindert, dass Übersetzer mit veralteten Vorlagen arbeiten oder dass „verwaiste“ Zeichenketten in der Benutzeroberfläche erscheinen.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-La internacionalización (i18n) es el puente que permite a tu plugin alcanzar una audiencia global sin requerir múltiples bases de código. En este capítulo hemos explorado el ciclo de vida completo de la localización en WordPress:
+Die Internationalisierung (i18n) ist die Brücke, die es deinem Plugin ermöglicht, ein globales Publikum zu erreichen, ohne dass mehrere Codebasen erforderlich sind. In diesem Kapitel haben wir den vollständigen Lokalisierungs-Lebenszyklus in WordPress untersucht:
 
-1. Comenzamos aislando las cadenas estáticas mediante las **funciones de traducción básicas** (`__()`, `_e()`), entendiendo la importancia de no concatenar variables de forma dinámica, sino utilizar marcadores de posición (`sprintf()`).
-2. Elevamos la precisión semántica aplicando **contexto y pluralización dinámica** (`_x()`, `_n()`), delegando la compleja lógica gramatical de otros idiomas al motor de WordPress en lugar de usar condicionales en PHP.
-3. Conectamos el código con los archivos físicos mediante la **carga del dominio de texto** con `load_plugin_textdomain()`, comprendiendo el comportamiento *Just-In-Time* y las prioridades de directorio entre el repositorio oficial y las traducciones locales.
-4. Finalmente, consolidamos el proceso a través de la **generación de archivos POT**, utilizando herramientas estándar de la industria como WP-CLI para crear plantillas limpias y listas para ser entregadas a los traductores.
+1. Wir begannen mit der Isolierung statischer Zeichenketten über die **grundlegenden Übersetzungsfunktionen** (`__()`, `_e()`) und haben verstanden, wie wichtig es ist, Variablen nicht dynamisch zu verketten, sondern Platzhalter zu verwenden (`sprintf()`).
+2. Wir haben die semantische Präzision durch die Anwendung von **Kontext und dynamischer Pluralbildung** (`_x()`, `_n()`) erhöht und die komplexe grammatikalische Logik anderer Sprachen an die WordPress-Engine delegiert, anstatt Bedingungen in PHP zu verwenden.
+3. Wir haben den Code mit den physischen Dateien verknüpft, indem wir **die Textdomain geladen** haben mit `load_plugin_textdomain()`. Dabei haben wir das *Just-In-Time*-Verhalten und die Verzeichnis-Prioritäten zwischen dem offiziellen Repository und den lokalen Übersetzungen verstanden.
+4. Schließlich haben wir den Prozess durch die **Generierung von POT-Dateien** gefestigt, indem wir branchenübliche Tools wie WP-CLI verwendet haben, um saubere und für Übersetzer bereite Vorlagen zu erstellen.

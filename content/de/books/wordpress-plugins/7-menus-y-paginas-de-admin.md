@@ -1,40 +1,40 @@
-La creación de una interfaz en el panel de administración es el hito más visible al desarrollar un plugin. En este capítulo, adoptaremos los estándares estrictos del núcleo de WordPress para construir experiencias profesionales. Aprenderemos a registrar menús y submenús mediante la API nativa, asegurando una correcta jerarquía y un riguroso control de acceso basado en roles. Asimismo, dominaremos el encolado condicional de scripts y estilos para proteger el rendimiento global del backend. Finalmente, estructuraremos nuestras vistas empleando las clases CSS nativas del Core, garantizando una experiencia de usuario (UX) coherente, accesible y adaptable.
+Das Erstellen einer Benutzeroberfläche im Administrationsbereich ist der sichtbarste Meilenstein bei der Entwicklung eines Plugins. In diesem Kapitel werden wir die strengen Standards des WordPress-Cores übernehmen, um professionelle Benutzererfahrungen zu gestalten. Wir lernen, Menüs und Submenüs über die native API zu registrieren und dabei eine korrekte Hierarchie sowie eine strikte, auf Berechtigungen (Capabilities) basierende Zugriffskontrolle sicherzustellen. Zudem werden wir das bedingte Laden (Enqueueing) von Scripts und Styles beherrschen, um die Gesamt-Performance des Backends zu schonen. Schließlich strukturieren wir unsere Views mithilfe der nativen CSS-Klassen des Cores, was eine konsistente, barrierefreie und anpassungsfähige User Experience (UX) garantiert.
 
-## 7.1 Agregar menús principales
+## 7.1 Hauptmenüs hinzufügen
 
-El ecosistema de administración de WordPress expone un flujo de inicialización específico para la interfaz de usuario del backend. La inserción de un elemento en la raíz del menú de navegación lateral del panel de control se gestiona de manera centralizada mediante el hook de acción `admin_menu`. Durante esta fase de ejecución, WordPress instancia y puebla las variables globales `$menu` y `$submenu`, que son arrays bidimensionales encargados de estructurar el árbol de navegación interno.
+Das Administrations-Ökosystem von WordPress stellt einen spezifischen Initialisierungsfluss für die Benutzeroberfläche des Backends bereit. Das Einfügen eines Elements in die Wurzel des seitlichen Navigationsmenüs im Dashboard wird zentral über den Action-Hook `admin_menu` gesteuert. Während dieser Ausführungsphase instanziiert und befüllt WordPress die globalen Variablen `$menu` und `$submenu`, bei denen es sich um zweidimensionale Arrays handelt, die für die Strukturierung des internen Navigationsbaums zuständig sind.
 
-Modificar estas variables directamente es una práctica desaconsejada que rompe la compatibilidad hacia adelante. En su lugar, el Core proporciona la API de Páginas de Administración, cuyo componente principal para menús raíz es la función `add_menu_page()`.
+Es wird davon abgeraten, diese Variablen direkt zu manipulieren, da dies die zukünftige Kompatibilität beeinträchtigt. Stattdessen stellt der Core die Administration Pages API bereit, deren Hauptkomponente für Hauptmenüs die Funktion `add_menu_page()` ist.
 
-### Flujo de Ejecución e Inicialización
+### Ausführungs- und Initialisierungsfluss
 
-El siguiente esquema ilustra el ciclo de vida de una petición en el backend y el punto exacto en el que se deben registrar los menús personalizados:
+Das folgende Diagramm veranschaulicht den Lebenszyklus einer Anfrage im Backend und den genauen Zeitpunkt, an dem benutzerdefinierte Menüs registriert werden müssen:
 
 ```text
- Petición entrante a /wp-admin/
+ Eingehende Anfrage an /wp-admin/
                |
                v
-    [ plugins_loaded ]  --> Carga de archivos principales del plugin
+    [ plugins_loaded ]  --> Laden der Hauptdateien des Plugins
                |
                v
-      [ init ]          --> Inicialización general de WordPress
+      [ init ]          --> Allgemeine Initialisierung von WordPress
                |
                v
-   [ admin_menu ]       --> Ejecución de add_menu_page() y add_submenu_page()
+    [ admin_menu ]       --> Ausführung von add_menu_page() und add_submenu_page()
                |
                v
- [ current_screen ]     --> El core determina la pantalla actual del admin
+  [ current_screen ]     --> Der Core ermittelt den aktuellen Admin-Bildschirm
                |
                v
-  Renderizado HTML      --> Ejecución del Callback asignado al menú
+   HTML-Rendering       --> Ausführung des dem Menü zugewiesenen Callbacks
 
 ```
 
-Registrar un menú fuera del gancho `admin_menu` (por ejemplo, en `init` o `plugins_loaded`) causará fallos de consistencia, provocando que las funciones de verificación de capacidades fallen o que el menú no se renderice debido a que las estructuras globales aún no han sido inicializadas.
+Das Registrieren eines Menüs außerhalb des Hooks `admin_menu` (zum Beispiel in `init` oder `plugins_loaded`) führt zu Konsistenzproblemen. Dies hat zur Folge, dass die Berechtigungsprüfungen fehlschlagen oder das Menü nicht gerendert wird, da die globalen Strukturen zu diesem Zeitpunkt noch nicht initialisiert wurden.
 
-### Anatomía de `add_menu_page()`
+### Anatomie von `add_menu_page()`
 
-La función se define en el núcleo de WordPress (`wp-admin/includes/plugin.php`) bajo la siguiente firma técnica:
+Die Funktion wird im Core von WordPress (`wp-admin/includes/plugin.php`) unter der folgenden Signatur definiert:
 
 ```php
 function add_menu_page(
@@ -49,47 +49,47 @@ function add_menu_page(
 
 ```
 
-#### Análisis Quirúrgico de los Parámetros
+#### Detaillierte Analyse der Parameter
 
-1. **`$page_title` (string):** El texto que se introducirá dentro de la etiqueta `<title>` del documento HTML cuando el usuario navegue a esta página de administración. Es crítico para la accesibilidad y el SEO interno.
-2. **`$menu_title` (string):** El texto legible que se mostrará directamente en el menú de navegación izquierdo del panel de control de WordPress.
-3. **`$capability` (string):** El permiso o rol mínimo requerido para que este menú sea visible y accesible para un usuario. WordPress realiza una comprobación automática mediante `current_user_can()`. Si el usuario no posee esta capacidad, el menú se oculta automáticamente y los intentos de acceso directo devuelven un error HTTP 403 (No autorizado).
-4. **`$menu_slug` (string):** El identificador único para este menú. Debe ser una cadena sanitizada (caracteres alfanuméricos, guiones o guiones bajos). Si no se proporciona un parámetro `$callback`, este slug debe coincidir con el nombre de un archivo PHP dentro del plugin, aunque la arquitectura limpia dicta que se utilice un slug semántico y se maneje el renderizado mediante un callback explícito.
-5. **`$callback` (callable):** La función o método de clase encargado de renderizar la interfaz HTML de la página de administración.
-6. **`$icon_url` (string):** Define el aspecto visual del icono del menú. Admite tres variantes:
+1. **`$page_title` (string):** Der Text, der in das `<title>`-Tag des HTML-Dokuments eingefügt wird, wenn der Benutzer auf diese Administrationsseite navigiert. Dies ist entscheidend für die Barrierefreiheit und das interne SEO.
+2. **`$menu_title` (string):** Der lesbare Text, der direkt im linken Navigationsmenü des WordPress-Dashboards angezeigt wird.
+3. **`$capability` (string):** Die Berechtigung oder die Mindestrolle, die erforderlich ist, damit dieses Menü für einen Benutzer sichtbar und zugänglich ist. WordPress führt eine automatische Überprüfung mittels `current_user_can()` durch. Wenn der Benutzer diese Berechtigung nicht besitzt, wird das Menü automatisch ausgeblendet, und Versuche des direkten Zugriffs geben einen HTTP-Fehler 403 (Nicht autorisiert) zurück.
+4. **`$menu_slug` (string):** Die eindeutige Kennung für dieses Menü. Es sollte ein bereinigter String sein (alphanumerische Zeichen, Bindestriche oder Unterstriche). Wenn kein `$callback`-Parameter angegeben ist, muss dieser Slug mit dem Namen einer PHP-Datei innerhalb des Plugins übereinstimmen. Eine saubere Architektur verlangt jedoch die Verwendung eines semantischen Slugs und die Handhabung des Renderings über einen expliziten Callback.
+5. **`$callback` (callable):** Die Funktion oder Klassenmethode, die für das Rendern der HTML-Oberfläche der Administrationsseite zuständig ist.
+6. **`$icon_url` (string):** Definiert das visuelle Erscheinungsbild des Menüsymbols. Unterstützt drei Varianten:
 
-* El nombre de una clase de Dashicons (ej. `'dashicons-admin-generic'`).
-* Una URL absoluta hacia una imagen rasterizada o SVG.
-* Una cadena codificada en Base64 con un esquema de datos SVG (Data URI), idóneo para evitar peticiones HTTP adicionales.
+* Der Name einer Dashicons-Klasse (z. B. `'dashicons-admin-generic'`).
+* Eine absolute URL zu einem Rasterbild oder einer SVG-Datei.
+* Ein Base64-codierter String mit einem SVG-Datenschema (Data-URI), ideal zur Vermeidung zusätzlicher HTTP-Anfragen.
 
-1. **`$position` (int|float):** El orden numérico en el que aparecerá el menú dentro de la barra lateral. WordPress utiliza un sistema de ordenación basado en enteros de menor a mayor.
+7. **`$position` (int|float):** Die numerische Reihenfolge, in der das Menü in der Seitenleiste erscheint. WordPress verwendet ein Sortiersystem, das auf Ganzzahlen von klein nach groß basiert.
 
-#### Valores de Posición Estándar del Core
+#### Standard-Positionsdaten des Cores
 
-Para evitar colisiones con elementos nativos, es imprescindible comprender la distribución numérica del array `$menu`:
+Um Kollisionen mit nativen Elementen zu vermeiden, ist es unerlässlich, die numerische Verteilung des `$menu`-Arrays zu verstehen:
 
-| Posición | Elemento del Menú Nativo |
+| Position | Natives Menüelement |
 | --- | --- |
-| **2** | Escritorio (Dashboard) |
-| **4** | *Primer separador de la barra* |
-| **5** | Entradas (Posts) |
-| **10** | Medios (Media) |
-| **15** | Enlaces (Links - Obsoleto) |
-| **20** | Páginas (Pages) |
-| **25** | Comentarios (Comments) |
-| **59** | *Segundo separador de la barra* |
-| **60** | Apariencia (Appearance) |
+| **2** | Dashboard |
+| **4** | *Erster Trenner der Leiste* |
+| **5** | Beiträge (Posts) |
+| **10** | Medien (Media) |
+| **15** | Links (Links - Veraltet) |
+| **20** | Seiten (Pages) |
+| **25** | Kommentare (Comments) |
+| **59** | *Zweiter Trenner der Leiste* |
+| **60** | Design (Appearance) |
 | **65** | Plugins |
-| **70** | Usuarios (Users) |
-| **75** | Herramientas (Tools) |
-| **80** | Ajustes (Settings) |
-| **99** | *Tercer separador de la barra* |
+| **70** | Benutzer (Users) |
+| **75** | Werkzeuge (Tools) |
+| **80** | Einstellungen (Settings) |
+| **99** | *Dritter Trenner der Leiste* |
 
-Si dos plugins registran un menú en la misma posición exacta utilizando valores enteros, el último en cargarse sobrescribirá al anterior en la variable global, ocultándolo del panel. Para mitigar este riesgo, la API permite el uso de números flotantes decimales (por ejemplo, `25.32`), reduciendo drásticamente la probabilidad de colisión.
+Wenn zwei Plugins ein Menü an genau derselben Position unter Verwendung von Ganzzahlwerten registrieren, überschreibt das zuletzt geladene Plugin das vorherige in der globalen Variable und blendet es im Panel aus. Um dieses Risiko zu minimieren, erlaubt die API die Verwendung von Dezimalzahlen (zum Beispiel `25.32`), was die Wahrscheinlichkeit einer Kollision drastisch verringert.
 
-### Implementación Orientada a Objetos Bajo Estándares Estrictos
+### Objektorientierte Implementierung unter strengen Standards
 
-A continuación se detalla una implementación robusta utilizando Tipado Estricto (PHP 8.0+) y una estructura encapsulada en una clase controladora dentro de la arquitectura de un plugin.
+Im Folgenden wird eine robuste Implementierung unter Verwendung von striktem Typdesign (PHP 8.0+) und einer in einer Controller-Klasse gekapselten Struktur innerhalb der Plugin-Architektur beschrieben.
 
 ```php
 <?php
@@ -98,17 +98,17 @@ declare(strict_types=1);
 namespace CustomPlugin\Admin;
 
 /**
- * Clase encargada de la gestión del menú principal en el área de administración.
+ * Klasse zur Verwaltung des Hauptmenüs im Administrationsbereich.
  */
 class AdminMenuController 
 {
     /**
-     * @var string Identificador único del menú.
+     * @var string Eindeutige Kennung des Menüs.
      */
     private const MENU_SLUG = 'custom-plugin-dashboard';
 
     /**
-     * Inicializa los ganchos de WordPress.
+     * Initialisiert die WordPress-Hooks.
      */
     public function register(): void 
     {
@@ -116,11 +116,11 @@ class AdminMenuController
     }
 
     /**
-     * Registra el menú principal utilizando la API nativa de WordPress.
+     * Registriert das Hauptmenü über die native API von WordPress.
      */
     public function addMainMenuPage(): void 
     {
-        // Icono personalizado codificado en SVG para evitar peticiones HTTP
+        // Benutzerdefiniertes SVG-Icon zur Vermeidung von HTTP-Anfragen
         $customIcon = 'data:image/svg+xml;base64,' . base64_encode(
             '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23a7aaad">' .
             '<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/>' .
@@ -128,39 +128,39 @@ class AdminMenuController
         );
 
         add_menu_page(
-            __('Panel de Control del Plugin', 'custom-plugin'), // Page Title
-            __('Mi Plugin', 'custom-plugin'),                  // Menu Title
-            'manage_options',                                  // Capability requerida
-            self::MENU_SLUG,                                   // Menu Slug
-            [$this, 'renderAdminPage'],                        // Callback de renderizado
-            $customIcon,                                       // URL o String del Icono
-            26.5                                               // Posición (Justo debajo de Comentarios)
+            __('Plugin-Dashboard', 'custom-plugin'),             // Page Title
+            __('Mein Plugin', 'custom-plugin'),                  // Menu Title
+            'manage_options',                                    // Erforderliche Capability
+            self::MENU_SLUG,                                     // Menu Slug
+            [$this, 'renderAdminPage'],                          // Render-Callback
+            $customIcon,                                         // Icon-URL oder String
+            26.5                                                 // Position (Direkt unter Kommentaren)
         );
     }
 
     /**
-     * Callback encargado de renderizar la interfaz de usuario en el panel.
-     * * Garantiza la seguridad estructural mediante la verificación implícita
-     * de capacidades antes de realizar operaciones de salida de datos.
+     * Callback, der für das Rendern der Benutzeroberfläche im Panel zuständig ist.
+     * * Garantiert die strukturelle Sicherheit durch implizite Prüfung
+     * der Capabilities vor jeder Datenausgabe.
      */
     public function renderAdminPage(): void 
     {
-        // Doble control de seguridad pasiva
+        // Zweifache passive Sicherheitsüberprüfung
         if (!current_user_can('manage_options')) {
-            wp_die(__('No tiene permisos suficientes para acceder a esta página.', 'custom-plugin'), '', [
+            wp_die(__('Du hast nicht genügend Berechtigungen, um auf diese Seite zuzugreifen.', 'custom-plugin'), '', [
                 'response' => 403
             ]);
         }
 
         ?>
         <div class="wrap">
-            <h1><?php echo esc_html(__('Configuración General de Mi Plugin', 'custom-plugin')); ?></h1>
+            <h1><?php echo esc_html(__('Allgemeine Einstellungen meines Plugins', 'custom-plugin')); ?></h1>
             <div class="notice notice-info">
-                <p><?php echo esc_html(__('Bienvenido al entorno de configuración centralizado.', 'custom-plugin')); ?></p>
+                <p><?php echo esc_html(__('Willkommen in der zentralen Konfigurationsumgebung.', 'custom-plugin')); ?></p>
             </div>
             <div class="card">
-                <h2><?php echo esc_html(__('Estado del Ecosistema', 'custom-plugin')); ?></h2>
-                <p><?php echo esc_html(__('Utilice las pestañas superiores si se configuran submenús en las secciones subsiguientes.', 'custom-plugin')); ?></p>
+                <h2><?php echo esc_html(__('Systemstatus', 'custom-plugin')); ?></h2>
+                <p><?php echo esc_html(__('Verwende die Tabs oben, wenn in den folgenden Abschnitten Submenüs konfiguriert werden.', 'custom-plugin')); ?></p>
             </div>
         </div>
         <?php
@@ -169,36 +169,36 @@ class AdminMenuController
 
 ```
 
-### Consideraciones Críticas de Seguridad y Arquitectura
+### Kritische Sicherheits- und Architekturüberlegungen
 
-* **Aislamiento del Callback:** Nunca se debe ejecutar lógica de negocio pesada, mutaciones de la base de datos o procesamiento de formularios directamente dentro del método `$callback` sin una verificación explícita de Nonces y sanitización previa. El callback debe ser tratado exclusivamente como una capa de presentación (Vista).
-* **Uso Correcto de Capabilities:** Evite asignar nombres de roles (ej. `'administrator'`) al parámetro `$capability`. El framework requiere capacidades abstractas (`'manage_options'`, `'edit_posts'`, `'activate_plugins'`) para asegurar la compatibilidad con plugins de gestión de roles personalizados y arquitecturas Multisite.
-* **Internacionalización (i18n):** Tanto el título de la página como el del menú deben pasarse por las funciones de localización (`__()` o `_e()`). No obstante, el parámetro `$menu_slug` jamás debe ser traducido, ya que sirve como identificador estático de la ruta URL (`wp-admin/admin.php?page=custom-plugin-dashboard`). Si se traduce el slug, el enrutamiento se romperá al cambiar el idioma del perfil del usuario.
+* **Isolierung des Callbacks:** Führe niemals schwere Geschäftslogik, Datenbankänderungen oder Formularverarbeitung direkt innerhalb der Methode `$callback` ohne explizite Nonce-Überprüfung und vorherige Bereinigung aus. Der Callback sollte ausschließlich als Präsentationsschicht (View) behandelt werden.
+* **Richtige Verwendung von Capabilities:** Vermeide es, Rollennamen (z. B. `'administrator'`) an den Parameter `$capability` zu übergeben. Das Framework erfordert abstrakte Fähigkeiten (`'manage_options'`, `'edit_posts'`, `'activate_plugins'`), um die Kompatibilität mit Plugins zur benutzerdefinierten Rollenverwaltung und Multisite-Architekturen sicherzustellen.
+* **Internationalisierung (i18n):** Sowohl der Seitentitel als auch der Menütitel müssen durch die Lokalisierungsfunktionen (`__()` oder `_e()`) geleitet werden. Der Parameter `$menu_slug` darf jedoch niemals übersetzt werden, da er als statischer Bezeichner der URL-Route dient (`wp-admin/admin.php?page=custom-plugin-dashboard`). Wenn der Slug übersetzt wird, bricht das Routing ab, sobald sich die Sprache des Benutzerprofils ändert.
 
-## 7.2 Creación de submenús
+## 7.2 Erstellung von Submenüs
 
-Una vez establecido el punto de anclaje principal en la interfaz de administración, es frecuente que los plugins complejos requieran ramificar sus opciones para evitar sobrecargar una única pantalla. WordPress gestiona esta jerarquía mediante la función `add_submenu_page()`, la cual vincula nuevas interfaces a un menú padre existente, ya sea un menú nativo del Core o uno personalizado creado por tu plugin.
+Sobald der Hauptankerpunkt im Administrationsbereich eingerichtet ist, ist es bei komplexen Plugins üblich, die Optionen zu verzweigen, um eine Überladung eines einzelnen Bildschirms zu vermeiden. WordPress verwaltet diese Hierarchie über die Funktion `add_submenu_page()`, die neue Oberflächen an ein bestehendes Elternmenü bindet — sei es ein natives Core-Menü oder ein von deinem Plugin erstelltes benutzerdefiniertes Menü.
 
-### Jerarquía y Enrutamiento
+### Hierarchie und Routing
 
-El ecosistema de menús de WordPress es estrictamente de dos niveles. No existe soporte nativo para sub-submenús. El árbol de navegación interno se construye vinculando el parámetro `$menu_slug` de un menú padre con el parámetro `$parent_slug` de sus elementos hijos.
+Das Menü-Ökosystem von WordPress ist streng zweistufig. Es gibt keine native Unterstützung für Sub-Submenüs. Der interne Navigationsbaum wird aufgebaut, indem der Parameter `$menu_slug` eines Elternmenüs mit dem Parameter `$parent_slug` seiner Kind-Elemente verknüpft wird.
 
 ```text
- Árbol de Navegación del Panel
-               |
- [ Menú Principal Padre ] ---- Slug: 'custom-plugin-dashboard'
-               |
-               +-- [ Dashboard ]  <-- Slug hijo coincide con el padre ('custom-plugin-dashboard')
-               |
-               +-- [ Ajustes ]    <-- Slug: 'custom-plugin-settings'
-               |
-               +-- [ Licencia ]   <-- Slug: 'custom-plugin-license'
+  Navigationsbaum des Panels
+                |
+  [ Haupt-Elternmenü ] ---- Slug: 'custom-plugin-dashboard'
+                |
+                +-- [ Dashboard ]  <-- Kind-Slug stimmt mit Elternteil überein ('custom-plugin-dashboard')
+                |
+                +-- [ Einstellungen ]    <-- Slug: 'custom-plugin-settings'
+                |
+                +-- [ Lizenz ]   <-- Slug: 'custom-plugin-license'
 
 ```
 
-### Anatomía de `add_submenu_page()`
+### Anatomie von `add_submenu_page()`
 
-La firma de la función introduce variaciones clave respecto a la creación de menús principales:
+Die Funktionssignatur führt wesentliche Unterschiede zur Erstellung von Hauptmenüs ein:
 
 ```php
 function add_submenu_page(
@@ -213,30 +213,30 @@ function add_submenu_page(
 
 ```
 
-El parámetro crítico aquí es `$parent_slug`. Dependiendo de dónde desees ubicar el submenú, este valor cambiará drásticamente.
+Der kritische Parameter hier ist `$parent_slug`. Je nachdem, wo du das Submenü platzieren möchtest, ändert sich dieser Wert drastisch.
 
-#### Vinculación a Menús Nativos
+#### Verknüpfung mit nativen Menüs
 
-Si tu plugin es de propósito único o no requiere un menú raíz propio, es una excelente práctica de UX anclar su configuración en los menús nativos existentes. WordPress proporciona el slug de los archivos PHP internos del administrador como `$parent_slug`, así como funciones contenedoras (*wrappers*) para facilitar el proceso:
+Wenn dein Plugin einen einzigen Zweck hat oder kein eigenes Hauptmenü benötigt, is es eine hervorragende UX-Praxis, seine Einstellungen in bestehenden nativen Menüs zu verankern. WordPress stellt den Slug der internen Admin-PHP-Dateien als `$parent_slug` bereit, ebenso wie Wrapper-Funktionen zur Erleichterung des Prozesses:
 
-| Menú Nativo Destino | Valor de `$parent_slug` | Función Wrapper Equivalente |
+| Ziel-Core-Menü | Wert von `$parent_slug` | Äquivalente Wrapper-Funktion |
 | --- | --- | --- |
-| **Ajustes** | `options-general.php` | `add_options_page()` |
-| **Herramientas** | `tools.php` | `add_management_page()` |
-| **Apariencia** | `themes.php` | `add_theme_page()` |
+| **Einstellungen** | `options-general.php` | `add_options_page()` |
+| **Werkzeuge** | `tools.php` | `add_management_page()` |
+| **Design** | `themes.php` | `add_theme_page()` |
 | **Plugins** | `plugins.php` | `add_plugins_page()` |
-| **Usuarios** | `users.php` | `add_users_page()` |
-| **Entradas** | `edit.php` | `add_posts_page()` |
-| **Páginas** | `edit.php?post_type=page` | `add_pages_page()` |
-| **Custom Post Type** | `edit.php?post_type=mi_cpt` | N/A (Usar `add_submenu_page`) |
+| **Benutzer** | `users.php` | `add_users_page()` |
+| **Beiträge** | `edit.php` | `add_posts_page()` |
+| **Seiten** | `edit.php?post_type=page` | `add_pages_page()` |
+| **Custom Post Type** | `edit.php?post_type=mi_cpt` | N/A (`add_submenu_page` verwenden) |
 
-### El Comportamiento del "Primer Submenú"
+### Das Verhalten des „ersten Submenüs“
 
-Cuando registras un menú principal con `add_menu_page()`, WordPress automáticamente crea un primer submenú subyacente con el mismo nombre y slug que el menú padre. Si deseas que este primer enlace actúe como una vista general y tenga un título diferente en el submenú (por ejemplo, cambiar el título "Mi Plugin" del menú padre por "Vista General" en el submenú), debes registrar un submenú explícito donde el `$parent_slug` y el `$menu_slug` sean idénticos al slug del padre.
+Wenn du ein Hauptmenü mit `add_menu_page()` registrierst, WordPress automatisch ein erstes untergeordnetes Submenü mit demselben Namen und Slug wie das Elternmenü erstellt. Wenn du möchtest, dass dieser erste Link als allgemeine Übersicht fungiert und einen anderen Titel im Submenü hat (zum Beispiel den Titel „Mein Plugin“ des Elternmenüs im Submenü in „Übersicht“ ändern), musst du ein explizites Submenü registrieren, bei dem `$parent_slug` und `$menu_slug` identisch mit dem Slug des Elternmenüs sind.
 
-### Implementación Práctica Orientada a Objetos
+### Praktische objektorientierte Implementierung
 
-Extendiendo la arquitectura de la lección anterior, a continuación se detalla cómo registrar múltiples submenús: uno vinculado a nuestro menú personalizado y otro inyectado en el menú nativo de Ajustes de WordPress.
+Als Erweiterung der Architektur aus der vorherigen Lektion wird im Folgenden beschrieben, wie du mehrere Submenüs registrierst: eines, das an unser benutzerdefiniertes Menü gebunden ist, und ein anderes, das in das native Einstellungsmenü von WordPress eingefügt wird.
 
 ```php
 <?php
@@ -250,39 +250,39 @@ class AdminSubmenuController
 
     public function register(): void 
     {
-        // Se engancha en admin_menu, igual que el menú principal.
-        // Es recomendable usar una prioridad mayor (ej. 11) si el menú 
-        // padre se registra en el mismo gancho con prioridad por defecto.
+        // Hängt sich an admin_menu, genau wie das Hauptmenü.
+        // Es wird empfohlen, eine höhere Priorität zu verwenden (z. B. 11), wenn das
+        // Elternmenü im selben Hook mit Standardpriorität registriert wird.
         add_action('admin_menu', [$this, 'registerSubmenus'], 11);
     }
 
     public function registerSubmenus(): void 
     {
-        // 1. Sobrescribir el primer submenú automático
-        // Al usar el mismo PARENT_SLUG como menu_slug, redefinimos el título
+        // 1. Überschreiben des ersten automatischen Submenüs
+        // Durch Verwendung desselben PARENT_SLUG als menu_slug definieren wir den Titel neu
         add_submenu_page(
             self::PARENT_SLUG,
-            __('Vista General del Plugin', 'custom-plugin'),
-            __('Vista General', 'custom-plugin'),
+            __('Plugin-Übersicht', 'custom-plugin'),
+            __('Übersicht', 'custom-plugin'),
             'manage_options',
-            self::PARENT_SLUG, // Coincide con el padre
+            self::PARENT_SLUG, // Stimmt mit dem Eltern-Slug überein
             [$this, 'renderDashboardView']
         );
 
-        // 2. Agregar un submenú adicional al menú personalizado
+        // 2. Hinzufügen eines zusätzlichen Submenüs zum benutzerdefinierten Menü
         add_submenu_page(
             self::PARENT_SLUG,
-            __('Configuración Avanzada', 'custom-plugin'),
-            __('Avanzado', 'custom-plugin'),
+            __('Erweiterte Einstellungen', 'custom-plugin'),
+            __('Erweitert', 'custom-plugin'),
             'manage_options',
             'custom-plugin-advanced',
             [$this, 'renderAdvancedView']
         );
 
-        // 3. Inyectar una vista en un menú nativo (Ajustes)
+        // 3. Einbinden eines Views in ein natives Menü (Einstellungen)
         add_options_page(
-            __('Integración del Plugin', 'custom-plugin'),
-            __('Mi Plugin (Core)', 'custom-plugin'),
+            __('Plugin-Integration', 'custom-plugin'),
+            __('Mein Plugin (Core)', 'custom-plugin'),
             'manage_options',
             'custom-plugin-core-settings',
             [$this, 'renderCoreSettingsView']
@@ -292,45 +292,45 @@ class AdminSubmenuController
     public function renderDashboardView(): void 
     {
         $this->enforceCapabilities();
-        echo '<div class="wrap"><h1>' . esc_html(__('Vista General', 'custom-plugin')) . '</h1></div>';
+        echo '<div class="wrap"><h1>' . esc_html(__('Übersicht', 'custom-plugin')) . '</h1></div>';
     }
 
     public function renderAdvancedView(): void 
     {
         $this->enforceCapabilities();
-        echo '<div class="wrap"><h1>' . esc_html(__('Opciones Avanzadas', 'custom-plugin')) . '</h1></div>';
+        echo '<div class="wrap"><h1>' . esc_html(__('Erweiterte Optionen', 'custom-plugin')) . '</h1></div>';
     }
 
     public function renderCoreSettingsView(): void 
     {
         $this->enforceCapabilities();
-        echo '<div class="wrap"><h1>' . esc_html(__('Ajustes en el Core', 'custom-plugin')) . '</h1></div>';
+        echo '<div class="wrap"><h1>' . esc_html(__('Einstellungen im Core', 'custom-plugin')) . '</h1></div>';
     }
 
     /**
-     * Método auxiliar para centralizar la verificación de seguridad.
+     * Hilfsmethode zur Zentralisierung der Sicherheitsüberprüfung.
      */
     private function enforceCapabilities(): void 
     {
         if (!current_user_can('manage_options')) {
-            wp_die(__('Acceso denegado.', 'custom-plugin'), '', ['response' => 403]);
+            wp_die(__('Zugriff verweigert.', 'custom-plugin'), '', ['response' => 403]);
         }
     }
 }
 
 ```
 
-### Patrón Arquitectónico para Menús Ocultos
+### Architekturmuster für versteckte Menüs
 
-En el desarrollo de plugins, surge a menudo la necesidad de crear páginas de administración que no deben aparecer listadas en la barra de navegación lateral (por ejemplo, una pantalla temporal para mostrar un registro de errores o un proceso de *onboarding* tras la activación).
+Bei der Entwicklung von Plugins besteht häufig die Notwendigkeit, Administrationsseiten zu erstellen, die nicht in der seitlichen Navigationsleiste aufgeführt werden sollen (z. B. ein temporärer Bildschirm zur Anzeige eines Fehlerprotokolls oder ein *Onboarding*-Prozess nach der Aktivierung).
 
-Para registrar una página sin que genere un elemento visible en el menú, se utiliza un "truco" de la API pasando un valor `null` al parámetro `$parent_slug`:
+Um eine Seite zu registrieren, ohne dass sie ein sichtbares Element im Menü erzeugt, wird ein API-„Trick“ angewendet, indem dem Parameter `$parent_slug` der Wert `null` übergeben wird:
 
 ```php
 add_submenu_page(
-    null, // Omite la inserción en el menú visual
-    __('Bienvenida al Plugin', 'custom-plugin'),
-    __('Bienvenida', 'custom-plugin'),
+    null, // Lässt das Einfügen in das visuelle Menü aus
+    __('Willkommen beim Plugin', 'custom-plugin'),
+    __('Willkommen', 'custom-plugin'),
     'manage_options',
     'custom-plugin-welcome',
     [$this, 'renderWelcomeScreen']
@@ -338,57 +338,58 @@ add_submenu_page(
 
 ```
 
-La página será completamente funcional y segura, pero solo se podrá acceder a ella navegando directamente a su URL correspondiente: `wp-admin/admin.php?page=custom-plugin-welcome`.
+Die Seite ist voll funktionsfähig und sicher, kann aber nur durch direktes Aufrufen der entsprechenden URL aufgerufen werden: `wp-admin/admin.php?page=custom-plugin-welcome`.
 
-## 7.3 Encolado de scripts y estilos
+## 7.3 Laden (Enqueueing) von Scripts und Styles
 
-La inyección directa de etiquetas `<script>` o `<link>` en el código HTML es una de las peores prácticas en el desarrollo para WordPress. Este enfoque destruye la modularidad, impide la minificación centralizada, genera conflictos de dependencias (por ejemplo, cargar múltiples versiones de jQuery) y anula los mecanismos de caché del navegador.
+Das direkte Einfügen von `<script>`- oder `<link>`-Tags in den HTML-Code ist eine der schlechtesten Praktiken in der WordPress-Entwicklung. Dieser Ansatz zerstört die Modularität, verhindert eine zentralisierte Minifizierung, erzeugt Abhängigkeitskonflikte (z. B. das Laden mehrerer jQuery-Versionen) und umgeht die Caching-Mechanismen des Browsers.
 
-Para resolver esto, WordPress implementa la **API de Encolado (Enqueue API)**, un sistema de gestión de dependencias que asegura que los recursos (assets) se carguen en el orden correcto, solo cuando son necesarios y respetando las versiones en caché.
+Um dies zu lösen, implementiert WordPress die **Enqueue API**, ein Abhängigkeitsverwaltungssystem, das sicherstellt, dass Ressourcen (Assets) in der richtigen Reihenfolge, nur bei Bedarf und unter Berücksichtigung der im Cache gespeicherten Versionen geladen werden.
 
-### El Gancho `admin_enqueue_scripts`
+### Der Hook `admin_enqueue_scripts`
 
-En el entorno de administración, el hook designado para registrar y encolar recursos es `admin_enqueue_scripts`. A diferencia de su contraparte del front-end (`wp_enqueue_scripts`), este gancho pasa un parámetro de suma importancia a la función callback: el **`$hook_suffix`** (también conocido como `$hook` o simplemente el identificador de la pantalla actual).
+Im Administrationsbereich ist der Hook `admin_enqueue_scripts` für das Registrieren und Einreihen von Ressourcen zuständig. Im Gegensatz zu seinem Frontend-Pendant (`wp_enqueue_scripts`) übergibt dieser Hook einen äußerst wichtigen Parameter an die Callback-Funktion: das **`$hook_suffix`** (auch bekannt als `$hook` oder einfach der Bezeichner des aktuellen Bildschirms).
 
-Cargar los scripts de tu plugin en *todas* las páginas del panel de administración (como en la pantalla de edición de entradas o ajustes generales) es una infracción de rendimiento y seguridad. Debes condicionar la carga de tus recursos exclusivamente a las interfaces que tu plugin genera.
+Das Laden der Skripte deines Plugins auf *allen* Seiten des Administrations-Dashboards (wie auf dem Beitrags-Bearbeitungsbildschirm oder in den allgemeinen Einstellungen) ist ein Verstoß gegen Performance und Sicherheit. Du musst das Laden deiner Ressourcen ausschließlich auf die Oberflächen beschränken, die dein Plugin generiert.
 
-### El Flujo de Carga Condicional
+### Der bedingte Lade-Workflow
 
-El siguiente esquema ilustra el proceso de validación para encolar recursos de forma quirúrgica:
+Das folgende Diagramm veranschaulicht den Validierungsprozess zum gezielten Laden von Ressourcen:
 
 ```text
-    Petición a /wp-admin/admin.php?page=mi-plugin
+    Anfrage an /wp-admin/admin.php?page=mi-plugin
                      |
-        [ admin_enqueue_scripts ] disparado
+        [ admin_enqueue_scripts ] ausgelöst
                      |
-         Pasa $hook_suffix (ej. 'toplevel_page_mi-plugin')
+         Übergibt $hook_suffix (z. B. 'toplevel_page_mi-plugin')
                      |
             +-------------------+
-            | ¿$hook_suffix     | ---> NO ---> [ Abortar encolado ] (Fin)
-            | coincide con      |
-            | nuestra página?   |
+            | Stimmt            |
+            | $hook_suffix mit  | ---> NEIN ---> [ Laden abbrechen ] (Ende)
+            | unserer Seite     |
+            | überein?          |
             +-------------------+
                      |
-                    SÍ
+                    JA
                      v
         1. wp_register_script() / wp_register_style()
-        2. wp_localize_script() (Paso de datos PHP a JS)
+        2. wp_localize_script() (Datenübergabe von PHP an JS)
         3. wp_enqueue_script()  / wp_enqueue_style()
 
 ```
 
-### Funciones Principales de la API
+### Hauptfunktionen der API
 
-La API separa conceptualmente el "registro" del "encolado", aunque se pueden realizar simultáneamente.
+Die API trennt das „Registrieren“ konzeptionell vom „Laden“ (Enqueueing), obwohl beides gleichzeitig durchgeführt werden kann.
 
-1. **`wp_register_style()` / `wp_register_script()`:** Avisa a WordPress de la existencia de un archivo, sus dependencias y su versión, pero no lo inserta en el HTML. Ideal para recursos que podrían cargarse bajo demanda mediante shortcodes o bloques.
-2. **`wp_enqueue_style()` / `wp_enqueue_script()`:** Inserta efectivamente el recurso en el `<head>` o justo antes de cerrar el `<body>`. Si el archivo no fue registrado previamente, esta función lo registra y encola en un solo paso.
+1. **`wp_register_style()` / `wp_register_script()`:** Weist WordPress auf die Existenz einer Datei, ihre Abhängigkeiten und ihre Version hin, fügt sie aber nicht in das HTML ein. Ideal für Ressourcen, die bei Bedarf über Shortcodes oder Blöcke geladen werden könnten.
+2. **`wp_enqueue_style()` / `wp_enqueue_script()`:** Fügt die Ressource tatsächlich in den `<head>` oder direkt vor dem schließenden `<body>` ein. Wenn die Datei zuvor nicht registriert wurde, registriert und lädt diese Funktion sie in einem einzigen Schritt.
 
-### Implementación Orientada a Objetos: Captura del Suffix
+### Objektorientierte Implementierung: Erfassung des Suffix
 
-Para encolar condicionalmente, necesitamos conocer el identificador único que WordPress asigna a nuestra página al crearla. Funciones como `add_menu_page()` y `add_submenu_page()` no solo crean el menú, sino que **devuelven un string** que representa el `$hook_suffix` de esa interfaz.
+Um bedingt zu laden, müssen wir die eindeutige Kennung kennen, die WordPress unserer Seite beim Erstellen zuweist. Funktionen wie `add_menu_page()` und `add_submenu_page()` erstellen nicht nur das Menü, sondern **geben einen String zurück**, der das `$hook_suffix` dieser Schnittstelle darstellt.
 
-El siguiente patrón arquitectónico captura ese string en una propiedad de la clase para utilizarlo posteriormente en la validación del encolado:
+Das folgende Architekturmuster erfasst diesen String in einer Eigenschaft der Klasse, um ihn später bei der Validierung des Ladevorgangs zu verwenden:
 
 ```php
 <?php
@@ -401,25 +402,25 @@ class AdminAssetsController
     private const MENU_SLUG = 'custom-plugin-dashboard';
     
     /**
-     * @var string Almacena el identificador único de la página del plugin.
+     * @var string Speichert den eindeutigen Bezeichner der Plugin-Seite.
      */
     private string $pageHook = '';
 
     public function register(): void 
     {
-        // 1. Registrar el menú
+        // 1. Menü registrieren
         add_action('admin_menu', [$this, 'addMainMenuPage']);
         
-        // 2. Registrar el hook de encolado
+        // 2. Enqueue-Hook registrieren
         add_action('admin_enqueue_scripts', [$this, 'enqueueAdminAssets']);
     }
 
     public function addMainMenuPage(): void 
     {
-        // Capturamos el string devuelto por add_menu_page
+        // Wir erfassen den von add_menu_page zurückgegebenen String
         $this->pageHook = add_menu_page(
-            __('Panel de Control', 'custom-plugin'),
-            __('Mi Plugin', 'custom-plugin'),
+            __('Dashboard', 'custom-plugin'),
+            __('Mein Plugin', 'custom-plugin'),
             'manage_options',
             self::MENU_SLUG,
             [$this, 'renderAdminPage'],
@@ -429,11 +430,11 @@ class AdminAssetsController
     }
 
     /**
-     * @param string $hook_suffix El identificador de la pantalla actual en el admin.
+     * @param string $hook_suffix Der Bezeichner des aktuellen Bildschirms im Admin.
      */
     public function enqueueAdminAssets(string $hook_suffix): void 
     {
-        // Validación de guardia: Si no estamos en la página del plugin, salimos.
+        // Guard-Validierung: Wenn wir uns nicht auf der Plugin-Seite befinden, brechen wir ab.
         if ($hook_suffix !== $this->pageHook) {
             return;
         }
@@ -441,43 +442,43 @@ class AdminAssetsController
         $plugin_url = plugin_dir_url(dirname(__FILE__, 2));
         $plugin_path = plugin_dir_path(dirname(__FILE__, 2));
 
-        // Encolado de Estilos (CSS)
-        // filemtime() actúa como cache-buster automático (versión = timestamp de modificación)
+        // Laden von Stylesheets (CSS)
+        // filemtime() fungiert als automatischer Cache-Buster (Version = Änderungs-Timestamp)
         wp_enqueue_style(
             'custom-plugin-admin-css',
             $plugin_url . 'assets/css/admin-style.css',
-            [], // Sin dependencias CSS
+            [], // Keine CSS-Abhängigkeiten
             (string) filemtime($plugin_path . 'assets/css/admin-style.css'),
             'all' // Media (all, screen, print)
         );
 
-        // Encolado de Scripts (JS)
+        // Laden von Skripten (JS)
         wp_enqueue_script(
             'custom-plugin-admin-js',
             $plugin_url . 'assets/js/admin-script.js',
-            ['jquery'], // Depende de jQuery (se cargará antes que nuestro script)
+            ['jquery'], // Hängt von jQuery ab (wird vor unserem Skript geladen)
             (string) filemtime($plugin_path . 'assets/js/admin-script.js'),
-            true // true = inyectar en el footer (antes de </body>)
+            true // true = in den Footer injizieren (vor </body>)
         );
 
-        // Puente PHP -> JavaScript
+        // Brücke PHP -> JavaScript
         $this->localizeScriptData();
     }
 
     /**
-     * Inyecta variables dinámicas de PHP en el objeto global de JavaScript.
+     * Injiziert dynamische PHP-Variablen in das globale JavaScript-Objekt.
      */
     private function localizeScriptData(): void 
     {
         wp_localize_script(
-            'custom-plugin-admin-js', // Debe coincidir con el handle del script encolado
-            'CustomPluginData',       // Nombre del objeto global que existirá en JS
+            'custom-plugin-admin-js', // Muss mit dem Handle des geladenen Skripts übereinstimmen
+            'CustomPluginData',       // Name des globalen Objekts, das in JS existieren wird
             [
                 'ajaxUrl'   => admin_url('admin-ajax.php'),
                 'nonce'     => wp_create_nonce('custom_plugin_admin_action'),
                 'i18n'      => [
-                    'confirmDelete' => __('¿Está seguro de eliminar este registro?', 'custom-plugin'),
-                    'saveSuccess'   => __('Ajustes guardados correctamente.', 'custom-plugin')
+                    'confirmDelete' => __('Bist du sicher, dass du diesen Eintrag löschen möchtest?', 'custom-plugin'),
+                    'saveSuccess'   => __('Einstellungen erfolgreich gespeichert.', 'custom-plugin')
                 ]
             ]
         );
@@ -485,37 +486,37 @@ class AdminAssetsController
 
     public function renderAdminPage(): void 
     {
-        // Lógica de renderizado (Vista)
+        // Render-Logik (View)
         echo '<div class="wrap"><h1>Panel</h1></div>';
     }
 }
 
 ```
 
-### El Puente de Datos: `wp_localize_script()`
+### Die Datenbrücke: `wp_localize_script()`
 
-Como se observa en el método `$this->localizeScriptData()`, los archivos JavaScript externos son estáticos y no pueden interpretar código PHP directamente. Para pasar configuraciones de rutas dinámicas (como la URL de AJAX), tokens de seguridad (Nonces) o cadenas de texto traducibles, se utiliza `wp_localize_script()`.
+Wie in der Methode `$this->localizeScriptData()` zu sehen ist, externe JavaScript-Dateien statisch sind und PHP-Code nicht direkt interpretieren können. Um dynamische Routenkonfigurationen (wie die AJAX-URL), Sicherheits-Token (Nonces) oder übersetzbare Textzeichenfolgen zu übergeben, wird `wp_localize_script()` verwendet.
 
-WordPress inyectará un bloque `<script>` embebido justo encima de tu archivo `admin-script.js` con el siguiente resultado en el HTML del panel:
+WordPress fügt einen eingebetteten `<script>`-Block direkt über deiner `admin-script.js`-Datei mit folgendem Ergebnis im HTML des Panels ein:
 
 ```html
 <script type="text/javascript">
 /* <![CDATA[ */
 var CustomPluginData = {
-    "ajaxUrl": "https://midominio.com/wp-admin/admin-ajax.php",
+    "ajaxUrl": "https://meinedomain.de/wp-admin/admin-ajax.php",
     "nonce": "a1b2c3d4e5",
     "i18n": {
-        "confirmDelete": "¿Está seguro de eliminar este registro?",
-        "saveSuccess": "Ajustes guardados correctamente."
+        "confirmDelete": "Bist du sicher, dass du diesen Eintrag löschen möchtest?",
+        "saveSuccess": "Einstellungen erfolgreich gespeichert."
     }
 };
 /* ]]> */
 </script>
-<script type="text/javascript" src="https://midominio.com/wp-content/plugins/mi-plugin/assets/js/admin-script.js?ver=1684501200" id="custom-plugin-admin-js-js"></script>
+<script type="text/javascript" src="https://meinedomain.de/wp-content/plugins/mi-plugin/assets/js/admin-script.js?ver=1684501200" id="custom-plugin-admin-js-js"></script>
 
 ```
 
-Dentro de tu archivo `admin-script.js`, el objeto ahora estará disponible de forma nativa para consumir de forma segura:
+In deiner Datei `admin-script.js` ist das Objekt nun nativ zur sicheren Nutzung verfügbar:
 
 ```javascript
 (function($) {
@@ -524,9 +525,9 @@ Dentro de tu archivo `admin-script.js`, el objeto ahora estará disponible de fo
     $(document).ready(function() {
         $('.delete-btn').on('click', function(e) {
             e.preventDefault();
-            // Consumiendo traducciones inyectadas desde PHP
+            // Nutzung der aus PHP injizierten Übersetzungen
             if (confirm(CustomPluginData.i18n.confirmDelete)) {
-                // Proceder con la petición AJAX utilizando CustomPluginData.nonce
+                // Mit AJAX-Anfrage unter Verwendung von CustomPluginData.nonce fortfahren
             }
         });
     });
@@ -535,82 +536,82 @@ Dentro de tu archivo `admin-script.js`, el objeto ahora estará disponible de fo
 
 ```
 
-*(Nota: En WordPress 4.5+ se introdujo `wp_add_inline_script` que permite inyectar JavaScript en línea más complejo, y en WP 5.0+ `wp_set_script_translations` para usar los sistemas de localización basados en JED/JSON estándar de Gutenberg, pero `wp_localize_script` se mantiene como la forma más rápida, segura y retrocompatible de transferir arrays multidimensionales de configuración desde el backend al frontend).*
+*(Hinweis: In WordPress 4.5+ wurde `wp_add_inline_script` eingeführt, was das Injizieren von komplexerem Inline-JavaScript ermöglicht, und in WP 5.0+ `wp_set_script_translations` für die Verwendung der Standard-JED/JSON-Lokalisierungssysteme von Gutenberg. `wp_localize_script` bleibt jedoch der schnellste, sicherste und abwärtskompatibelste Weg, um mehrdimensionale Konfigurations-Arrays vom Backend an das Frontend zu übertragen).*
 
-## 7.4 Diseño con clases CSS nativas
+## 7.4 Design mit nativen CSS-Klassen
 
-El mayor error en el diseño de interfaces de administración para WordPress es intentar reinventar la rueda. Un plugin profesional debe sentirse como una extensión natural del núcleo, no como un software de terceros incrustado a la fuerza.
+Der größte Fehler beim Design von Administrations-Benutzeroberflächen für WordPress besteht darin, das Rad neu erfinden zu wollen. Ein professionelles Plugin sollte sich wie eine natürliche Erweiterung des Cores anfühlen, nicht wie eine mit Gewalt eingebettete Drittanbieter-Software.
 
-WordPress provee un framework CSS interno (cargado automáticamente a través de los estilos del administrador) compuesto por decenas de clases utilitarias. Utilizar estas clases garantiza que tu interfaz respetará los esquemas de color elegidos por el usuario en su perfil, mantendrá la accesibilidad (contraste y navegación por teclado) y se adaptará automáticamente a los rediseños futuros del Core sin requerir mantenimiento por tu parte.
+WordPress bietet ein internes CSS-Framework (das automatisch über die Admin-Styles geladen wird), das aus Dutzenden von Hilfsklassen besteht. Die Verwendung dieser Klassen garantiert, dass deine Benutzeroberfläche die vom Benutzer in seinem Profil gewählten Farbschemata respektiert, die Barrierefreiheit (Kontrast und Tastaturnavigation) wahrt und sich automatisch an zukünftige Redesigns des Cores anpasst, ohne dass eine Wartung deinerseits erforderlich ist.
 
-### Contenedores y Estructura Base
+### Container und Basisstruktur
 
-Todo el contenido de una página de administración debe estar encapsulado para alinearse correctamente con la barra superior y el menú lateral.
+Der gesamte Inhalt einer Administrationsseite muss eingekapselt sein, um sich korrekt an der oberen Leiste und dem seitlichen Menü auszurichten.
 
-* **`.wrap`**: Es el contenedor principal obligatorio. Otorga los márgenes y el relleno necesarios para separar tu contenido de los bordes de la pantalla.
-* **`.wp-heading-inline`**: Se aplica a la etiqueta `<h1>`. Permite que otros elementos (como botones de acción) se coloquen a su lado en la misma línea.
-* **`.page-title-action`**: Convierte un enlace estándar `<a>` en un botón posicionado justo al lado del título principal (ideal para acciones como "Añadir nuevo").
-* **`.wp-header-end`**: Se aplica a una etiqueta `<hr>`. Actúa como un separador invisible que limpia los elementos flotantes del encabezado (clearfix) y marca el inicio del contenido real.
+* **`.wrap`**: Dies ist der obligatorische Hauptcontainer. Er liefert die notwendigen Abstände (Margin und Padding), um deinen Inhalt von den Rändern des Bildschirms zu trennen.
+* **`.wp-heading-inline`**: Wird auf das `<h1>`-Tag angewendet. Ermöglicht es anderen Elementen (wie Aktionsbuttons), sich daneben auf derselben Zeile zu platzieren.
+* **`.page-title-action`**: Konvertiert einen Standard-`<a>`-Link in einen Button, der direkt neben dem Haupttitel positioniert ist (ideal für Aktionen wie „Neu hinzufügen“).
+* **`.wp-header-end`**: Wird auf ein `<hr>`-Tag angewendet. Fungiert als unsichtbarer Separator, der schwebende Elemente im Header bereinigt (Clearfix) und den Beginn des eigentlichen Inhalts markiert.
 
-### Sistema de Notificaciones (Admin Notices)
+### Benachrichtigungssystem (Admin Notices)
 
-Las alertas de estado son fundamentales para informar al usuario sobre el resultado de una acción (como guardar configuraciones). Todas comparten una clase base y se modifican mediante clases de estado.
+Statusmeldungen sind wichtig, um den Benutzer über das Ergebnis einer Aktion (wie das Speichern von Einstellungen) zu informieren. Alle teilen sich eine Basisklasse und werden durch Statusklassen modifiziert.
 
 ```text
-Estructura de una Notificación
+Struktur einer Benachrichtigung
 +-------------------------------------------------------+
-| [Color Borde] Mensaje descriptivo para el usuario (X) |
+| [Rahmenfarbe] Beschreibende Nachricht für den Benutzer (X)|
 +-------------------------------------------------------+
 
 ```
 
-* **Clase Base**: `.notice`
-* **Modificadores de Estado**:
-* `.notice-success` (Borde verde): Operaciones exitosas.
-* `.notice-error` (Borde rojo): Fallos, validaciones incorrectas.
-* `.notice-warning` (Borde naranja): Acciones destructivas o actualizaciones pendientes.
-* `.notice-info` (Borde azul): Información general o estado del sistema.
+* **Basisklasse**: `.notice`
+* **Statusmodifikatoren**:
+  * `.notice-success` (Grüner Rand): Erfolgreiche Operationen.
+  * `.notice-error` (Roter Rand): Fehler, ungültige Validierungen.
+  * `.notice-warning` (Orangener Rand): Destruktive Aktionen oder ausstehende Updates.
+  * `.notice-info` (Blauer Rand): Allgemeine Informationen oder Systemstatus.
 
-* **Comportamiento**: `.is-dismissible` inyecta automáticamente mediante JavaScript un botón (X) para que el usuario pueda cerrar la alerta.
+* **Verhalten**: `.is-dismissible` injiziert automatisch über JavaScript einen Schließen-Button (X), damit der Benutzer den Hinweis schließen kann.
 
-### Estructuración de Formularios
+### Strukturierung von Formularen
 
-Para el desarrollo de páginas de opciones, WordPress utiliza un diseño tabular estandarizado.
+Für die Entwicklung von Einstellungsseiten verwendet WordPress ein standardisiertes tabellarisches Layout.
 
-* **`.form-table`**: Transforma una etiqueta `<table>` en una cuadrícula responsiva perfecta para formularios de configuración, donde la columna izquierda contiene los `<label>` y la derecha los inputs.
-* **Clases de campos de texto**: Regulan la anchura de los inputs para mantener consistencia.
-* `.regular-text`: Anchura estándar (recomendada para la mayoría de campos).
-* `.small-text`: Para campos numéricos o de códigos cortos.
-* `.large-text`: Ocupa el 100% del ancho del contenedor.
-* `.code`: Cambia la tipografía a monoespaciada (ideal para URLs, slugs o fragmentos de código).
+* **`.form-table`**: Verwandelt ein `<table>`-Tag in ein responsives Raster, das sich perfekt für Konfigurationsformulare eignet, bei denen die linke Spalte die `<label>`-Tags und die rechte Spalte die Inputs enthält.
+* **Klassen für Textfelder**: Regulieren die Breite der Inputs, um Konsistenz zu wahren.
+  * `.regular-text`: Standardbreite (empfohlen für die meisten Felder).
+  * `.small-text`: Für numerische Felder oder kurze Codes.
+  * `.large-text`: Belegt 100 % der Breite des Containers.
+  * `.code`: Ändert die Schriftart in Festbreitenschrift (ideal für URLs, Slugs oder Codefragmente).
 
-### Componentes de Interfaz: Botones y Tarjetas
+### Benutzeroberflächen-Komponenten: Buttons und Cards
 
-* **Botones**: WordPress unifica el diseño de los botones (sean etiquetas `<button>`, `<input type="submit">` o `<a>`) a través de la clase base `.button`.
-* `.button-primary`: Fondo azul sólido. Úsalo solo para la acción principal de la pantalla (como "Guardar cambios").
-* `.button-secondary` (o solo `.button`): Fondo gris claro. Para acciones secundarias (cancelar, previsualizar).
-* `.button-large` / `.button-small`: Modificadores de tamaño.
-* `.button-link`: Texto con apariencia de enlace puro pero comportamiento de botón.
+* **Buttons**: WordPress vereinheitlicht das Design von Schaltflächen (sei es das `<button>`-Tag, `<input type="submit">` o `<a>`) über die Basisklasse `.button`.
+  * `.button-primary`: Solider blauer Hintergrund. Verwende ihn nur für die Hauptaktion des Bildschirms (wie „Änderungen speichern“).
+  * `.button-secondary` (oder nur `.button`): Hellgrauer Hintergrund. Für sekundäre Aktionen (Abbrechen, Vorschau).
+  * `.button-large` / `.button-small`: Größenmodifikatoren.
+  * `.button-link`: Text mit dem Aussehen eines reinen Links, aber dem Verhalten eines Buttons.
 
-* **`.card`**: Crea una caja blanca con un ligero sombreado, ideal para tableros de resumen (dashboards) o para agrupar información que no pertenece a un formulario.
+* **`.card`**: Erstellt eine weiße Box mit leichtem Schattenwurf, ideal für Zusammenfassungs-Dashboards oder zur Gruppierung von Informationen, die nicht zu einem Formular gehören.
 
-### Implementación Completa: Una Interfaz Nativa
+### Vollständige Implementierung: Eine native Benutzeroberfläche
 
-El siguiente código HTML ilustra cómo combinar estas clases para construir una página de ajustes con un diseño idéntico al del Core, sin escribir una sola línea de CSS personalizado:
+Der folgende HTML-Code veranschaulicht, wie diese Klassen kombiniert werden, um eine Einstellungsseite mit einem exakt dem Core entsprechenden Design zu erstellen, ohne eine einzige Zeile benutzerdefiniertes CSS schreiben zu müssen:
 
 ```html
 <div class="wrap">
-    <h1 class="wp-heading-inline">Ajustes del Plugin</h1>
-    <a href="#" class="page-title-action">Documentación</a>
+    <h1 class="wp-heading-inline">Plugin-Einstellungen</h1>
+    <a href="#" class="page-title-action">Dokumentation</a>
     <hr class="wp-header-end">
 
     <div class="notice notice-success is-dismissible">
-        <p><strong>Ajustes guardados.</strong> La configuración se ha actualizado correctamente.</p>
+        <p><strong>Einstellungen gespeichert.</strong> Die Konfiguration wurde erfolgreich aktualisiert.</p>
     </div>
 
     <div class="card" style="max-width: 100%; margin-bottom: 20px;">
-        <h2 class="title">Estado de Conexión API</h2>
-        <p>El sistema se encuentra sincronizado. Su última actualización fue hace 2 horas.</p>
+        <h2 class="title">API-Verbindungsstatus</h2>
+        <p>Das System ist synchronisiert. Das letzte Update war vor 2 Stunden.</p>
     </div>
 
     <form method="post" action="options.php">
@@ -618,33 +619,33 @@ El siguiente código HTML ilustra cómo combinar estas clases para construir una
             <tbody>
                 <tr>
                     <th scope="row">
-                        <label for="api_key">Clave de la API</label>
+                        <label for="api_key">API-Schlüssel</label>
                     </th>
                     <td>
                         <input name="api_key" type="text" id="api_key" value="ak_12345XYZ" class="regular-text code">
-                        <p class="description">Introduzca la clave privada proporcionada por su proveedor.</p>
+                        <p class="description">Gib den von deinem Anbieter bereitgestellten privaten Schlüssel ein.</p>
                     </td>
                 </tr>
                 <tr>
                     <th scope="row">
-                        <label for="items_per_page">Elementos por página</label>
+                        <label for="items_per_page">Einträge pro Seite</label>
                     </th>
                     <td>
                         <input name="items_per_page" type="number" id="items_per_page" value="20" class="small-text">
                     </td>
                 </tr>
                 <tr>
-                    <th scope="row">Nivel de Depuración</th>
+                    <th scope="row">Debug-Modus</th>
                     <td>
                         <fieldset>
-                            <legend class="screen-reader-text"><span>Nivel de Depuración</span></legend>
+                            <legend class="screen-reader-text"><span>Debug-Modus</span></legend>
                             <label>
                                 <input type="radio" name="debug_mode" value="1" checked="checked">
-                                Activado
+                                Aktiviert
                             </label><br>
                             <label>
                                 <input type="radio" name="debug_mode" value="0">
-                                Desactivado
+                                Deaktiviert
                             </label>
                         </fieldset>
                     </td>
@@ -653,16 +654,16 @@ El siguiente código HTML ilustra cómo combinar estas clases para construir una
         </table>
 
         <p class="submit">
-            <input type="submit" name="submit" id="submit" class="button button-primary" value="Guardar cambios">
-            <button type="button" class="button button-secondary">Restaurar valores por defecto</button>
+            <input type="submit" name="submit" id="submit" class="button button-primary" value="Änderungen speichern">
+            <button type="button" class="button button-secondary">Standardwerte wiederherstellen</button>
         </p>
     </form>
 </div>
 
 ```
 
-## Resumen del capítulo
+## Kapitelzusammenfassung
 
-En este capítulo hemos construido los cimientos de la experiencia de usuario en el panel de administración. Exploramos cómo interactuar con el árbol de navegación interno usando `add_menu_page()` para establecer un punto de entrada central y `add_submenu_page()` para jerarquizar las opciones, garantizando en todo momento la protección mediante capacidades y permisos estandarizados.
+In diesem Kapitel haben wir das Fundament für die User Experience im Administrationsbereich gelegt. Wir haben untersucht, wie du über `add_menu_page()` mit dem internen Navigationsbaum interagierst, um einen zentralen Einstiegspunkt zu schaffen, und über `add_submenu_page()` die Optionen hierarchisch strukturierst — stets geschützt durch standardisierte Capabilities und Berechtigungen.
 
-Abordamos la vital importancia del rendimiento y la prevención de conflictos mediante el uso quirúrgico de la API de Encolado (`admin_enqueue_scripts`), asegurando que nuestros recursos estáticos y traducciones dinámicas con `wp_localize_script()` se carguen exclusivamente en nuestras propias pantallas. Finalmente, descubrimos cómo estructurar HTML utilizando las clases CSS nativas de WordPress, permitiéndonos crear interfaces que son responsivas, accesibles y visualmente coherentes con el entorno en el que residen, reduciendo nuestra deuda técnica al mínimo.
+Wir haben uns mit der entscheidenden Bedeutung von Performance und Konfliktvermeidung durch den gezielten Einsatz der Enqueue API (`admin_enqueue_scripts`) befasst und sichergestellt, dass unsere statischen Ressourcen sowie dynamischen Übersetzungen mit `wp_localize_script()` ausschließlich auf unseren eigenen Bildschirmen geladen werden. Schließlich haben wir entdeckt, wie man HTML mithilfe nativer CSS-Klassen von WordPress strukturiert. Dies ermöglicht es uns, Benutzeroberflächen zu erstellen, die responsiv, barrierefrei und visuell konsistent mit der Umgebung sind, in der sie sich befinden, wodurch wir unsere technischen Schulden auf ein Minimum reduzieren.

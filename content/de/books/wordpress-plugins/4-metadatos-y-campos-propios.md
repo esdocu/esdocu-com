@@ -1,20 +1,20 @@
-Las estructuras de datos nativas de WordPress a menudo resultan insuficientes para modelar requerimientos complejos. Este capítulo profundiza en la Metadata API, el motor que permite asociar información ilimitada y específica a entradas, usuarios y términos taxonómicos sin alterar la base de datos.
+Die nativen Datenstrukturen von WordPress reichen oft nicht aus, um komplexe Anforderungen abzubilden. Dieses Kapitel befasst sich eingehend mit der Metadata API – der Engine, mit der du unbegrenzt spezifische Informationen mit Beiträgen, Benutzern und Taxonomie-Begriffen verknüpfen kannst, ohne die Datenbankstruktur zu verändern.
 
-Aprenderás a construir Metaboxes personalizados para ofrecer una interfaz de administración profesional y a medida. Dominaremos el ciclo completo de vida de los datos: desde su presentación visual hasta la intercepción de peticiones, aplicando técnicas estrictas de sanitización, validación y persistencia segura para crear plugins verdaderamente robustos.
+Du lernst, wie du benutzerdefinierte Metaboxen erstellst, um eine professionelle und maßgeschneiderte Administrationsoberfläche bereitzustellen. Wir werden den gesamten Lebenszyklus der Daten beherrschen: von der visuellen Darstellung bis hin zum Abfangen von Anfragen. Dabei wenden wir strenge Techniken zur Bereinigung (Sanitization), Validierung und sicheren Persistenz an, um wirklich robuste Plugins zu entwickeln.
 
-## 4.1 Introducción a la Metadata API
+## 4.1 Einführung in die Metadata API
 
-La Metadata API de WordPress es un subsistema estandarizado que permite asociar información adicional (metadatos) a los objetos principales del ecosistema. Como vimos en el capítulo anterior al construir Custom Post Types, la estructura nativa de la tabla `wp_posts` es rígida y está diseñada para almacenar datos genéricos (título, contenido, fecha, autor). Cuando necesitamos almacenar atributos específicos de nuestro modelo de negocio (por ejemplo, el "precio" de un CPT "Inmueble" o el "cargo" de un usuario), recurrimos a la API de metadatos.
+Die Metadata API von WordPress ist un subsystem estandarizado (ein standardisiertes Subsystem), mit dem du zusätzliche Informationen (Metadaten) mit den Hauptobjekten des Ökosystems verknüpfen kannst. Wie wir im vorherigen Kapitel bei der Erstellung von Custom Post Types gesehen haben, ist die native Struktur der Tabelle `wp_posts` starr und für die Speicherung allgemeiner Daten (Titel, Inhalt, Datum, Autor) ausgelegt. Wenn wir spezifische Attribute unseres Geschäftsmodells speichern müssen (zum Beispiel den „Preis“ eines CPTs „Immobilie“ oder die „Rolle/Position“ eines Benutzers), greifen wir auf die Metadata API zurück.
 
-En lugar de alterar el esquema de las tablas principales de la base de datos (una práctica totalmente desaconsejada en WordPress), la Metadata API utiliza un modelo de entidad-atributo-valor (EAV). Esto nos proporciona flexibilidad absoluta para escalar estructuras de datos dinámicamente.
+Anstatt das Schema der Haupttabellen der Datenbank zu ändern (eine Praxis, von der in WordPress dringend abgeraten wird), verwendet die Metadata API ein Entity-Attribute-Value-Modell (EAV). Dies bietet uns absolute Flexibilität, um Datenstrukturen dynamisch zu skalieren.
 
-### Arquitectura de almacenamiento
+### Speicherarchitektur
 
-La API gestiona la persistencia de datos apoyándose en cuatro tablas específicas de la base de datos (profundizaremos en la clase `$wpdb` en el Capítulo 5). Cada tipo de objeto tiene su propia tabla de metadatos asociada, manteniendo un diseño relacional de "uno a muchos" (1:N):
+Die API verwaltet die Datenpersistenz mithilfe von vier spezifischen Tabellen in der Datenbank (auf die Klasse `$wpdb` werden wir in Kapitel 5 näher eingehen). Jeder Objekttyp hat seine eigene zugeordnete Metadaten-Tabelle und behält ein relationales „1:N“-Design (One-to-Many) bei:
 
 ```text
 +----------------+       1:N       +-------------------+
-| TABLA PRINCIPAL| <-------------+ | TABLA DE METADATA |
+|  HAUPTTABELLE  | <-------------+ | METADATEN-TABELLE |
 +----------------+                 +-------------------+
 | ID (PK)        |                 | meta_id (PK)      |
 | ...            |                 | object_id (FK)    |
@@ -22,7 +22,7 @@ La API gestiona la persistencia de datos apoyándose en cuatro tablas específic
 |                |                 | meta_value        |
 +----------------+                 +-------------------+
 
-Relaciones disponibles en el Core:
+Im Core verfügbare Beziehungen:
 wp_posts    -> wp_postmeta
 wp_users    -> wp_usermeta
 wp_terms    -> wp_termmeta
@@ -30,97 +30,97 @@ wp_comments -> wp_commentmeta
 
 ```
 
-### Operaciones CRUD y Funciones Principales
+### CRUD-Operationen und Hauptfunktionen
 
-Aunque internamente el núcleo de WordPress utiliza funciones genéricas como `add_metadata()` o `Youtube()`, en el desarrollo diario de plugins utilizaremos las funciones envolventes (wrappers) específicas para cada tipo de objeto. Tomaremos los posts (aplicable a cualquier CPT) como referencia principal, ya que representan el caso de uso más frecuente.
+Obwohl der WordPress-Core intern generische Funktionen wie `add_metadata()` oder `update_metadata()` verwendet, nutzen wir in der täglichen Plugin-Entwicklung spezifische Wrapper-Funktionen für jeden Objekttyp. Wir nehmen Beiträge (bzw. Posts, anwendbar auf jeden CPT) als Hauptreferenz, da sie den häufigsten Anwendungsfall darstellen.
 
-#### 1. Creación (`add_post_meta`)
+#### 1. Erstellung (`add_post_meta`)
 
-Agrega un nuevo par clave-valor a un post específico.
+Fügt einem bestimmten Beitrag ein neues Schlüssel-Wert-Paar hinzu.
 
 ```php
 add_post_meta( int $post_id, string $meta_key, mixed $meta_value, bool $unique = false );
 
 ```
 
-El cuarto parámetro, `$unique`, es crucial. Si se establece en `true`, la función fallará si ya existe esa clave para ese post en particular. Si es `false` (por defecto), WordPress permite almacenar múltiples valores bajo la misma clave.
+Der vierte Parameter, `$unique`, ist entscheidend. Wenn er auf `true` gesetzt ist, schlägt die Funktion fehl, wenn dieser Schlüssel bereits für diesen bestimmten Beitrag existiert. Wenn er `false` ist (Standard), erlaubt WordPress das Speichern mehrerer Werte unter demselben Schlüssel.
 
-#### 2. Lectura (`get_post_meta`)
+#### 2. Auslesen (`get_post_meta`)
 
-Recupera el valor de un metadato. Es la función que más utilizarás en el front-end de tu plugin.
+Ruft den Wert eines Metadatums ab. Das ist die Funktion, die du im Frontend deines Plugins am häufigsten verwenden wirst.
 
 ```php
 get_post_meta( int $post_id, string $meta_key = '', bool $single = false );
 
 ```
 
-El parámetro `$single` dicta la estructura del retorno y es fuente de errores comunes:
+Der Parameter `$single` bestimmt die Struktur des Rückgabewerts und ist eine häufige Fehlerquelle:
 
-* `$single = false` (Por defecto): Devuelve un **array** indexado con todos los valores encontrados para esa clave. Ideal si permitiste múltiples valores al guardar.
-* `$single = true`: Devuelve un **string** (o el tipo de dato original des-serializado) con el primer valor coincidente.
+* `$single = false` (Standard): Gibt ein indiziertes **Array** mit allen für diesen Schlüssel gefundenen Werten zurück. Ideal, wenn du beim Speichern mehrere Werte zugelassen hast.
+* `$single = true`: Gibt einen **String** (oder den deserialisierten Originaldatentyp) mit dem ersten übereinstimmenden Wert zurück.
 
-#### 3. Actualización (`update_post_meta`)
+#### 3. Aktualisierung (`update_post_meta`)
 
-Actualiza un metadato existente.
+Aktualisiert ein bestehendes Metatum.
 
 ```php
 update_post_meta( int $post_id, string $meta_key, mixed $meta_value, mixed $prev_value = '' );
 
 ```
 
-**Nota de rendimiento:** `update_post_meta()` es extremadamente versátil. Si la clave no existe, internamente llama a `add_post_meta()`. Por tanto, a menos que necesites estrictamente registrar múltiples valores idénticos bajo la misma clave, acostúmbrate a usar `update_post_meta` por defecto para el guardado de datos, ahorrando validaciones previas de existencia.
+**Performance-Hinweis:** `update_post_meta()` ist extrem vielseitig. Wenn der Schlüssel noch nicht existiert, ruft die Funktion intern `add_post_meta()` auf. Gewöhne dir daher an, standardmäßig `update_post_meta` zum Speichern von Daten zu verwenden (es sei denn, du musst unbedingt mehrere identische Werte unter demselben Schlüssel registrieren), um dir vorherige Existenzprüfungen zu sparen.
 
-#### 4. Borrado (`delete_post_meta`)
+#### 4. Löschen (`delete_post_meta`)
 
-Elimina un registro de metadato de la base de datos.
+Entfernt einen Metadaten-Eintrag aus der Datenbank.
 
 ```php
 delete_post_meta( int $post_id, string $meta_key, mixed $meta_value = '' );
 
 ```
 
-Si omites `$meta_value`, se borrarán todas las entradas con ese `$meta_key` para el post. Si lo especificas, solo se borrará la entrada que coincida exactamente con ese valor.
+Wenn du `$meta_value` weglässt, werden alle Einträge mit diesem `$meta_key` für den Beitrag gelöscht. Wenn du ihn angibst, wird nur der Eintrag gelöscht, der genau mit diesem Wert übereinstimmt.
 
-### Metadatos Ocultos y Serialización
+### Versteckte Metadaten und Serialisierung
 
-Existen dos comportamientos automáticos en la Metadata API que debes dominar para mantener tu plugin limpio y eficiente:
+Es gibt zwei automatische Verhaltensweisen in der Metadata API, die du beherrschen musst, um dein Plugin sauber und effizient zu halten:
 
-* **Serialización automática:** No es necesario convertir arrays u objetos PHP a JSON antes de guardarlos. Si pasas un array en `$meta_value`, WordPress lo pasará automáticamente por la función `serialize()` de PHP antes de insertarlo en la base de datos, y utilizará `unserialize()` transparentemente al recuperarlo con `get_post_meta()`.
-* **Claves privadas (Hidden Meta):** Por defecto, WordPress expone los metadatos de los posts en la caja metabox nativa de "Campos Personalizados" en la pantalla de edición. Para evitar que los administradores alteren accidentalmente los datos internos de tu plugin, debes prefijar tus claves con un guion bajo (`_`).
+* **Automatische Serialisierung:** Du musst PHP-Arrays oder -Objekte vor dem Speichern nicht in JSON konvertieren. Wenn du ein Array an `$meta_value` übergibst, jagt WordPress es vor dem Einfügen in die Datenbank automatisch durch die PHP-Funktion `serialize()` und verwendet beim Auslesen mit `get_post_meta()` transparent wieder `unserialize()`.
+* **Private Schlüssel (Versteckte Metadaten):** Standardmäßig zeigt WordPress die Metadaten von Beiträgen in der nativen Metabox „Benutzerdefinierte Felder“ auf dem Bearbeitungsbildschirm an. Um zu verhindern, dass Administratoren versehentlich interne Daten deines Plugins ändern, solltest du deinen Schlüsseln ein Unterstrich-Präfix (`_`) voranstellen.
 
 ```php
-// Metadato público: Visible en la UI nativa de campos personalizados
+// Öffentliches Metadatum: Sichtbar in der nativen UI für benutzerdefinierte Felder
 update_post_meta( $post_id, 'precio_inmueble', 250000 );
 
-// Metadato privado: Oculto de la UI, exclusivo para el control de tu plugin
+// Privates Metadatum: In der UI versteckt, exklusiv zur Steuerung deines Plugins
 update_post_meta( $post_id, '_estado_sincronizacion', 'completado' );
 
 ```
 
-En la siguiente sección, integraremos estas funciones directamente en la interfaz de administración creando Metaboxes personalizados, abandonando la interfaz genérica nativa a favor de una experiencia de usuario controlada y específica para nuestro plugin.
+Im nächsten Abschnitt werden wir diese Funktionen direkt in die Administrationsoberfläche integrieren, indem wir benutzerdefinierte Metaboxen erstellen. Dabei lassen wir die native, generische Oberfläche hinter uns und bieten stattdessen eine kontrollierte und für unser Plugin spezifische Benutzererfahrung.
 
-## 4.2 Creación de Metaboxes en el admin
+## 4.2 Erstellung von Metaboxen im Admin-Bereich
 
-Mientras que la Metadata API proporciona la capa de acceso a datos para leer y escribir información, los *Metaboxes* (cajas de meta) constituyen la capa de presentación. Son los paneles o módulos modulares que aparecen en las pantallas de edición de contenido (entradas, páginas o Custom Post Types) y permiten a los administradores o editores introducir esos metadatos a través de una interfaz gráfica estructurada.
+Während die Metadata API die Datenzugriffsschicht zum Lesen und Schreiben von Informationen bereitstellt, bilden die *Metaboxen* (Meta-Boxen) die Präsentationsschicht. Es handelt sich um modulare Panels oder Module, die auf den Bearbeitungsbildschirmen für Inhalte (Beiträge, Seiten oder Custom Post Types) erscheinen und es Administratoren oder Redakteuren ermöglichen, diese Metadaten über eine strukturierte grafische Oberfläche einzugeben.
 
-En lugar de obligar al usuario a utilizar la caja genérica y propensa a errores de "Campos Personalizados" nativa de WordPress, la creación de un Metabox específico nos permite diseñar un formulario a medida, controlando la experiencia de usuario y preparando el terreno para la validación estricta de los datos.
+Anstatt den Benutzer zu zwingen, die generische und fehleranfällige Box für native „Benutzerdefinierte Felder“ von WordPress zu verwenden, ermöglicht uns die Erstellung einer spezifischen Metabox das Design eines maßgeschneiderten Formulars. So kontrollieren wir die Benutzererfahrung und bereiten den Boden für eine strenge Datenvalidierung vor.
 
-### El Hook `add_meta_boxes`
+### Der Hook `add_meta_boxes`
 
-Para inyectar nuestra interfaz en la pantalla de edición, WordPress expone el action hook `add_meta_boxes`. Este gancho se dispara cuando la pantalla de edición se está preparando, justo antes de renderizar los elementos estructurales.
+Um unsere Oberfläche in den Bearbeitungsbildschirm einzubinden, stellt WordPress den Action-Hook `add_meta_boxes` bereit. Dieser Hook wird ausgelöst, wenn der Bearbeitungsbildschirm vorbereitet wird, kurz bevor die strukturellen Elemente gerendert werden.
 
 ```php
 add_action( 'add_meta_boxes', 'mi_plugin_registrar_metaboxes' );
 
 function mi_plugin_registrar_metaboxes() {
-    // Aquí invocaremos add_meta_box()
+    // Hier rufen wir add_meta_box() auf
 }
 
 ```
 
-### La función `add_meta_box`
+### Die Funktion `add_meta_box`
 
-Dentro de nuestro callback, utilizamos la función principal de esta API para registrar nuestro contenedor.
+Innerhalb unseres Callbacks verwenden wir die Hauptfunktion dieser API, um unseren Container zu registrieren.
 
 ```php
 add_meta_box(
@@ -135,36 +135,36 @@ add_meta_box(
 
 ```
 
-Analicemos los parámetros críticos:
+Analysieren wir die kritischen Parameter:
 
-* **`$id`**: Un identificador HTML único (atributo `id`) para la caja.
-* **`$title`**: El título visible que aparecerá en la cabecera del Metabox.
-* **`$callback`**: La función responsable de imprimir (hacer *echo*) el HTML del contenido del Metabox.
-* **`$screen`**: El tipo de contenido donde debe aparecer. Puede ser un string (ej. `'post'`, `'page'`, `'mi_cpt'`) o un array de varios tipos de post.
-* **`$context`**: Determina la posición del panel. Los valores comunes son `'normal'` (debajo del editor), `'side'` (en la columna lateral) y `'advanced'` (al final, similar a normal).
-* **`$priority`**: El orden jerárquico dentro de su contexto (`'high'`, `'core'`, `'default'`, `'low'`).
+* **`$id`**: Eine eindeutige HTML-Kennung (Attribut `id`) für die Box.
+* **`$title`**: Der sichtbare Titel, der im Header der Metabox erscheint.
+* **`$callback`**: Die Funktion, die für die Ausgabe (per *echo*) des HTML-Inhalts der Metabox zuständig ist.
+* **`$screen`**: Der Inhaltstyp, auf dem sie erscheinen soll. Dies kann ein String (z. B. `'post'`, `'page'`, `'mi_cpt'`) o ein Array mit mehreren Inhaltstypen sein.
+* **`$context`**: Bestimmt die Position des Panels. Typische Werte sind `'normal'` (unter dem Editor), `'side'` (in der rechten Seitenleiste) und `'advanced'` (am Ende, ähnlich wie normal).
+* **`$priority`**: Die hierarchische Reihenfolge innerhalb des Kontextes (`'high'`, `'core'`, `'default'`, `'low'`).
 
-### Distribución visual en la pantalla de edición
+### Visuelle Aufteilung auf dem Bearbeitungsbildschirm
 
-Para visualizar cómo los parámetros `$context` y `$priority` afectan el renderizado, este es el mapa estructural de la pantalla de edición:
+Um zu veranschaulichen, wie sich die Parameter `$context` und `$priority` auf das Rendering auswirken, siehst du hier die Struktur des Bearbeitungsbildschirms:
 
 ```text
 +---------------------------------------------------------+
-|                  TÍTULO DEL POST                        |
+|                  BEITRAGSTITEL                          |
 +---------------------------------------------------------+
 |                                        |                |
-|                                        |  CONTEXT:      |
-|           ÁREA DEL EDITOR              |  'side'        |
+|                                        |  KONTEXT:      |
+|           EDITOR-BEREICH               |  'side'        |
 |                                        |                |
 |                                        | +------------+ |
 |                                        | | Metabox 3  | |
 +----------------------------------------+ +------------+ |
-| CONTEXT: 'normal'                      | | Metabox 4  | |
+| KONTEXT: 'normal'                      | | Metabox 4  | |
 | +------------------------------------+ | +------------+ |
 | | Metabox 1 (Priority: high)         | |                |
 | +------------------------------------+ |                |
 +----------------------------------------+                |
-| CONTEXT: 'advanced'                    |                |
+| KONTEXT: 'advanced'                    |                |
 | +------------------------------------+ |                |
 | | Metabox 2 (Priority: default)      | |                |
 | +------------------------------------+ |                |
@@ -172,40 +172,40 @@ Para visualizar cómo los parámetros `$context` y `$priority` afectan el render
 
 ```
 
-### Renderizado de la Interfaz (El Callback)
+### Rendern der Benutzeroberfläche (Der Callback)
 
-La función `$callback` definida en `add_meta_box` recibe automáticamente por parámetro el objeto `WP_Post` actual. Esto es vital, ya que nos permite recuperar (usando `get_post_meta()`) los metadatos previamente guardados para poblar los campos del formulario.
+Die in `add_meta_box` definierte `$callback`-Funktion erhält automatisch das aktuelle `WP_Post`-Objekt als Parameter übergeben. Das ist essenziell, da es uns ermöglicht, zuvor gespeicherte Metadaten (mithilfe von `get_post_meta()`) abzurufen, um die Formularfelder vorzubefüllen.
 
-A continuación, implementamos un Metabox de ejemplo para un Custom Post Type ficticio llamado `inmueble`, capturando un precio:
+Im Folgenden implementieren wir eine Beispiel-Metabox für einen fiktiven Custom Post Type namens `inmueble` (Immobilie), um einen Preis zu erfassen:
 
 ```php
-// 1. Registro del Metabox
+// 1. Registrierung der Metabox
 add_action( 'add_meta_boxes', 'inmobiliaria_registrar_metabox_precio' );
 
 function inmobiliaria_registrar_metabox_precio() {
     add_meta_box(
-        'inmobiliaria_precio_box',           // ID único
-        'Datos Financieros del Inmueble',    // Título visible
-        'inmobiliaria_render_metabox_precio',// Callback de renderizado
-        'inmueble',                          // Pantalla (CPT)
-        'side',                              // Contexto (columna lateral)
-        'high'                               // Prioridad
+        'inmobiliaria_precio_box',           // Eindeutige ID
+        'Finanzdaten der Immobilie',         // Sichtbarer Titel
+        'inmobiliaria_render_metabox_precio',// Render-Callback
+        'inmueble',                          // Screen (CPT)
+        'side',                              // Kontext (Seitenleiste)
+        'high'                               // Priorität
     );
 }
 
-// 2. Renderizado del HTML
+// 2. Rendern des HTML
 function inmobiliaria_render_metabox_precio( $post ) {
-    // Recuperar el valor existente, si lo hay. Note el uso del prefijo '_'
+    // Vorhandenen Wert abrufen, falls vorhanden. Beachte das Präfix '_'
     $precio_actual = get_post_meta( $post->ID, '_inmueble_precio', true );
     
-    // Campo Nonce (Crucial para la seguridad, se profundizará en el Cap 10)
+    // Nonce-Feld (Entscheidend für die Sicherheit, Details in Kap. 10)
     wp_nonce_field( 'guardar_precio_inmueble', 'inmueble_precio_nonce' );
 
-    // Renderizar la estructura HTML
+    // HTML-Struktur rendern
     ?>
     <div class="inmobiliaria-metabox-wrapper">
         <label for="inmueble_precio_input">
-            <strong>Precio de Venta (USD):</strong>
+            <strong>Verkaufspreis (USD):</strong>
         </label>
         <input 
             type="number" 
@@ -216,91 +216,91 @@ function inmobiliaria_render_metabox_precio( $post ) {
             step="1000"
             style="margin-top: 8px;"
         />
-        <p class="description">Introduzca el valor sin comas ni símbolos.</p>
+        <p class="description">Gib den Wert ohne Kommas oder Symbole ein.</p>
     </div>
     <?php
 }
 
 ```
 
-En este punto, hemos logrado inyectar exitosamente nuestra interfaz en el panel de administración de WordPress. El atributo `name` de nuestro `<input>` está listo para enviar la información a través de la petición HTTP POST cuando el usuario haga clic en "Publicar" o "Actualizar". Sin embargo, el Metabox por sí solo es puramente visual; no guarda la información de forma automática. El proceso de interceptar esta petición, verificar la seguridad y almacenar los datos es el siguiente paso del ciclo de vida de los metadatos.
+Zu diesem Zeitpunkt haben wir unsere Schnittstelle erfolgreich in das WordPress-Admin-Panel eingebunden. Das `name`-Attribut unseres `<input>`-Felds ist bereit, die Informationen per HTTP-POST-Anfrage zu senden, wenn der Benutzer auf „Veröffentlichen“ oder „Aktualisieren“ klickt. Die Metabox allein ist jedoch rein visuell; sie speichert die Informationen nicht automatisch. Das Abfangen dieser Anfrage, die Überprüfung der Sicherheit und das Speichern der Daten ist der nächste Schritt im Lebenszyklus der Metadaten.
 
-## 4.3 Guardado y validación de campos
+## 4.3 Speichern und Validieren von Feldern
 
-Mostrar un campo de formulario en un Metabox es solo la mitad del trabajo. Cuando un usuario hace clic en el botón "Publicar" o "Actualizar" en WordPress, todos los datos de la pantalla de edición se envían al servidor mediante una petición HTTP POST. Sin embargo, WordPress no guardará los campos personalizados creados manualmente a menos que le indiquemos explícitamente cómo interceptar, procesar y almacenar esa información.
+Ein Formularfeld in einer Metabox anzuzeigen, ist nur die halbe Miete. Wenn ein Benutzer in WordPress auf den Button „Veröffentlichen“ oder „Aktualisieren“ klickt, werden alle Daten des Bearbeitungsbildschirms per HTTP-POST-Anfrage an den Server gesendet. WordPress speichert die manuell erstellten benutzerdefinierten Felder jedoch nicht automatisch, es sei denn, wir weisen das System explizit an, wie diese Informationen abgefangen, verarbeitet und gespeichert werden sollen.
 
-Para lograr esto, utilizamos el action hook `save_post`, que se dispara justo después de que el núcleo de WordPress haya insertado o actualizado los datos principales del post en la base de datos.
+Um dies zu erreichen, nutzen wir den Action-Hook `save_post`, der ausgelöst wird, sobald der WordPress-Core die Hauptdaten des Beitrags in der Datenbank eingefügt oder aktualisiert hat.
 
-### El flujo de guardado seguro
+### Der sichere Speicher-Workflow
 
-Antes de capturar los datos y enviarlos ciegamente a la base de datos con `update_post_meta()`, debemos implementar una serie de validaciones estrictas. El guardado de metadatos es uno de los puntos de entrada más críticos para la seguridad de un plugin.
+Bevor wir die Daten entgegennehmen und blind mit `update_post_meta()` in die Datenbank schreiben, müssen wir eine Reihe strenger Validierungen implementieren. Das Speichern von Metadaten ist eines der kritischsten Einfallstore für die Sicherheit eines Plugins.
 
-El ciclo de ejecución dentro de nuestro hook `save_post` debe seguir invariablemente esta arquitectura de compuertas lógicas:
+Der Ausführungszyklus innerhalb unseres `save_post`-Hooks muss ausnahmslos dieser logischen Struktur folgen:
 
 ```text
-[Petición POST (Guardar/Actualizar)]
+[POST-Anfrage (Speichern/Aktualisieren)]
                  |
                  v
          (Hook: save_post)
                  |
   +--------------+--------------+
-  | 1. Verificación de Nonce    | ---> [Inválido / Ausente] ---> Abortar
+  | 1. Nonce-Überprüfung        | ---> [Ungültig / Fehlt] ---> Abbrechen
   +--------------+--------------+
-                 | [Válido]
+                 | [Gültig]
   +--------------+--------------+
-  | 2. Ignorar Autoguardados    | ---> [Es Autoguardado] ------> Abortar
+  | 2. Autosave ignorieren      | ---> [Ist Autosave] --------> Abbrechen
   +--------------+--------------+
-                 | [No lo es]
+                 | [Nein]
   +--------------+--------------+
-  | 3. Control de Capacidades   | ---> [Sin Permisos] ---------> Abortar
+  | 3. Berechtigungsprüfung     | ---> [Keine Berechtigung] --> Abbrechen
   +--------------+--------------+
-                 | [Autorizado]
+                 | [Autorisiert]
   +--------------+--------------+
-  | 4. Validación / Sanitización| (Limpieza de los datos de $_POST)
+  | 4. Validierung / Bereinigung| (Bereinigung der $_POST-Daten)
   +--------------+--------------+
                  |
   +--------------+--------------+
-  | 5. Persistencia (CRUD)      | (update_post_meta o delete_post_meta)
+  | 5. Persistenz (CRUD)        | (update_post_meta oder delete_post_meta)
   +--------------+--------------+
 
 ```
 
-### 1. El gancho `save_post`
+### 1. Der Hook `save_post`
 
-Registramos nuestra función conectándola al hook. Es recomendable utilizar la variante específica del hook para nuestro Custom Post Type, `save_post_{post_type}`, para evitar que nuestra lógica se ejecute innecesariamente al guardar páginas o entradas regulares.
+Wir registrieren unsere Funktion, indem wir sie an den Hook anhängen. Es wird empfohlen, die spezifische Variante des Hooks für unseren Custom Post Type zu verwenden (`save_post_{post_type}`), um zu verhindern, dass unsere Logik unnötigerweise beim Speichern von Seiten oder regulären Beiträgen ausgeführt wird.
 
 ```php
-// Conectar al hook general de guardado
+// Am allgemeinen Speicher-Hook anhängen
 add_action( 'save_post', 'inmobiliaria_guardar_metabox_precio' );
 
-// O alternativamente, conectar solo cuando se guarda un 'inmueble' (Recomendado)
+// Oder alternativ nur beim Speichern eines 'inmueble' ausführen (Empfohlen)
 // add_action( 'save_post_inmueble', 'inmobiliaria_guardar_metabox_precio' );
 
 ```
 
-### 2. Implementación de la rutina de guardado
+### 2. Implementierung der Speicherroutine
 
-A continuación, desarrollamos la función `inmobiliaria_guardar_metabox_precio()` aplicando el flujo de seguridad detallado en el diagrama. Retomaremos el campo `inmueble_precio` que creamos en el capítulo 4.2.
+Als Nächstes entwickeln wir die Funktion `inmobiliaria_guardar_metabox_precio()` unter Anwendung des im Diagramm beschriebenen Sicherheits-Workflows. Dabei greifen wir wieder auf das in Kapitel 4.2 erstellte Feld `inmueble_precio` zurück.
 
 ```php
 function inmobiliaria_guardar_metabox_precio( $post_id ) {
 
-    // 1. Verificación de Nonce
-    // Comprobamos si nuestro campo nonce fue enviado y si es válido.
+    // 1. Nonce-Überprüfung
+    // Überprüfen, ob unser Nonce-Feld gesendet wurde und ob es gültig ist.
     if ( ! isset( $_POST['inmueble_precio_nonce'] ) || 
          ! wp_verify_nonce( $_POST['inmueble_precio_nonce'], 'guardar_precio_inmueble' ) ) {
         return $post_id;
     }
 
-    // 2. Ignorar Autoguardados
-    // WordPress guarda revisiones automáticamente por AJAX. No queremos validar ni 
-    // guardar metadatos en estos ciclos incompletos.
+    // 2. Autosave ignorieren
+    // WordPress speichert Revisionen automatisch per AJAX. Wir wollen in diesen
+    // unvollständigen Zyklen keine Metadaten validieren oder speichern.
     if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
         return $post_id;
     }
 
-    // 3. Control de Capacidades
-    // ¿Tiene este usuario el rol necesario para editar este contenido?
+    // 3. Berechtigungsprüfung (Capabilities)
+    // Hat dieser Benutzer die erforderliche Rolle, um diesen Inhalt zu bearbeiten?
     if ( isset( $_POST['post_type'] ) && 'page' === $_POST['post_type'] ) {
         if ( ! current_user_can( 'edit_page', $post_id ) ) {
             return $post_id;
@@ -311,26 +311,26 @@ function inmobiliaria_guardar_metabox_precio( $post_id ) {
         }
     }
 
-    /* --- LLEGADOS A ESTE PUNTO, ES SEGURO PROCEDER --- */
+    /* --- AB HIER IST DIE AUSFÜHRUNG SICHER --- */
 
-    // 4. Validación y Sanitización
-    // Nunca confíes en $_POST directamente. El capítulo 10 ahonda en la seguridad,
-    // pero aquí aplicamos sanitización básica según el tipo de dato esperado.
+    // 4. Validierung und Bereinigung (Sanitization)
+    // Vertraue $_POST niemals direkt. Kapitel 10 befasst sich eingehend mit Sicherheit,
+    // aber hier wenden wir eine grundlegende Bereinigung basierend auf dem erwarteten Datentyp an.
     
-    // Verificamos si la clave existe en el array POST
+    // Überprüfen, ob der Schlüssel im POST-Array existiert
     if ( isset( $_POST['inmueble_precio'] ) ) {
         
-        // Sanitizamos: Como esperamos un número (precio), forzamos a float o int.
-        // También podríamos usar sanitize_text_field() si fuera un texto.
+        // Bereinigen: Da wir eine Zahl (Preis) erwarten, erzwingen wir float oder int.
+        // Wir könnten auch sanitize_text_field() verwenden, wenn es sich um Text handeln würde.
         $precio_sanitizado = floatval( $_POST['inmueble_precio'] );
 
-        // Validación de negocio (Ej: el precio no puede ser negativo)
+        // Business-Validierung (Z. B. darf der Preis nicht negativ sein)
         if ( $precio_sanitizado < 0 ) {
             $precio_sanitizado = 0;
         }
 
-        // 5. Persistencia
-        // Actualizamos el metadato. Si el campo se vació, es mejor práctica borrarlo.
+        // 5. Persistenz
+        // Metadaten aktualisieren. Wenn das Feld geleert wurde, ist es Best Practice, es zu löschen.
         if ( empty( $precio_sanitizado ) && $precio_sanitizado !== 0.0 ) {
             delete_post_meta( $post_id, '_inmueble_precio' );
         } else {
@@ -341,19 +341,19 @@ function inmobiliaria_guardar_metabox_precio( $post_id ) {
 
 ```
 
-### Consideraciones sobre Validación vs Sanitización
+### Überlegungen zu Validierung vs. Bereinigung (Sanitization)
 
-Aunque a menudo se usan indistintamente, en la Metadata API cumplen roles diferentes:
+Obwohl sie oft synonym verwendet werden, erfüllen sie in der Metadata API unterschiedliche Rollen:
 
-* **Sanitización (Limpiar):** Modifica el dato de entrada para hacerlo seguro. En el ejemplo anterior, `floatval()` elimina cualquier inyección de código o texto indeseado, dejando solo una cifra decimal. Otras funciones útiles del core son `sanitize_text_field()`, `sanitize_email()`, o `wp_kses_post()`.
-* **Validación (Comprobar):** Evalúa si el dato cumple las reglas de tu negocio antes de guardarlo. En nuestro código, comprobar que el precio no sea menor a cero es una validación. Si un dato no pasa la validación, puedes decidir guardar un valor por defecto o rechazar la actualización mediante el uso de transitorios (Transients) para mostrar un error en el panel de administración.
+* **Bereinigung / Sanitization (Säubern):** Verändert die Eingabedaten, um sie sicher zu machen. Im vorherigen Beispiel entfernt `floatval()` jegliche Code-Injektionen oder unerwünschten Text und hinterlässt nur eine Dezimalzahl. Andere nützliche Core-Funktionen sind `sanitize_text_field()`, `sanitize_email()` oder `wp_kses_post()`.
+* **Validierung (Prüfen):** Evaluiert, ob die Daten deine Business-Regeln erfüllen, bevor sie gespeichert werden. In unserem Code ist die Prüfung, dass der Preis nicht kleiner als Null sein darf, eine Validierung. Wenn ein Wert die Validierung nicht besteht, kannst du dich dafür entscheiden, einen Standardwert zu speichern oder die Aktualisierung abzulehnen und Transients zu verwenden, um eine Fehlermeldung im Administrationsbereich anzuzeigen.
 
-### Manejo de Arrays en Metadatos
+### Umgang mit Arrays in Metadaten
 
-Si tu Metabox utiliza campos de selección múltiple (como un `<select multiple>` o varios `<input type="checkbox">`), el dato en `$_POST` llegará como un array. Debes iterar sobre este array para sanitizar cada elemento individualmente antes de guardarlo. `update_post_meta()` puede recibir este array sanitizado directamente como `$meta_value` (recordemos que WordPress lo serializará automáticamente en la base de datos).
+Wenn deine Metabox Mehrfachauswahlfelder verwendet (wie ein `<select multiple>` oder mehrere `<input type="checkbox">`), kommen die Daten in `$_POST` als Array an. Du musst dieses Array durchlaufen, um jedes Element einzeln zu bereinigung, bevor du es speicherst. `update_post_meta()` kann dieses bereinigte Array direkt als `$meta_value` empfangen (denke daran, dass WordPress es automatisch in der Datenbank serialisiert).
 
 ```php
-// Ejemplo rápido de sanitización de un array
+// Schnelles Beispiel für die Bereinigung eines Arrays
 if ( isset( $_POST['inmueble_caracteristicas'] ) && is_array( $_POST['inmueble_caracteristicas'] ) ) {
     $caracteristicas_limpias = array_map( 'sanitize_text_field', $_POST['inmueble_caracteristicas'] );
     update_post_meta( $post_id, '_inmueble_caracteristicas', $caracteristicas_limpias );
@@ -361,59 +361,59 @@ if ( isset( $_POST['inmueble_caracteristicas'] ) && is_array( $_POST['inmueble_c
 
 ```
 
-## 4.4 Metadatos de usuarios y términos
+## 4.4 Metadaten von Benutzern und Begriffen (Terms)
 
-A lo largo de este capítulo hemos utilizado los posts y Custom Post Types como el vehículo principal para explicar la Metadata API. Sin embargo, la verdadera potencia de este subsistema radica en su universalidad. La misma arquitectura y las mismas reglas de persistencia, serialización y caché se aplican a otros dos objetos fundamentales de WordPress: los usuarios y los términos (categorías, etiquetas y taxonomías personalizadas).
+In diesem Kapitel haben wir Beiträge und Custom Post Types als Hauptbeispiel zur Erklärung der Metadata API verwendet. Die wahre Stärke dieses Subsystems liegt jedoch in seiner Universalität. Dieselbe Architektur und dieselben Regeln für Persistenz, Serialisierung und Caching gelten für zwei weitere grundlegende WordPress-Objekte: Benutzer und Begriffe bzw. Terms (Kategorien, Schlagwörter und benutzerdefinierte Taxonomien).
 
-Comprender cómo interactuar con los metadatos de estos objetos te permitirá construir perfiles de usuario complejos y jerarquías de clasificación ricas en información.
+Wenn du verstehst, wie du mit den Metadaten dieser Objekte interagierst, kannst du komplexe Benutzerprofile und informationsreiche Klassifizierungshierarchien aufbauen.
 
-### Metadatos de Usuarios (User Meta)
+### Benutzermetadaten (User Meta)
 
-La tabla `wp_usermeta` almacena información adicional sobre los usuarios registrados. El propio núcleo de WordPress la utiliza intensivamente para guardar preferencias del panel, capacidades (roles) y colores de la interfaz.
+Die Tabelle `wp_usermeta` speichert zusätzliche Informationen über registrierte Benutzer. Der WordPress-Core selbst nutzt sie intensiv, um Dashboard-Einstellungen, Fähigkeiten (Rollen) und Farben der Benutzeroberfläche zu speichern.
 
-Las funciones envolventes siguen exactamente la misma nomenclatura que las de los posts:
+Die Wrapper-Funktionen folgen genau der gleichen Nomenklatur wie bei Beiträgen:
 
 * `add_user_meta( $user_id, $meta_key, $meta_value, $unique )`
 * `get_user_meta( $user_id, $meta_key, $single )`
 * `update_user_meta( $user_id, $meta_key, $meta_value, $prev_value )`
 * `delete_user_meta( $user_id, $meta_key, $meta_value )`
 
-#### Interfaz y guardado en perfiles de usuario
+#### Benutzeroberfläche und Speichern in Benutzerprofilen
 
-Para añadir campos personalizados a la pantalla de edición de perfil (`profile.php` y `user-edit.php`), no utilizamos la API de Metaboxes. En su lugar, nos conectamos a ganchos de acción específicos para inyectar HTML tabular y para interceptar el guardado.
+Um benutzerdefinierte Felder zum Profil-Bearbeitungsbildschirm (`profile.php` und `user-edit.php`) hinzuzufügen, nutzen wir nicht die Metabox-API. Stattdessen hängen wir uns an spezifische Action-Hooks, um tabellarisches HTML einzubinden und das Speichern abzufangen.
 
 ```php
-// 1. Mostrar campos en el perfil (para el propio usuario y para administradores)
+// 1. Felder im Profil anzeigen (für den Benutzer selbst und für Administratoren)
 add_action( 'show_user_profile', 'mi_plugin_campos_perfil' );
 add_action( 'edit_user_profile', 'mi_plugin_campos_perfil' );
 
 function mi_plugin_campos_perfil( $user ) {
     $cargo = get_user_meta( $user->ID, '_cargo_profesional', true );
     ?>
-    <h3>Información Profesional</h3>
+    <h3>Berufliche Informationen</h3>
     <table class="form-table">
         <tr>
-            <th><label for="cargo_profesional">Cargo</label></th>
+            <th><label for="cargo_profesional">Position / Rolle</label></th>
             <td>
                 <input type="text" name="cargo_profesional" id="cargo_profesional" value="<?php echo esc_attr( $cargo ); ?>" class="regular-text" />
-                <span class="description">Ej: Director de Marketing.</span>
+                <span class="description">Z. B. Marketing-Direktor.</span>
             </td>
         </tr>
     </table>
     <?php
 }
 
-// 2. Guardar los campos del perfil
+// 2. Profilfelder speichern
 add_action( 'personal_options_update', 'mi_plugin_guardar_campos_perfil' );
 add_action( 'edit_user_profile_update', 'mi_plugin_guardar_campos_perfil' );
 
 function mi_plugin_guardar_campos_perfil( $user_id ) {
-    // Verificación de capacidades
+    // Berechtigungsprüfung
     if ( ! current_user_can( 'edit_user', $user_id ) ) {
         return false;
     }
 
-    // Sanitización y guardado
+    // Bereinigung und Speichern
     if ( isset( $_POST['cargo_profesional'] ) ) {
         $cargo_limpio = sanitize_text_field( $_POST['cargo_profesional'] );
         update_user_meta( $user_id, '_cargo_profesional', $cargo_limpio );
@@ -422,49 +422,49 @@ function mi_plugin_guardar_campos_perfil( $user_id ) {
 
 ```
 
-### Metadatos de Términos (Term Meta)
+### Metadaten von Begriffen (Term Meta)
 
-Introducida formalmente en WordPress 4.4, la tabla `wp_termmeta` solucionó uno de los mayores problemas históricos del ecosistema: la incapacidad nativa de añadir atributos a categorías o taxonomías. Antes de esto, los desarrolladores debían recurrir a soluciones subóptimas, como almacenar arrays masivos en la tabla `wp_options`.
+Eingeführt mit WordPress 4.4, die Tabelle `wp_termmeta` löste eines der größten historischen Probleme des Ökosystems: das native Unvermögen, Kategorien oder Taxonomien Attribute hinzuzufügen. Zuvor mussten Entwickler auf suboptimale Lösungen ausweichen, wie das Speichern riesiger Arrays in der Tabelle `wp_options`.
 
-Hoy, la API refleja perfectamente la estructura que ya conocemos:
+Heute spiegelt die API perfekt die Struktur wider, die wir bereits kennen:
 
 * `add_term_meta( $term_id, $meta_key, $meta_value, $unique )`
 * `get_term_meta( $term_id, $meta_key, $single )`
 * `update_term_meta( $term_id, $meta_key, $meta_value, $prev_value )`
 * `delete_term_meta( $term_id, $meta_key, $meta_value )`
 
-#### Integración visual en taxonomías
+#### Visuelle Integration in Taxonomien
 
-A diferencia de los posts (que usan metaboxes) y los usuarios (que usan una única página de perfil), las taxonomías tienen dos pantallas distintas donde debemos inyectar nuestros campos: la pantalla de creación rápida (en la lista de términos) y la pantalla de edición individual.
+Im Gegensatz zu Beiträgen (die Metaboxen verwenden) und Benutzern (die eine einzige Profilseite nutzen), haben Taxonomien zwei verschiedene Bildschirme, auf denen wir unsere Felder einbinden müssen: den Bildschirm zur Schnellerstellung (in der Liste der Begriffe) und den individuellen Bearbeitungsbildschirm.
 
-Los hooks de inyección son dinámicos, basados en el nombre de la taxonomía (ej. `category`, `post_tag`, o tu taxonomía personalizada como `ubicacion`).
+Die Hooks zum Einfügen sind dynamisch und basieren auf dem Namen der Taxonomie (z. B. `category`, `post_tag` oder deiner benutzerdefinierten Taxonomie wie `ubicacion`).
 
 ```php
-// Asumimos una taxonomía personalizada llamada 'ubicacion'
+// Wir nehmen eine benutzerdefinierte Taxonomie namens 'ubicacion' (Ort/Standort) an
 
-// 1. Mostrar campo en el formulario de creación (Añadir nueva ubicación)
+// 1. Feld im Erstellungsformular anzeigen (Neuen Standort hinzufügen)
 add_action( 'ubicacion_add_form_fields', 'inmobiliaria_campo_color_ubicacion' );
 
 function inmobiliaria_campo_color_ubicacion() {
-    // Aquí el HTML no usa estructura de tabla
+    // Hier verwendet das HTML keine Tabellenstruktur
     ?>
     <div class="form-field">
-        <label for="color_marcador">Color del Marcador en Mapa</label>
+        <label for="color_marcador">Farbe der Kartenmarkierung</label>
         <input type="text" name="color_marcador" id="color_marcador" value="" />
-        <p>Código HEX (ej. #FF0000)</p>
+        <p>HEX-Code (z. B. #FF0000)</p>
     </div>
     <?php
 }
 
-// 2. Mostrar campo en el formulario de edición (Editar ubicación existente)
+// 2. Feld im Bearbeitungsformular anzeigen (Bestehenden Standort bearbeiten)
 add_action( 'ubicacion_edit_form_fields', 'inmobiliaria_editar_color_ubicacion' );
 
 function inmobiliaria_editar_color_ubicacion( $term ) {
     $color_actual = get_term_meta( $term->term_id, '_color_marcador', true );
-    // Aquí el HTML SÍ usa estructura de tabla
+    // Hier verwendet das HTML EINE Tabellenstruktur
     ?>
     <tr class="form-field">
-        <th scope="row"><label for="color_marcador">Color del Marcador</label></th>
+        <th scope="row"><label for="color_marcador">Farbe der Markierung</label></th>
         <td>
             <input type="text" name="color_marcador" id="color_marcador" value="<?php echo esc_attr( $color_actual ); ?>" />
         </td>
@@ -472,13 +472,13 @@ function inmobiliaria_editar_color_ubicacion( $term ) {
     <?php
 }
 
-// 3. Guardar el metadato (hook para creación y edición)
+// 3. Metadatum speichern (Hook für Erstellung und Bearbeitung)
 add_action( 'created_ubicacion', 'inmobiliaria_guardar_color_ubicacion' );
 add_action( 'edited_ubicacion', 'inmobiliaria_guardar_color_ubicacion' );
 
 function inmobiliaria_guardar_color_ubicacion( $term_id ) {
     if ( isset( $_POST['color_marcador'] ) ) {
-        // Usamos una función de sanitización específica para colores HEX
+        // Wir verwenden eine spezifische Bereinigungsfunktion für HEX-Farben
         $color_limpio = sanitize_hex_color( $_POST['color_marcador'] );
         update_term_meta( $term_id, '_color_marcador', $color_limpio );
     }
@@ -486,32 +486,32 @@ function inmobiliaria_guardar_color_ubicacion( $term_id ) {
 
 ```
 
-### Unificando el concepto
+### Konzept-Zusammenfassung
 
-Para visualizar cómo el núcleo maneja internamente esta abstracción de metadatos, observa cómo todas las funciones envolventes terminan llamando a la misma lógica de bajo nivel del Core:
+Um zu veranschaulichen, wie der Core diese Metadatenabstraktion intern handhabt, siehst du hier, wie alle Wrapper-Funktionen letztlich dieselbe Low-Level-Logik des Cores aufrufen:
 
 ```text
-[ Tu Plugin ]
+[ Dein Plugin ]
      |
      +--> update_post_meta()  --+
      |                          |
      +--> update_user_meta()  --+--> update_metadata( $type, $id, $key, $value )
      |                          |             |
      +--> update_term_meta()  --+             v
-                                     [ Capa de Caché de Objeto ]
+                                     [ Objekt-Cache-Schicht ]
                                               |
                                               v
-                                       [ Base de Datos ]
+                                        [ Datenbank ]
 
 ```
 
-Esta arquitectura garantiza que el rendimiento y la seguridad se mantengan consistentes sin importar a qué tipo de entidad estés añadiendo atributos personalizados.
+Diese Architektur garantiert, dass die Leistung und die Sicherheit konsistent bleiben, unabhängig davon, welchem Objekttyp du benutzerdefinierte Attribute hinzufügst.
 
-## Resumen del capítulo
+## Kapitelzusammenfassung
 
-En este capítulo hemos profundizado en la Metadata API, el sistema que otorga verdadera flexibilidad de datos a WordPress sin alterar los esquemas de la base de datos principal:
+In diesem Kapitel haben wir uns eingehend mit der Metadata API befasst – dem System, das WordPress echte Datenflexibilität verleiht, ohne die Schemata der Hauptdatenbank zu verändern:
 
-1. **Introducción a la Metadata API:** Entendimos el modelo Entidad-Atributo-Valor (EAV) y cómo las funciones CRUD (`add_`, `get_`, `update_`, `delete_`) interactúan automáticamente con la serialización de PHP, ocultando datos de interfaces genéricas mediante el uso de claves privadas (con guion bajo).
-2. **Creación de Metaboxes:** Abandonamos los "Campos Personalizados" nativos para construir interfaces a medida utilizando `add_meta_box()`, inyectando HTML específico en áreas estratégicas de la pantalla de edición de cualquier tipo de post.
-3. **Guardado y validación:** Construimos el flujo crítico de seguridad atado al hook `save_post`. Implementamos compuertas lógicas (verificación de Nonces, autoguardados, y capacidades) antes de proceder a la indispensable sanitización y persistencia de la variable superglobal `$_POST`.
-4. **Usuarios y Términos:** Extendimos nuestros conocimientos más allá de los posts, aplicando la misma filosofía de metadatos para enriquecer perfiles de usuario (`wp_usermeta`) y jerarquías taxonómicas (`wp_termmeta`), utilizando los ganchos de acción de perfil y taxonomía apropiados para renderizar y guardar la información.
+1. **Einführung in die Metadata API:** Wir haben das Entity-Attribute-Value-Modell (EAV) verstanden und gelernt, wie die CRUD-Funktionen (`add_`, `get_`, `update_`, `delete_`) automatisch mit die PHP-Serialisierung interagieren und Daten mithilfe von privaten Schlüsseln (mit Unterstrich) vor generischen Oberflächen verbergen.
+2. **Erstellung von Metaboxen:** Wir haben uns von den nativen „Benutzerdefinierten Feldern“ verabschiedet, um maßgeschneiderte Schnittstellen mit `add_meta_box()` zu erstellen, indem wir spezifisches HTML in strategische Bereiche des Bearbeitungsbildschirms für jeden Inhaltstyp (Post Type) eingefügt haben.
+3. **Speichern und Validieren:** Wir haben den kritischen Sicherheits-Workflow erstellt, der an den `save_post`-Hook gebunden ist. Dabei haben wir logische Prüfungen (Nonce-Überprüfung, Autosaves und Berechtigungen) implementiert, bevor wir mit der unerlässlichen Bereinigung und Speicherung der superglobalen Variable `$_POST` fortgefahren sind.
+4. **Benutzer und Begriffe (Terms):** Wir haben unser Wissen über Beiträge hinaus erweitert und dieselbe Metadaten-Philosophie angewendet, um Benutzerprofile (`wp_usermeta`) und Taxonomiehierarchien (`wp_termmeta`) anzureichern, wobei wir die entsprechenden Profil- und Taxonomie-Action-Hooks zum Rendern und Speichern von Informationen verwendet haben.

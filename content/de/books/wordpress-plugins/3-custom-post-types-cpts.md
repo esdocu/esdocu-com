@@ -1,18 +1,18 @@
-WordPress nació como plataforma de blogging, pero su verdadera potencia como CMS reside en su asombrosa flexibilidad. En este capítulo dejaremos atrás la limitación de usar exclusivamente "entradas" o "páginas". Aprenderás a diseñar arquitecturas de información a medida mediante el registro avanzado de Custom Post Types (CPTs) y taxonomías personalizadas. Exploraremos cómo configurar la interfaz de administración, asegurar una correcta internacionalización semántica y dominar la relación entre entidades para ejecutar consultas combinadas eficientes. Es el momento de estructurar tus datos de forma profesional y sin restricciones.
+WordPress wurde ursprünglich als Blogging-Plattform entwickelt, doch seine wahre Stärke als CMS liegt in seiner enormen Flexibilität. In diesem Kapitel lassen wir die Einschränkung hinter uns, ausschließlich „Beiträge“ oder „Seiten“ zu nutzen. Du lernst, wie du maßgeschneiderte Informationsarchitekturen durch die erweiterte Registrierung von Custom Post Types (CPTs) und benutzerdefinierten Taxonomien erstellst. Wir untersuchen, wie man die Administrationsoberfläche konfiguriert, eine korrekte semantische Internationalisierung sicherstellt und die Beziehung zwischen Entitäten beherrscht, um effiziente kombinierte Abfragen auszuführen. Es ist an der Zeit, deine Daten professionell und ohne Einschränkungen zu strukturieren.
 
-## 3.1 Registro avanzado de CPTs
+## 3.1 Fortgeschrittene Registrierung von CPTs
 
-En el núcleo de WordPress, un Custom Post Type (CPT) no es una estructura de base de datos separada; es simplemente una fila en la tabla `wp_posts` donde la columna `post_type` adquiere un valor definido por el desarrollador en lugar de los predeterminados (`post`, `page`, `attachment`, etc.). El "registro" de un CPT es, por tanto, el acto de instruir a la API de WordPress sobre cómo debe interactuar, enrutar, mostrar y gestionar este identificador específico.
+Im Core von WordPress ist ein Custom Post Type (CPT) keine separate Datenbankstruktur; es handelt sich lediglich um eine Zeile in der Tabelle `wp_posts`, bei der die Spalte `post_type` einen vom Entwickler definierten Wert anstelle der Standardwerte (`post`, `page`, `attachment` etc.) aufweist. Die „Registrierung“ eines CPTs ist daher der Akt, die WordPress-API anzuweisen, wie sie mit diesem spezifischen Bezeichner interagieren, ihn routen, anzeigen und verwalten soll.
 
-La función central para esta tarea es `register_post_type( $post_type, $args )`. Sin embargo, para un desarrollo profesional, la configuración del array `$args` va mucho más allá de hacerlo visible en el panel de administración.
+Die zentrale Funktion für diese Aufgabe lautet `register_post_type( $post_type, $args )`. Für eine professionelle Entwicklung geht die Konfiguration des Arrays `$args` jedoch weit über das bloße Sichtbarmachen im Admin-Bereich hinaus.
 
-### El Hook adecuado: `init`
+### Der richtige Hook: `init`
 
-El registro de un CPT siempre debe engancharse a la acción `init`. Engancharlo antes (como en `plugins_loaded`) puede causar que la funcionalidad de reescritura de URLs falle, y engancharlo después (como en `wp_loaded`) significa que el CPT no estará disponible cuando otros plugins o el propio núcleo intenten consultarlo.
+Die Registrierung eines CPTs sollte immer an die Action `init` angehängt werden. Eine zu frühe Registrierung (wie bei `plugins_loaded`) kann dazu führen, dass das URL-Rewriting fehlschlägt, und eine zu späte Registrierung (wie bei `wp_loaded`) bedeutet, dass der CPT nicht verfügbar ist, wenn andere Plugins oder der Core selbst versuchen, darauf zuzugreifen.
 
 ```php
 /**
- * Clase manejadora del registro del CPT 'Libro'.
+ * Handler-Klasse für die Registrierung des CPTs 'Buch'.
  */
 class MiPlugin_CPT_Libro {
 
@@ -23,10 +23,10 @@ class MiPlugin_CPT_Libro {
     }
 
     public function registrar_cpt() {
-        // Nota: Los argumentos de interfaz (labels) se abordarán en la sección 3.2
+        // Hinweis: Die Interface-Argumente (Labels) werden in Sektion 3.2 behandelt
         $labels = [
-            'name'          => __( 'Libros', 'miplugin' ),
-            'singular_name' => __( 'Libro', 'miplugin' ),
+            'name'          => __( 'Bücher', 'miplugin' ),
+            'singular_name' => __( 'Buch', 'miplugin' ),
         ];
 
         $args = [
@@ -42,7 +42,7 @@ class MiPlugin_CPT_Libro {
             'hierarchical'        => false,
             'menu_position'       => 20,
             'supports'            => [ 'title', 'editor', 'thumbnail', 'excerpt', 'revisions' ],
-            'show_in_rest'        => true, // Habilita Gutenberg y la REST API
+            'show_in_rest'        => true, // Aktiviert Gutenberg und die REST-API
         ];
 
         register_post_type( self::POST_TYPE, $args );
@@ -54,20 +54,20 @@ $cpt_libro->init();
 
 ```
 
-### Diseccionando el array `$args` (Configuración Avanzada)
+### Das Array `$args` analysieren (Erweiterte Konfiguration)
 
-Para tener un control absoluto sobre el comportamiento del CPT, es fundamental comprender la cascada de herencias que generan ciertos argumentos booleanos y cómo afectan al ecosistema de WP.
+Um die vollständige Kontrolle über das Verhalten des CPTs zu haben, ist es wichtig, die Kaskade von Vererbungen zu verstehen, die bestimmte boolesche Argumente erzeugen, und wie sie sich auf das WP-Ökosystem auswirken.
 
-#### 1. Visibilidad y Accesibilidad
+#### 1. Sichtbarkeit und Barrierefreiheit
 
-El argumento `public` es un atajo. Si lo defines como `true`, WordPress establecerá automáticamente a `true` los siguientes argumentos (a menos que los sobrescribas explícitamente):
+Das Argument `public` ist eine Abkürzung. Wenn du es auf `true` setzt, setzt WordPress die folgenden Argumente automatisch auf `true` (sofern sie nicht explizit überschrieben werden):
 
-* `exclude_from_search`: Falso (aparecerá en los resultados de búsqueda).
-* `publicly_queryable`: Verdadero (se podrá acceder vía URL).
-* `show_in_nav_menus`: Verdadero.
-* `show_ui`: Verdadero.
+* `exclude_from_search`: False (erscheint in den Suchergebnissen).
+* `publicly_queryable`: True (ist über die URL erreichbar).
+* `show_in_nav_menus`: True.
+* `show_ui`: True.
 
-En arquitecturas avanzadas, es común tener CPTs de uso interno (por ejemplo, para almacenar registros de logs o configuraciones complejas). Para un CPT "invisible" pero gestionable desde código:
+In fortgeschrittenen Architekturen ist es üblich, CPTs für den internen Gebrauch zu haben (z. B. zum Speichern von Logs oder komplexen Konfigurationen). Für einen „unsichtbaren“, aber über Code verwaltbaren CPT:
 
 ```php
 'public'              => false,
@@ -77,152 +77,147 @@ En arquitecturas avanzadas, es común tener CPTs de uso interno (por ejemplo, pa
 
 ```
 
-#### 2. Soporte del Editor Moderno (Gutenberg)
+#### 2. Unterstützung des modernen Editors (Gutenberg)
 
-El argumento `show_in_rest` introdujo un cambio de paradigma. Originalmente concebido para exponer el CPT en la REST API (que veremos en el Capítulo 13), en las versiones actuales de WordPress **es el interruptor maestro del editor de bloques**.
+Das Argument `show_in_rest` hat einen Paradigmenwechsel eingeleitet. Ursprünglich dafür gedacht, den CPT in der REST-API bereitzustellen (die wir in Kapitel 13 besprechen), ist es in aktuellen WordPress-Versionen **der Hauptschalter für den Block-Editor**.
 
-Si `show_in_rest` es `false` (su valor por defecto) o se omite, el CPT utilizará el editor clásico (TinyMCE). Si se establece en `true`, WordPress cargará Gutenberg. Además, puedes modificar la ruta base de la API usando `rest_base` y `rest_controller_class` si necesitas personalizar la lógica de los endpoints.
+Wenn `show_in_rest` auf `false` gesetzt ist (Standard) oder weggelassen wird, verwendet der CPT den klassischen Editor (TinyMCE). Wenn es auf `true` gesetzt wird, lädt WordPress Gutenberg. Zudem kannst du den Basispfad der API mit `rest_base` und `rest_controller_class` anpassen, falls du die Logik der Endpunkte konfigurieren musst.
 
-#### 3. Motor de Reescritura (Rewrite Rules)
+#### 3. Umschreibungs-Engine (Rewrite Rules)
 
-El array `rewrite` controla cómo la WP_Rewrite API procesa las URLs del CPT.
+Das Array `rewrite` steuert, wie die WP_Rewrite-API die URLs des CPTs verarbeitet.
 
-* `slug`: Por defecto usa el nombre del CPT, pero permite definir una URL amigable (ej. de `miplugin_libro` a `libros`).
-* `with_front`: Si tu estructura de enlaces permanentes general tiene una base (como `/blog/%postname%/`), poner esto en `true` hará que tu CPT sea `/blog/libros/mi-libro/`. Ponerlo en `false` fuerza `/libros/mi-libro/`, lo cual es preferible en el 90% de los casos.
-* `pages`: Soporte para paginación dentro del CPT.
+* `slug`: Verwendet standardmäßig den Namen des CPTs, erlaubt aber die Definition einer benutzerfreundlichen URL (z. B. von `miplugin_libro` zu `libros`).
+* `with_front`: Wenn deine allgemeine Permalink-Struktur eine Basis hat (wie `/blog/%postname%/`), führt die Einstellung `true` dazu, dass dein CPT unter `/blog/libros/mein-buch/` erreichbar ist. Die Einstellung `false` erzwingt `/libros/mein-buch/`, was in 90 % der Fälle bevorzugt wird.
+* `pages`: Unterstützung für Paginierung innerhalb des CPTs.
 
-*Importante:* Cambiar el `slug` requiere limpiar las reglas de reescritura. No uses `flush_rewrite_rules()` dentro del hook `init` (destruirá el rendimiento). Debes hacerlo únicamente en la rutina de activación del plugin (Capítulo 2.3).
+*Wichtig:* Das Ändern des `slug` erfordert das Leeren der Rewrite Rules. Verwende `flush_rewrite_rules()` niemals innerhalb des Hooks `init` (das beeinträchtigt die Performance schwer). Dies sollte nur während der Aktivierungsroutine des Plugins geschehen (Kapitel 2.3).
 
-#### 4. Array de Capacidades (`supports`)
+#### 4. Array der Fähigkeiten (`supports`)
 
-Define qué metaboxes y características del núcleo se cargan en la pantalla de edición.
+Definiert, welche Metaboxen und Core-Funktionen in der Bearbeitungsoberfläche geladen werden.
 
-```text
-+-------------------+---------------------------------------------------+
-| Argumento         | Impacto en la interfaz y base de datos            |
-+-------------------+---------------------------------------------------+
-| title             | Añade la caja de título y la columna post_title.  |
-| editor            | Carga TinyMCE o Gutenberg (según show_in_rest).   |
-| author            | Metabox para asignar el post_author.              |
-| thumbnail         | Soporte para post_thumbnail (Imagen destacada).   |
-| excerpt           | Metabox para resumen (post_excerpt).              |
-| trackbacks        | Soporte para pingbacks y trackbacks.              |
-| custom-fields     | Carga la interfaz nativa de Custom Fields.        |
-| comments          | Habilita el soporte de discusión (comment_status).|
-| revisions         | Activa el guardado de histórico (post_parent).    |
-| page-attributes   | Metabox para orden (menu_order) y jerarquía.      |
-| post-formats      | Soporte para formatos (video, aside, gallery).    |
-+-------------------+---------------------------------------------------+
+| Argument | Auswirkung auf Interface und Datenbank |
+| --- | --- |
+| title | Fügt das Titelfeld und die Spalte post_title hinzu. |
+| editor | Lädt TinyMCE oder Gutenberg (je nach show_in_rest). |
+| author | Metabox zur Zuweisung des post_author. |
+| thumbnail | Unterstützung für post_thumbnail (Beitragsbild). |
+| excerpt | Metabox für den Auszug (post_excerpt). |
+| trackbacks | Unterstützung für Pingbacks und Trackbacks. |
+| custom-fields | Lädt das native Interface für Custom Fields. |
+| comments | Aktiviert die Diskussionsunterstützung (comment_status). |
+| revisions | Aktiviert das Speichern von Revisionen (post_parent). |
+| page-attributes | Metabox für Reihenfolge (menu_order) und Hierarchie. |
+| post-formats | Unterstützung für Beitragsformate (Video, Aside, Galerie). |
 
-```
+Wenn du das Argument `supports` weglässt, weist WordPress standardmäßig `['title', 'editor']` zu. Wenn du `false` übergibst, bietet der CPT keine dieser nativen Funktionen, was nützlich ist, wenn du eine komplett eigene Bearbeitungsoberfläche auf Basis eigener Metaboxen erstellen möchtest (Kapitel 4).
 
-Si omites el argumento `supports`, WordPress asignará `['title', 'editor']` por defecto. Si pasas `false`, el CPT no tendrá soporte para ninguna de estas características nativas, lo cual es útil si planeas construir una interfaz de edición 100% personalizada basada únicamente en metaboxes propios (Capítulo 4).
+## 3.2 Labels und Argumente der Benutzeroberfläche
 
-## 3.2 Etiquetas y argumentos de interfaz
+Wenn ein Custom Post Type registriert wird, hängt die Benutzererfahrung (UX) im WordPress-Admin-Bereich vollständig von der semantischen Konfiguration seiner Labels und den Argumenten ab, die sein visuelles Verhalten definieren. Ein CPT mit schlecht konfigurierten Labels zeigt generische Texte an, die vom Inhaltstyp `post` ererbt wurden, was dem Plugin Professionalität nimmt und den Administrator verwirrt.
 
-Cuando se registra un Custom Post Type, la experiencia del usuario (UX) dentro del panel de administración de WordPress depende por completo de la configuración semántica de sus etiquetas y de los argumentos que definen su comportamiento visual. Un CPT con etiquetas mal configuradas mostrará textos genéricos heredados del tipo de contenido `post`, lo que restará profesionalidad al plugin y confundirá al administrador.
+### Semantische Internationalisierung: Die Verwendung von `_x()`
 
-### Internacionalización semántica: El uso de `_x()`
+Um das Array der Beschriftungen (`labels`) aufzubauen, reicht die Verwendung der Standard-Übersetzungsfunktion `__()` nicht aus. In vielen Sprachen betrifft die Geschlechtsbeugung sowohl Substantive als auch die zugehörigen Adjektive und Verben.
 
-Para construir el array de etiquetas (`labels`), no basta con utilizar la función de traducción estándar `__()`. En muchos idiomas, incluidos el español y otras lenguas romances, la flexión de género afecta tanto a los sustantivos como a los adjetivos y verbos asociados.
-
-Por ejemplo, la cadena "Add New" se traduce como "Añadir nuevo" si el CPT es un "Libro", pero debe ser "Añadir nueva" si el CPT es una "Factura". Para resolver esto sin hardcodear el idioma, WordPress proporciona la función `_x()`, la cual permite añadir un contexto sintáctico para los traductores.
+Zum Beispiel wird die Zeichenkette „Add New“ im Spanischen als „Añadir nuevo“ übersetzt, wenn der CPT ein „Buch“ ist, muss aber „Añadir nueva“ lauten, wenn der CPT eine „Rechnung“ ist. Um dies ohne Hardcodieren der Sprache zu lösen, bietet WordPress die Funktion `_x()`, die Übersetzern einen syntaktischen Kontext bereitstellt.
 
 ```php
 $labels = [
-    'name'                  => _x( 'Libros', 'Post type general name', 'miplugin' ),
-    'singular_name'         => _x( 'Libro', 'Post type singular name', 'miplugin' ),
-    'menu_name'             => _x( 'Libros', 'Admin Menu text', 'miplugin' ),
-    'name_admin_bar'        => _x( 'Libro', 'Add New on Toolbar', 'miplugin' ),
-    'add_new'               => _x( 'Añadir nuevo', 'Libro', 'miplugin' ),
-    'add_new_item'          => __( 'Añadir nuevo libro', 'miplugin' ),
-    'new_item'              => __( 'Nuevo libro', 'miplugin' ),
-    'edit_item'             => __( 'Editar libro', 'miplugin' ),
-    'view_item'             => __( 'Ver libro', 'miplugin' ),
-    'all_items'             => __( 'Todos los libros', 'miplugin' ),
-    'search_items'          => __( 'Buscar libros', 'miplugin' ),
-    'parent_item_colon'     => __( 'Libros padre:', 'miplugin' ),
-    'not_found'             => __( 'No se encontraron libros.', 'miplugin' ),
-    'not_found_in_trash'    => __( 'No se encontraron libros en la papelera.', 'miplugin' ),
-    'featured_image'        => _x( 'Portada del libro', 'Overrides the “Featured Image” phrase', 'miplugin' ),
-    'set_featured_image'    => _x( 'Establecer portada', 'Overrides the “Set featured image” phrase', 'miplugin' ),
-    'remove_featured_image' => _x( 'Eliminar portada', 'Overrides the “Remove featured image” phrase', 'miplugin' ),
-    'use_featured_image'    => _x( 'Usar como portada', 'Overrides the “Use as featured image” phrase', 'miplugin' ),
+    'name'                  => _x( 'Bücher', 'Post type general name', 'miplugin' ),
+    'singular_name'         => _x( 'Buch', 'Post type singular name', 'miplugin' ),
+    'menu_name'             => _x( 'Bücher', 'Admin Menu text', 'miplugin' ),
+    'name_admin_bar'        => _x( 'Buch', 'Add New on Toolbar', 'miplugin' ),
+    'add_new'               => _x( 'Neu hinzufügen', 'Libro', 'miplugin' ),
+    'add_new_item'          => __( 'Neues Buch hinzufügen', 'miplugin' ),
+    'new_item'              => __( 'Neues Buch', 'miplugin' ),
+    'edit_item'             => __( 'Buch bearbeiten', 'miplugin' ),
+    'view_item'             => __( 'Buch ansehen', 'miplugin' ),
+    'all_items'             => __( 'Alle Bücher', 'miplugin' ),
+    'search_items'          => __( 'Bücher suchen', 'miplugin' ),
+    'parent_item_colon'     => __( 'Übergeordnete Bücher:', 'miplugin' ),
+    'not_found'             => __( 'Keine Bücher gefunden.', 'miplugin' ),
+    'not_found_in_trash'    => __( 'Keine Bücher im Papierkorb gefunden.', 'miplugin' ),
+    'featured_image'        => _x( 'Buchcover', 'Overrides the “Featured Image” phrase', 'miplugin' ),
+    'set_featured_image'    => _x( 'Cover festlegen', 'Overrides the “Set featured image” phrase', 'miplugin' ),
+    'remove_featured_image' => _x( 'Cover entfernen', 'Overrides the “Remove featured image” phrase', 'miplugin' ),
+    'use_featured_image'    => _x( 'Als Cover verwenden', 'Overrides the “Use as featured image” phrase', 'miplugin' ),
 ];
 
 ```
 
-### Ubicación de las etiquetas en la interfaz del Administrador
+### Positionierung der Labels in der Admin-Oberfläche
 
-El siguiente esquema en texto plano ilustra cómo se mapean las principales etiquetas configuradas dentro del ciclo de vida visual del panel de control de WordPress:
+Das folgende Schema veranschaulicht, wie die wichtigsten konfigurierten Labels im visuellen Lebenszyklus des WordPress-Admin-Bereichs abgebildet werden:
 
 ```text
 +-------------------------------------------------------------------------+
-| WP Admin Bar -> [+] Añadir -> [name_admin_bar]                          |
+| WP Admin Bar -> [+] Hinzufügen -> [name_admin_bar]                      |
 +-------------------------------------------------------------------------+
-| Menú Lateral (Sidebar)      | Área de Trabajo / Listado de Contenido     |
+| Seitenmenü (Sidebar)        | Arbeitsbereich / Inhaltsauflistung        |
 |                             |                                           |
 | -- [menu_name]              | Home > [name] > [all_items]               |
 |    |-- [all_items]          |                                           |
-|    |-- Añadir nuevo         | [all_items]  [add_new] <-- Botón superior |
+|    |-- Neu hinzufügen       | [all_items]  [add_new] <-- Oberer Button  |
 |                             |                                           |
 |                             | +---------------------------------------+ |
-|                             | | Caja de búsqueda:   [search_items]    | |
+|                             | | Suchfeld:   [search_items]            | |
 |                             | +---------------------------------------+ |
 |                             |                                           |
-|                             | Si la lista está vacía:                   |
-|                             | "[not_found]"                           |
+|                             | Wenn die Liste leer ist:                  |
+|                             | "[not_found]"                             |
 +-------------------------------------------------------------------------+
 
 ```
 
-### Argumentos de control de la UI
+### Argumente zur UI-Steuerung
 
-Más allá de los textos, existen argumentos específicos dentro del array de `$args` en `register_post_type()` que determinan la accesibilidad y el posicionamiento del CPT dentro del entorno gráfico.
+Über die Texte hinaus gibt es spezifische Argumente im `$args`-Array von `register_post_type()`, die die Erreichbarkeit und Positionierung des CPTs innerhalb des Admin-Bereichs bestimmen.
 
-#### `menu_position` (Ubicación en el menú lateral)
+#### `menu_position` (Position im Seitenmenü)
 
-Este argumento acepta un número entero que determina la prioridad de aparición en la barra lateral. Si se omite, WordPress lo colocará por defecto debajo de los Comentarios (posición 25).
+Dieses Argument akzeptiert eine Ganzzahl, die die Reihenfolge des Erscheinens in der Seitenleiste bestimmt. Wenn es weggelassen wird, platziert WordPress es standardmäßig unterhalb der Kommentare (Position 25).
 
-Conocer las posiciones exactas del núcleo es crucial para evitar colisiones visuales:
+Die genauen Menüpositionen des Cores zu kennen, hilft visuelle Konflikte zu vermeiden:
 
-* `5`: Debajo de Entradas (Posts).
-* `10`: Debajo de Medios (Media).
-* `15`: Debajo de Enlaces (Links).
-* `20`: Debajo de Páginas (Pages).
-* `25`: Debajo de Comentarios.
-* `60`: Debajo del primer separador de menú.
-* `65`: Debajo de Plugins.
-* `70`: Debajo de Usuarios.
-* `75`: Debajo de Herramientas.
-* `80`: Debajo de Ajustes.
-* `100`: Debajo del segundo separador de menú.
+* `5`: Unterhalb von Beiträgen (Posts).
+* `10`: Unterhalb von Medien (Media).
+* `15`: Unterhalb von Links.
+* `20`: Unterhalb von Seiten (Pages).
+* `25`: Unterhalb von Kommentaren.
+* `60`: Unterhalb des ersten Menütrenners.
+* `65`: Unterhalb von Plugins.
+* `70`: Unterhalb von Benutzern.
+* `75`: Unterhalb von Werkzeugen.
+* `80`: Unterhalb von Einstellungen.
+* `100`: Unterhalb des zweiten Menütrenners.
 
-#### `menu_icon` (Identidad visual)
+#### `menu_icon` (Visuelle Identität)
 
-Para definir el icono del menú lateral, existen dos vías profesionales:
+Um das Icon für das Seitenmenü zu definieren, gibt es zwei professionelle Wege:
 
-1. **Dashicons:** La biblioteca nativa de fuentes de iconos de WordPress. Se pasa el nombre de la clase directamente (ej. `'dashicons-book-alt'`).
-2. **SVG Vectorial Embebido:** Para personalización de marca avanzada, se puede pasar un string con un SVG codificado en Base64. Esto evita peticiones HTTP adicionales y asegura consistencia independientemente del tema de administración del usuario.
+1. **Dashicons:** Die native Icon-Schriftbibliothek von WordPress. Der Klassenname wird direkt übergeben (z. B. `'dashicons-book-alt'`).
+2. **Eingebettetes SVG:** Für ein individuelles Branding kann ein String mit einem Base64-codierten SVG übergeben werden. Dies vermeidet zusätzliche HTTP-Anfragen und sorgt für Konsistenz, unabhängig vom ausgewählten Admin-Theme des Benutzers.
 
 ```php
 'menu_icon' => 'data:image/svg+xml;base64,' . base64_encode( '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path fill="#black" d="M15 2h-8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-12c0-1.1-.9-2-2-2zm-1 5h-6v-1h6v1zm0 3h-6v-1h6v1zm0 3h-6v-1h6v1z"/></svg>' ),
 
 ```
 
-#### `show_in_menu` (Anidación de CPTs)
+#### `show_in_menu` (CPTs verlinken / verschachteln)
 
-Este parámetro acepta un valor booleano o un string. Al pasar un string con la ruta de un archivo `.php` de la administración, puedes agrupar tu CPT dentro de un menú existente en lugar de crear un elemento de primer nivel.
+Dieser Parameter akzeptiert einen booleschen Wert oder einen String. Durch Übergabe eines Pfads zu einer `.php`-Datei des Admin-Bereichs kannst du deinen CPT in ein bestehendes Menü einordnen, statt einen Menüpunkt auf oberster Ebene zu erstellen.
 
-* Anidar dentro de Entradas: `'show_in_menu' => 'edit.php'`
-* Anidar dentro de Ajustes: `'show_in_menu' => 'options-general.php'`
-* Anidar dentro de un menú personalizado propio creado por el plugin: `'show_in_menu' => 'mi_panel_de_control_slug'`
+* In Beiträge einbetten: `'show_in_menu' => 'edit.php'`
+* In Einstellungen einbetten: `'show_in_menu' => 'options-general.php'`
+* In ein eigenes, vom Plugin erstelltes Menü einbetten: `'show_in_menu' => 'mi_panel_de_control_slug'`
 
-### Modificación del marcador de posición del título
+### Ändern des Platzhaltertexts im Titel
 
-Por defecto, la caja de texto donde se introduce el título del CPT muestra el texto genérico "Añadir el título". Modificar este comportamiento no se realiza mediante un argumento directo en `register_post_type()`, sino interceptando el filtro `enter_title_here`.
+Standardmäßig zeigt das Texteingabefeld für den Titel des CPTs den generischen Text „Titel eingeben“ an. Das Ändern dieses Verhaltens erfolgt nicht über ein direktes Argument in `register_post_type()`, sondern durch Abfangen des Filters `enter_title_here`.
 
-A continuación, se muestra cómo integrar de forma limpia esta lógica dentro de la estructura orientada a objetos del desarrollo del CPT:
+Es folgt ein Beispiel, wie man diese Logik sauber in die objektorientierte Struktur der CPT-Entwicklung einbindet:
 
 ```php
 class MiPlugin_CPT_Libro {
@@ -235,21 +230,21 @@ class MiPlugin_CPT_Libro {
     }
 
     public function registrar_cpt() {
-        // Registro del CPT con los argumentos y etiquetas explicados previamente...
+        // Registrierung des CPTs mit den zuvor erklärten Argumenten und Labels...
     }
 
     /**
-     * Modifica el texto de marcador de posición (placeholder) del título
-     * solo cuando nos encontramos editando el CPT específico.
+     * Modifiziert den Platzhaltertext (placeholder) des Titels
+     * nur dann, wenn wir den spezifischen CPT bearbeiten.
      *
-     * @param string $title Texto actual del marcador de posición.
-     * @return string Texto modificado.
+     * @param string $title Aktueller Platzhaltertext.
+     * @return string Modifizierter Text.
      */
     public function modificar_placeholder_titulo( $title ) {
         $screen = get_current_screen();
 
         if ( isset( $screen->post_type ) && self::POST_TYPE === $screen->post_type ) {
-            return __( 'Introduce el título del libro (ej. Don Quijote)', 'miplugin' );
+            return __( 'Gib den Buchtitel ein (z. B. Don Quijote)', 'miplugin' );
         }
 
         return $title;
@@ -258,24 +253,24 @@ class MiPlugin_CPT_Libro {
 
 ```
 
-## 3.3 Registro de taxonomías propias
+## 3.3 Registrierung eigener Taxonomien
 
-Así como los Custom Post Types extienden los tipos de contenido en WordPress, las taxonomías personalizadas permiten estructurar las relaciones y la categorización de dichos contenidos de forma multidimensional. En el núcleo de WordPress, una taxonomía es un sistema de clasificación (como las categorías o etiquetas nativas) cuyos términos se almacenan en la tabla `wp_terms` y se vinculan a los contenidos mediante `wp_term_relationships`.
+Ebenso wie Custom Post Types die Inhaltstypen in WordPress erweitern, ermöglichen benutzerdefinierte Taxonomien das mehrdimensionale Strukturieren von Beziehungen und Kategorisierungen dieser Inhalte. Im WordPress-Core ist eine Taxonomie ein Klassifizierungssystem (wie die nativen Kategorien oder Schlagwörter), deren Begriffe in der Tabelle `wp_terms` gespeichert und über `wp_term_relationships` mit den Inhalten verknüpft werden.
 
-La función del núcleo designada para este propósito es `register_taxonomy( $taxonomy, $object_type, $args )`. Al igual que con los CPTs, un registro avanzado requiere un control preciso de sus argumentos y su ejecución en el momento adecuado del ciclo de vida de WordPress.
+Die für diesen Zweck vorgesehene Core-Funktion lautet `register_taxonomy( $taxonomy, $object_type, $args )`. Wie bei den CPTs erfordert eine fortgeschrittene Registrierung eine präzise Steuerung der Argumente und deren Ausführung zum richtigen Zeitpunkt im WordPress-Lebenszyklus.
 
-### El Hook adecuado y el orden de ejecución
+### Der richtige Hook und die Ausführungsreihenfolge
 
-Las taxonomías personalizadas deben registrarse siempre dentro del hook `init`. Es técnicamente posible y recomendado registrar tanto el CPT como su taxonomía asociada dentro de la misma función callback conectada a `init` para mantener el código cohesionado.
+Benutzerdefinierte Taxonomien müssen immer innerhalb des Hooks `init` registriert werden. Es ist technisch möglich und wird empfohlen, sowohl den CPT als auch die zugehörige Taxonomie innerhalb derselben Callback-Funktion zu registrieren, die an `init` angehängt ist, um den Code zusammenzuhalten.
 
 ```php
 /**
- * Clase para gestionar el registro de la taxonomía 'Género'.
+ * Klasse zur Verwaltung der Registrierung der Taxonomie 'Genre'.
  */
 class MiPlugin_Taxonomia_Genero {
 
     const TAXONOMY = 'miplugin_genero';
-    const POST_TYPE = 'miplugin_libro'; // CPT asociado definido en 3.1
+    const POST_TYPE = 'miplugin_libro'; // In 3.1 definierter assoziierter CPT
 
     public function init() {
         add_action( 'init', [ $this, 'registrar_taxonomia' ] );
@@ -283,29 +278,29 @@ class MiPlugin_Taxonomia_Genero {
 
     public function registrar_taxonomia() {
         $labels = [
-            'name'              => _x( 'Géneros', 'taxonomy general name', 'miplugin' ),
-            'singular_name'     => _x( 'Género', 'taxonomy singular name', 'miplugin' ),
-            'search_items'      => __( 'Buscar Géneros', 'miplugin' ),
-            'all_items'         => __( 'Todos los Géneros', 'miplugin' ),
-            'parent_item'       => __( 'Género Padre', 'miplugin' ),
-            'parent_item_colon' => __( 'Género Padre:', 'miplugin' ),
-            'edit_item'         => __( 'Editar Género', 'miplugin' ),
-            'update_item'       => __( 'Actualizar Género', 'miplugin' ),
-            'add_new_item'      => __( 'Añadir Nuevo Género', 'miplugin' ),
-            'new_item_name'     => __( 'Nombre del Nuevo Género', 'miplugin' ),
-            'menu_name'         => __( 'Géneros', 'miplugin' ),
+            'name'              => _x( 'Genres', 'taxonomy general name', 'miplugin' ),
+            'singular_name'     => _x( 'Genre', 'taxonomy singular name', 'miplugin' ),
+            'search_items'      => __( 'Genres suchen', 'miplugin' ),
+            'all_items'         => __( 'Alle Genres', 'miplugin' ),
+            'parent_item'       => __( 'Übergeordnetes Genre', 'miplugin' ),
+            'parent_item_colon' => __( 'Übergeordnetes Genre:', 'miplugin' ),
+            'edit_item'         => __( 'Genre bearbeiten', 'miplugin' ),
+            'update_item'       => __( 'Genre aktualisieren', 'miplugin' ),
+            'add_new_item'      => __( 'Neues Genre hinzufügen', 'miplugin' ),
+            'new_item_name'     => __( 'Name des neuen Genres', 'miplugin' ),
+            'menu_name'         => __( 'Genres', 'miplugin' ),
         ];
 
         $args = [
             'labels'            => $labels,
-            'hierarchical'      => true, // Comportamiento similar a Categorías
+            'hierarchical'      => true, // Verhalten ähnlich wie Kategorien
             'public'            => true,
             'show_ui'           => true,
-            'show_admin_column' => true, // Columna automática en el listado del CPT
+            'show_admin_column' => true, // Automatische Spalte im CPT-Listeneintrag
             'show_in_nav_menus' => true,
             'show_tagcloud'     => false,
             'rewrite'           => [ 'slug' => 'genero', 'with_front' => false ],
-            'show_in_rest'      => true, // Requerido para Gutenberg
+            'show_in_rest'      => true, // Erforderlich für Gutenberg
         ];
 
         register_taxonomy( self::TAXONOMY, [ self::POST_TYPE ], $args );
@@ -317,49 +312,49 @@ $tax_genero->init();
 
 ```
 
-### Jerárquicas vs. No Jerárquicas: El argumento `hierarchical`
+### Hierarchisch vs. Nicht hierarchisch: Das Argument `hierarchical`
 
-El argumento `hierarchical` determina el comportamiento estructural y la interfaz de usuario de la taxonomía dentro del panel de administración:
+Das Argument `hierarchical` bestimmt die strukturelle Funktionsweise und die Benutzeroberfläche der Taxonomie im Administrationsbereich:
 
-* **`'hierarchical' => true` (Estilo Categorías):** Permite relaciones de tipo padre-hijo entre los términos. En el editor de contenidos (Gutenberg o Clásico), se renderiza como una lista de casillas de verificación (checkboxes). Los usuarios eligen términos preexistentes y pueden crear nuevos directamente sin salir de la pantalla de edición.
-* **`'hierarchical' => false` (Estilo Etiquetas/Tags):** No permite herencia ni elementos padre. En la interfaz se muestra como una caja de texto donde los términos se introducen separados por comas y cuenta con un autocompletado basado en los términos más utilizados.
+* **`'hierarchical' => true` (Kategorie-Stil):** Ermittelt Vater-Kind-Beziehungen zwischen Begriffen. Im Inhaltseditor (Gutenberg oder klassisch) wird dies als Liste von Kontrollkästchen (Checkboxes) gerendert. Benutzer wählen bereits existierende Begriffe aus oder können direkt neue erstellen, ohne die Bearbeitungsansicht zu verlassen.
+* **`'hierarchical' => false` (Schlagwort-Stil):** Erlaubt keine Vererbung oder übergeordneten Elemente. In der Oberfläche wird dies als Textfeld dargestellt, in das Begriffe kommagetrennt eingegeben werden können. Es bietet zudem eine Autovervollständigung auf Basis der am häufigsten genutzten Begriffe.
 
-### Argumentos avanzados de control
+### Erweiterte Steuerungsargumente
 
-Para afinar la integración de la taxonomía en el ecosistema del sitio, se deben dominar los siguientes parámetros específicos:
+Um die Integration der Taxonomie im Ökosystem der Website zu verfeinern, sollten folgende spezifische Parameter beherrscht werden:
 
 #### `show_admin_column`
 
-Establecer este argumento en `true` instruye a WordPress para que cree automáticamente una columna personalizada en la tabla de listado del CPT asignado (en este caso, en la pantalla de `edit.php?post_type=miplugin_libro`). Esto ahorra al desarrollador la necesidad de interceptar manualmente los filtros de columnas del admin para mostrar los términos asignados a cada entrada.
+Wird dieses Argument auf `true` gesetzt, wird WordPress angewiesen, automatisch eine benutzerdefinierte Spalte in der Auflistungstabelle des zugewiesenen CPTs zu erstellen (in diesem Fall in der Ansicht `edit.php?post_type=miplugin_libro`). Dies spart dem Entwickler die Arbeit, manuell die Admin-Spaltenfilter abzufangen, um die zugewiesenen Begriffe für jeden Eintrag anzuzeigen.
 
 #### `meta_box_cb`
 
-Permite cambiar por completo la función callback encargada de renderizar la interfaz de la taxonomía en la pantalla de edición del post. Si se pasa `false`, se remueve por completo el metabox nativo de la barra lateral. Esto es una práctica común cuando el plugin implementa una interfaz de selección personalizada mediante JavaScript o controles avanzados en metaboxes propios.
+Erlaubt es, die Callback-Funktion komplett zu ändern, die für das Rendern des Taxonomie-Interfaces im Post-Bearbeitungsbildschirm zuständig ist. Übergibt man `false`, wird die native Metabox in der Seitenleiste komplett entfernt. Dies ist gängige Praxis, wenn das Plugin ein eigenes Interface zur Begriffsauswahl mittels JavaScript oder fortgeschrittenen Kontrollen in eigenen Metaboxes implementiert.
 
-#### `rewrite` (Reglas de enrutamiento)
+#### `rewrite` (Routing-Regeln)
 
-Al igual que con los CPTs, controla la estructura de los enlaces permanentes de las páginas de archivo de la taxonomía.
+Steuert wie bei den CPTs die Struktur der Permalinks für die Archivseiten der Taxonomie.
 
-* `slug`: Define la base de la URL (ej. `midominio.com/genero/ciencia-ficcion/`).
-* `hierarchical`: Si se establece en `true`, la URL reflejará la estructura interna de los términos (ej. `midominio.com/genero/novela/ciencia-ficcion/`).
+* `slug`: Definiert die Basis der URL (z. B. `meinedomain.com/genero/science-fiction/`).
+* `hierarchical`: Wenn auf `true` gesetzt, spiegelt die URL die interne Struktur der Begriffe wider (z. B. `meinedomain.com/genero/roman/science-fiction/`).
 
-### El peligro de `register_taxonomy_for_object_type()`
+### Die Gefahr von `register_taxonomy_for_object_type()`
 
-Existe una función en el núcleo llamada `register_taxonomy_for_object_type()`. Su uso es un error común cuando se registran taxonomías propias para CPTs propios. Esta función está diseñada exclusivamente para vincular una taxonomía **existente** (como las categorías nativas `category`) a un tipo de contenido.
+Es gibt eine Core-Funktion namens `register_taxonomy_for_object_type()`. Ihre Verwendung is ein häufiger Fehler, wenn eigene Taxonomien für eigene CPTs registriert werden. Diese Funktion ist ausschließlich dafür gedacht, eine **bereits existierende** Taxonomie (wie die nativen Kategorien `category`) mit einem Inhaltstyp zu verknüpfen.
 
-Para taxonomías creadas por tu propio plugin, la vinculación debe declararse directamente pasando el identificador del CPT en el segundo parámetro (el array `$object_type`) de la función `register_taxonomy()`, tal como se ejemplificó en el código de la sección anterior (`[ self::POST_TYPE ]`).
+Für durch dein eigenes Plugin erstellte Taxonomien muss die Verknüpfung direkt durch Übergabe des CPT-Bezeichners im zweiten Parameter (dem Array `$object_type`) der Funktion `register_taxonomy()` deklariert werden, so wie es im Code der vorherigen Sektion gezeigt wurde (`[ self::POST_TYPE ]`).
 
-### Estructura de almacenamiento en Base de Datos
+### Speicherstruktur in der Datenbank
 
-El siguiente diagrama en texto plano muestra cómo interactúan las tablas nativas de WordPress cuando se registra y asigna un término de una taxonomía personalizada:
+Das folgende Schema veranschaulicht, wie die nativen WordPress-Tabellen interagieren, wenn ein Begriff einer benutzerdefinierten Taxonomie registriert und zugewiesen wird:
 
 ```text
 +-----------------------+      +---------------------------+
 |       wp_terms        |      |    wp_term_taxonomy       |
 +-----------------------+      +---------------------------+
 | term_id: 12           | <--- | term_taxonomy_id: 14      |
-| name: 'Ciencia Ficción'|      | term_id: 12               |
-| slug: 'ciencia-ficcion'|      | taxonomy: 'miplugin_genero'|
+| name: 'Science Fiction'|      | term_id: 12               |
+| slug: 'science-fiction'|      | taxonomy: 'miplugin_genero'|
 +-----------------------+      +---------------------------+
                                              |
                                              v
@@ -373,15 +368,15 @@ El siguiente diagrama en texto plano muestra cómo interactúan las tablas nativ
 
 ```
 
-## 3.4 Relación entre CPTs y taxonomías
+## 3.4 Beziehung zwischen CPTs und Taxonomien
 
-El verdadero poder de las arquitecturas de datos en WordPress se revela cuando los Custom Post Types y las taxonomías trabajan en conjunto. Mientras que el CPT define el "qué" (el objeto de contenido), la taxonomía define el "cómo se agrupa". Esta relación de muchos a muchos permite construir consultas complejas y estructurar la navegación del sitio.
+Die wahre Stärke von Datenarchitekturen in WordPress zeigt sich, wenn Custom Post Types und Taxonomien zusammenarbeiten. Während der CPT das „Was“ definiert (das Inhaltsobjekt), definiert die Taxonomie das „Wie es gruppiert wird“. Diese n:m-Beziehung ermöglicht es, komplexe Abfragen zu erstellen und die Navigation der Website zu strukturieren.
 
-### Consultas combinadas con `WP_Query` y `tax_query`
+### Kombinierte Abfragen mit `WP_Query` und `tax_query`
 
-Para extraer contenidos de un CPT basándose en los términos de una taxonomía personalizada, la clase `WP_Query` proporciona el argumento `tax_query`. Este parámetro requiere un array multidimensional, lo que permite realizar cruces lógicos complejos (AND, OR) entre múltiples taxonomías si fuera necesario.
+Um Inhalte aus einem CPT basierend auf Begriffen einer benutzerdefinierten Taxonomie abzurufen, bietet die Klasse `WP_Query` das Argument `tax_query`. Dieser Parameter erfordert ein mehrdimensionales Array, was bei Bedarf komplexe logische Verknüpfungen (AND, OR) zwischen mehreren Taxonomien ermöglicht.
 
-A continuación, se muestra cómo recuperar los últimos 10 libros que pertenecen al género "Ciencia Ficción":
+Nachfolgend wird gezeigt, wie die letzten 10 Bücher abgerufen werden, die dem Genre „Science-Fiction“ angehören:
 
 ```php
 $args = [
@@ -391,10 +386,10 @@ $args = [
     'tax_query'      => [
         [
             'taxonomy'         => 'miplugin_genero',
-            'field'            => 'slug', // Puede ser 'term_id', 'name', 'slug' o 'term_taxonomy_id'
-            'terms'            => 'ciencia-ficcion',
-            'include_children' => true,   // Falso si solo se quiere el término exacto, no sus hijos
-            'operator'         => 'IN',   // Operadores: 'IN', 'NOT IN', 'AND', 'EXISTS', 'NOT EXISTS'
+            'field'            => 'slug', // Kann 'term_id', 'name', 'slug' oder 'term_taxonomy_id' sein
+            'terms'            => 'science-fiction',
+            'include_children' => true,   // False, wenn nur der exakte Begriff ohne Kinder gewünscht ist
+            'operator'         => 'IN',   // Operatoren: 'IN', 'NOT IN', 'AND', 'EXISTS', 'NOT EXISTS'
         ],
     ],
 ];
@@ -404,33 +399,33 @@ $libros_query = new WP_Query( $args );
 if ( $libros_query->have_posts() ) {
     while ( $libros_query->have_posts() ) {
         $libros_query->the_post();
-        // Lógica de renderizado...
+        // Rendering-Logik...
     }
     wp_reset_postdata();
 }
 
 ```
 
-### Recuperación de términos desde un CPT
+### Abrufen von Begriffen aus einem CPT
 
-Cuando te encuentras dentro del loop o tienes el ID de un post específico, frecuentemente necesitas mostrar a qué términos está asociado. Para taxonomías personalizadas, funciones como `the_category()` no sirven. Debes utilizar `get_the_terms()`.
+Wenn du dich innerhalb des Loops befindest oder die ID eines bestimmten Beitrags hast, musst du häufig anzeigen, welchen Begriffen dieser zugeordnet ist. Für benutzerdefinierte Taxonomien sind Funktionen wie `the_category()` nutzlos. Du musst `get_the_terms()` verwenden.
 
 ```php
-// Obtener los términos asociados al post actual
+// Holt die dem aktuellen Beitrag zugeordneten Begriffe
 $generos = get_the_terms( get_the_ID(), 'miplugin_genero' );
 
 if ( ! is_wp_error( $generos ) && ! empty( $generos ) ) {
     $nombres_generos = wp_list_pluck( $generos, 'name' );
-    echo 'Géneros: ' . esc_html( implode( ', ', $nombres_generos ) );
+    echo 'Genres: ' . esc_html( implode( ', ', $nombres_generos ) );
 }
 
 ```
 
-### Integración avanzada en el panel de administración
+### Erweiterte Integration im Administrationsbereich
 
-Si definiste `'show_admin_column' => true` al registrar la taxonomía, WordPress mostrará los términos en la tabla listado del CPT. Sin embargo, para sitios con gran volumen de datos, los administradores necesitarán filtrar los CPTs mediante un menú desplegable por taxonomía.
+Wenn du `'show_admin_column' => true` bei der Registrierung der Taxonomie definiert hast, zeigt WordPress die Begriffe in der CPT-Auflistungstabelle an. Bei Websites mit hohem Datenaufkommen müssen Administratoren jedoch in der Lage sein, die CPTs über ein Dropdown-Menü nach Taxonomie zu filtern.
 
-WordPress no crea este filtro desplegable automáticamente para taxonomías personalizadas. Debes construirlo enganchándote a la acción `restrict_manage_posts`.
+WordPress erstellt diesen Dropdown-Filter für benutzerdefinierte Taxonomien nicht automatisch. Du musst ihn erstellen, indem du dich in die Action `restrict_manage_posts` einklinkst.
 
 ```php
 class MiPlugin_Filtro_Taxonomia {
@@ -443,7 +438,7 @@ class MiPlugin_Filtro_Taxonomia {
     }
 
     public function agregar_desplegable_filtro( $post_type ) {
-        // Solo ejecutar en la pantalla de nuestro CPT
+        // Nur in der Ansicht unseres CPTs ausführen
         if ( self::POST_TYPE !== $post_type ) {
             return;
         }
@@ -452,7 +447,7 @@ class MiPlugin_Filtro_Taxonomia {
         $term_slug = isset( $_GET[ self::TAXONOMY ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::TAXONOMY ] ) ) : '';
 
         wp_dropdown_categories( [
-            'show_option_all' => sprintf( __( 'Todos los %s', 'miplugin' ), $taxonomia->label ),
+            'show_option_all' => sprintf( __( 'Alle %s', 'miplugin' ), $taxonomia->label ),
             'taxonomy'        => self::TAXONOMY,
             'name'            => self::TAXONOMY,
             'orderby'         => 'name',
@@ -469,10 +464,10 @@ $filtro->init();
 
 ```
 
-El núcleo de WordPress interceptará automáticamente el parámetro GET generado por este formulario y modificará la consulta principal (`WP_Query`) de la tabla de administración, filtrando los resultados sin necesidad de código adicional de nuestra parte.
+Der WordPress-Core fängt den von diesem Formular generierten GET-Parameter automatisch ab und modifiziert die Hauptabfrage (`WP_Query`) der Admin-Tabelle, wodurch die Ergebnisse ohne zusätzlichen Code unsererseits gefiltert werden.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este capítulo, hemos abordado la creación y estructuración de modelos de datos mediante las APIs de WordPress. Hemos visto que el registro de Custom Post Types (`register_post_type`) y taxonomías (`register_taxonomy`) debe ejecutarse de forma segura en el hook `init`, prestando especial atención a los argumentos que controlan la visibilidad, el soporte de características como Gutenberg (`show_in_rest`) y las reglas de reescritura de URLs.
+In diesem Kapitel haben wir die Erstellung und Strukturierung von Datenmodellen über die WordPress-APIs behandelt. Wir haben gesehen, dass die Registrierung von Custom Post Types (`register_post_type`) und Taxonomien (`register_taxonomy`) sicher im Hook `init` erfolgen muss, unter besonderer Beachtung der Argumente, die Sichtbarkeit, die Unterstützung von Features wie Gutenberg (`show_in_rest`) und die URL-Umschreibungsregeln steuern.
 
-Analizamos la importancia de la internacionalización semántica (`_x()`) para construir interfaces de administración profesionales. Finalmente, exploramos cómo relacionar ambas entidades, ejecutando consultas condicionales complejas con `WP_Query` y mejorando la experiencia de gestión en el panel de administración mediante filtros personalizados. Esta base estructural es esencial antes de pasar a la inyección de datos granulares a nivel de campo.
+Wir haben die Bedeutung der semantischen Internationalisierung (`_x()`) für den Aufbau professioneller Admin-Oberflächen analysiert. Schließlich haben wir untersucht, wie beide Entitäten verknüpft werden, indem wir komplexe bedingte Abfragen mit `WP_Query` ausgeführt und die Verwaltungserfahrung im Admin-Bereich durch benutzerdefinierte Filter verbessert haben. Diese strukturelle Basis ist unerlässlich, bevor wir zur Injektion granularer Daten auf Feldebene übergehen.

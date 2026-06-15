@@ -1,43 +1,43 @@
-Aunque WordPress ofrece APIs robustas como CPTs y metadatos, existen escenarios donde el volumen de información o la complejidad relacional exigen interactuar directamente con la base de datos. En este capítulo, descubriremos cómo trascender las estructuras nativas. Aprenderás a utilizar la clase global `$wpdb` para manipular datos, blindarás tus consultas contra inyecciones SQL usando sentencias preparadas, y dominarás `dbDelta()` para construir y actualizar esquemas de tablas personalizadas, estableciendo un control de versiones seguro y optimizado para el máximo rendimiento de tu plugin.
+Obwohl WordPress robuste APIs wie CPTs und Metadaten bietet, gibt es Szenarien, in denen das Datenvolumen oder die relationale Komplexität eine direkte Interaktion mit der Datenbank erfordern. In diesem Kapitel werden wir entdecken, wie wir über die nativen Strukturen hinausgehen können. Du lernst, wie du die globale Klasse `$wpdb` verwendest, um Daten zu manipulieren, deine Abfragen mithilfe von Prepared Statements gegen SQL-Injektionen abzusichern und `dbDelta()` zu beherrschen, um benutzerdefinierte Tabellenschemata zu erstellen und zu aktualisieren. Dabei richten wir eine sichere Versionskontrolle ein, die auf maximale Performance deines Plugins optimiert ist.
 
-## 5.1 La clase global $wpdb
+## 5.1 Die globale Klasse $wpdb
 
-En el corazón de la interacción entre WordPress y su base de datos se encuentra la clase `wpdb`. Ubicada en el archivo `wp-includes/wp-db.php`, esta clase actúa como una capa de abstracción sobre la base de datos (típicamente MySQL o MariaDB). Su propósito principal es proporcionar un conjunto estandarizado de métodos para consultar, insertar, actualizar y eliminar datos sin tener que utilizar las funciones nativas de PHP como `mysqli_query()` o `PDO` directamente.
+Im Herzen der Interaktion zwischen WordPress und deiner Datenbank befindet sich die Klasse `wpdb`. Diese Klasse (in der Datei `wp-includes/wp-db.php`) fungiert als Abstraktionsebene über der Datenbank (in der Regel MySQL oder MariaDB). Ihr Hauptzweck besteht darin, eine standardisierte Reihe von Methoden bereitzustellen, um Daten abzufragen, einzufügen, zu aktualisieren und zu löschen, ohne direkt auf native PHP-Funktionen wie `mysqli_query()` oder `PDO` zurückgreifen zu müssen.
 
-Para acceder a esta instancia única en cualquier parte de tu plugin, debes invocar la variable global:
+Um an einer beliebigen Stelle in deinem Plugin auf diese einzigartige Instanz zuzugreifen, musst du die globale Variable aufrufen:
 
 ```php
 global $wpdb;
 
 ```
 
-A nivel de arquitectura, la clase `$wpdb` se sitúa entre la lógica de tu plugin y el motor de la base de datos, facilitando el acceso a tablas nativas y personalizadas:
+Auf der Architekturebene befindet sich die Klasse `$wpdb` zwischen der Logik deines Plugins und der Datenbank-Engine, was den Zugriff auf native und benutzerdefinierte Tabellen erleichtert:
 
 ```text
 +---------------------+       +-----------------------+       +------------------------+
-|   Tu Plugin (PHP)   | ----> |  Objeto global $wpdb  | ----> | Base de Datos (MySQL)  |
-| (Lógica de negocio) | <---- | (Capa de abstracción) | <---- | (Tablas y registros)   |
+|   Dein Plugin (PHP) | ----> |  Globales $wpdb-Objekt| ----> |  Datenbank (MySQL)     |
+|   (Geschäftslogik)  | <---- |  (Abstraktionsebene)  | <---- |  (Tabellen u. Einträge)|
 +---------------------+       +-----------------------+       +------------------------+
 
 ```
 
-### Propiedades clave del objeto $wpdb
+### Schlüsseleigenschaften des $wpdb-Objekts
 
-Al invocar `$wpdb`, obtienes acceso a propiedades vitales que exponen información sobre la base de datos y el estado de la última consulta ejecutada:
+Beim Aufruf von `$wpdb` erhältst du Zugriff auf wichtige Eigenschaften, die Informationen über die Datenbank und den Status der zuletzt ausgeführten Abfrage offenlegen:
 
-* **`$wpdb->prefix`**: El prefijo de las tablas de la base de datos (por defecto, `wp_`). Es imperativo usar esta propiedad en lugar de escribir el prefijo en duro al consultar tablas nativas o personalizadas para garantizar la compatibilidad en cualquier instalación.
-* **`$wpdb->insert_id`**: Contiene el ID generado por la última consulta `INSERT` ejecutada.
-* **`$wpdb->num_rows`**: Devuelve el número de filas afectadas o devueltas por la última consulta.
-* **`$wpdb->last_error`**: Almacena el mensaje de error de la última consulta que falló, fundamental para la depuración.
-* **Tablas nativas**: WordPress mapea todas sus tablas nativas como propiedades (ej. `$wpdb->posts`, `$wpdb->users`, `$wpdb->options`). Usar `$wpdb->posts` es preferible a `{$wpdb->prefix}posts`.
+* **`$wpdb->prefix`**: Das Präfix der Datenbanktabellen (standardmäßig `wp_`). Es ist zwingend erforderlich, diese Eigenschaft zu verwenden, anstatt das Präfix beim Abfragen nativer oder benutzerdefinierter Tabellen fest im Code zu hinterlegen, um die Kompatibilität in jeder Installation zu gewährleisten.
+* **`$wpdb->insert_id`**: Enthält die durch die zuletzt ausgeführte `INSERT`-Abfrage generierte ID.
+* **`$wpdb->num_rows`**: Gibt die Anzahl der von der letzten Abfrage betroffenen oder zurückgegebenen Zeilen zurück.
+* **`$wpdb->last_error`**: Speichert die Fehlermeldung der letzten fehlgeschlagenen Abfrage, was für das Debugging unerlässlich ist.
+* **Native Tabellen**: WordPress ordnet alle seine nativen Tabellen als Eigenschaften zu (z. B. `$wpdb->posts`, `$wpdb->users`, `$wpdb->options`). Die Verwendung von `$wpdb->posts` ist gegenüber `{$wpdb->prefix}posts` zu bevorzugen.
 
-### Métodos de lectura de datos
+### Methoden zum Lesen von Daten
 
-La clase ofrece métodos específicos dependiendo de la estructura de los datos que esperas recibir. Esta granularidad optimiza la memoria y simplifica el manejo de los resultados en PHP.
+Die Klasse bietet spezifische Methoden an, je nach der Struktur der erwarteten Rückgabedaten. Diese Granularität optimiert den Speicherbedarf und vereinfacht den Umgang mit den Ergebnissen in PHP.
 
 #### 1. get_var()
 
-Diseñado para recuperar un único valor (una celda específica) de la base de datos. Si la consulta devuelve múltiples filas o columnas, solo se retorna el valor de la primera columna de la primera fila.
+Konzipiert für das Abrufen eines einzelnen Werts (einer bestimmten Zelle) aus der Datenbank. Wenn die Abfrage mehrere Zeilen oder Spalten zurückgibt, wird nur der Wert aus der ersten Spalte der ersten Zeile zurückgegeben.
 
 ```php
 global $wpdb;
@@ -47,15 +47,15 @@ $user_count = $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->users}" );
 
 #### 2. get_row()
 
-Recupera una única fila completa. Es ideal cuando buscas un registro específico basado en un ID o una condición única. Permite especificar el formato de salida: objeto (por defecto), array asociativo o array numérico.
+Ruft eine komplette einzelne Zeile ab. Sie eignet sich hervorragend, wenn du nach einem bestimmten Datensatz basierend auf einer ID oder einer eindeutigen Bedingung suchst. Sie erlaubt die Angabe des Ausgabeformats: Objekt (Standard), assoziatives Array oder numerisches Array.
 
 ```php
 global $wpdb;
-// Devuelve un objeto
+// Gibt ein Objekt zurück
 $post_destacado = $wpdb->get_row( "SELECT * FROM {$wpdb->posts} WHERE ID = 10" );
 echo $post_destacado->post_title;
 
-// Devuelve un array asociativo (ARRAY_A)
+// Gibt ein assoziatives Array zurück (ARRAY_A)
 $post_array = $wpdb->get_row( "SELECT * FROM {$wpdb->posts} WHERE ID = 10", ARRAY_A );
 echo $post_array['post_title'];
 
@@ -63,18 +63,18 @@ echo $post_array['post_title'];
 
 #### 3. get_col()
 
-Devuelve una única columna de resultados en forma de array unidimensional. Muy útil para obtener listados de IDs o valores específicos.
+Gibt eine einzelne Spalte mit Ergebnissen als eindimensionales Array zurück. Äußerst nützlich, um Listen mit IDs oder spezifischen Werten abzurufen.
 
 ```php
 global $wpdb;
-// Obtiene todos los IDs de posts publicados
+// Ruft alle IDs von veröffentlichten Beiträgen ab
 $ids_publicados = $wpdb->get_col( "SELECT ID FROM {$wpdb->posts} WHERE post_status = 'publish'" );
 
 ```
 
 #### 4. get_results()
 
-Es el método más versátil para recuperar múltiples filas de resultados. Al igual que `get_row()`, permite definir el formato de salida, siendo un array de objetos el valor predeterminado.
+Dies ist die vielseitigste Methode, um mehrere Zeilen an Ergebnissen abzurufen. Ähnlich wie `get_row()` erlaubt sie es, das Ausgabeformat zu definieren, wobei un Array von Objekten der Standardwert ist.
 
 ```php
 global $wpdb;
@@ -86,39 +86,39 @@ foreach ( $ultimos_posts as $post ) {
 
 ```
 
-### Métodos de conveniencia para escritura y modificación
+### Komfortmethoden zum Schreiben und Ändern
 
-Para operaciones de inserción, actualización y borrado, WordPress proporciona métodos "helper" que abstraen la escritura de la sentencia SQL y, crucialmente, manejan la sanitización y preparación de los tipos de datos de forma automática.
+Für Einfüge-, Aktualisierungs- und Löschvorgänge stellt WordPress Hilfsmethoden bereit, die das Schreiben des SQL-Statements abstrahieren und — was noch wichtiger ist — die Bereinigung und Aufbereitung der Datentypen automatisch übernehmen.
 
-| Método | Descripción y uso recomendado |
+| Methode | Beschreibung und empfohlene Verwendung |
 | --- | --- |
-| **`insert()`** | Inserta una nueva fila en una tabla. Recibe la tabla, un array asociativo con los datos (`columna => valor`), y opcionalmente los formatos de datos (`%s` para string, `%d` para entero, `%f` para float). |
-| **`update()`** | Actualiza filas existentes. Recibe la tabla, los datos a actualizar, un array con las condiciones `WHERE`, y opcionalmente los formatos para los datos y las condiciones. |
-| **`delete()`** | Elimina filas que coinciden con condiciones específicas. Recibe la tabla, las condiciones en un array asociativo, y los formatos de las condiciones. |
+| **`insert()`** | Fügt eine neue Zeile in eine Tabelle ein. Empfängt die Tabelle, ein assoziatives Array mit den Daten (`Spalte => Wert`) und optional die Datenformate (`%s` für String, `%d` für Integer, `%f` für Float). |
+| **`update()`** | Aktualisiert bestehende Zeilen. Empfängt die Tabelle, die zu aktualisierenden Daten, ein Array mit den `WHERE`-Bedingungen und optional die Formate für die Daten und Bedingungen. |
+| **`delete()`** | Löscht Zeilen, die mit bestimmten Bedingungen übereinstimmen. Empfängt die Tabelle, die Bedingungen in einem assoziativen Array und die Formate der Bedingungen. |
 
-**Ejemplo de uso de métodos de conveniencia:**
+**Beispiel zur Verwendung von Komfortmethoden:**
 
 ```php
 global $wpdb;
 $tabla = $wpdb->prefix . 'mi_tabla_custom';
 
-// Inserción
+// Einfügen
 $wpdb->insert(
     $tabla,
     array( 'columna_texto' => 'Valor', 'columna_numero' => 42 ),
-    array( '%s', '%d' ) // Formatos: string, integer
+    array( '%s', '%d' ) // Formate: string, integer
 );
 
-// Actualización
+// Aktualisieren
 $wpdb->update(
     $tabla,
-    array( 'columna_texto' => 'Nuevo Valor' ), // Datos
-    array( 'columna_numero' => 42 ),           // Condición WHERE
-    array( '%s' ),                             // Formato de datos
-    array( '%d' )                              // Formato de condición
+    array( 'columna_texto' => 'Nuevo Valor' ), // Daten
+    array( 'columna_numero' => 42 ),           // WHERE-Bedingung
+    array( '%s' ),                             // Datenformat
+    array( '%d' )                              // Bedingungsformat
 );
 
-// Borrado
+// Löschen
 $wpdb->delete(
     $tabla,
     array( 'columna_numero' => 42 ),
@@ -127,67 +127,67 @@ $wpdb->delete(
 
 ```
 
-Estos métodos de conveniencia son la forma recomendada de alterar la base de datos, ya que evitan la inyección SQL en la mayoría de los casos básicos. Sin embargo, para consultas más complejas (como `JOINs` complejos, o métodos de lectura como `get_results()` que requieren variables dinámicas), será obligatorio el uso del método de preparación de sentencias, el cual se abordará en profundidad en la siguiente sección.
+Diese Komfortmethoden sind der empfohlene Weg, um die Datenbank zu verändern, da sie SQL-Injektionen in den meisten einfachen Fällen verhindern. Für komplexere Abfragen (wie komplexe `JOINs` oder Lesemethoden wie `get_results()`, die dynamische Variablen erfordern) ist die Verwendung von Prepared Statements jedoch zwingend erforderlich. Dieses Thema wird im nächsten Abschnitt eingehend behandelt.
 
-## 5.2 Consultas SQL seguras con prepare
+## 5.2 Sichere SQL-Abfragen mit prepare
 
-Cuando utilizas los métodos de conveniencia descritos en la lección anterior (`insert`, `update`, `delete`), WordPress se encarga automáticamente de sanitizar y escapar los datos. Sin embargo, cuando necesitas ejecutar consultas complejas utilizando métodos directos como `get_results()`, `get_var()` o el método genérico `query()`, la responsabilidad de la seguridad recae completamente sobre ti.
+Wenn du die im vorherigen Abschnitt beschriebenen Komfortmethoden (`insert`, `update`, `delete`) verwendest, kümmert sich WordPress automatisch um die Bereinigung und das Escaping der Daten. Wenn du jedoch komplexe Abfragen über direkte Methoden wie `get_results()`, `get_var()` oder die generische Methode `query()` ausführen musst, liegt die Verantwortung für die Sicherheit allein bei dir.
 
-La regla de oro en el desarrollo para WordPress es: **nunca confíes en la entrada del usuario y nunca pases variables directamente a una cadena SQL**. Hacerlo abre la puerta a ataques de Inyección SQL (SQLi), la vulnerabilidad más crítica en aplicaciones web.
+Die goldene Regel bei der WordPress-Entwicklung lautet: **Vertraue niemals Benutzereingaben und übergib Variablen niemals direkt an einen SQL-String**. Andernfalls öffnest du Tür und Tor für SQL-Injektionen (SQLi) — die kritischste Sicherheitslücke in Webanwendungen.
 
-Para blindar tus consultas, WordPress proporciona el método `$wpdb->prepare()`.
+Um deine Abfragen abzusichern, bietet WordPress die Methode `$wpdb->prepare()`.
 
-### El funcionamiento de prepare()
+### Die Funktionsweise von prepare()
 
-A diferencia de las sentencias preparadas nativas de extensiones como PDO (donde la consulta y los datos se envían por separado al servidor MySQL), `$wpdb->prepare()` actúa a nivel de PHP. Funciona de manera similar a la función `sprintf()` de PHP, tomando una cadena con marcadores de posición (*placeholders*) y sustituyéndolos por variables, pero añadiendo una capa vital: **escapa y entrecomilla automáticamente los valores**.
+Im Gegensatz zu nativen Prepared Statements von Erweiterungen wie PDO (bei denen die Abfrage und die Daten separat an den MySQL-Server gesendet werden) arbeitet `$wpdb->prepare()` auf PHP-Ebene. Sie funktioniert ähnlich wie die PHP-Funktion `sprintf()`, indem sie einen String mit Platzhaltern (*placeholders*) entgegennimmt und diese durch Variablen ersetzt, fügt jedoch eine wesentliche Ebene hinzu: **Sie bereinigt, escapet und setzt die Werte automatisch in Anführungszeichen**.
 
 ```text
-[Consulta SQL con Placeholders] + [Datos Dinámicos (Inseguros)]
+[SQL-Abfrage mit Platzhaltern] + [Dynamische Daten (unsicher)]
                |                               |
                +----------------+--------------+
                                 |
                                 v
-                       $wpdb->prepare() 
-                 (Sanea, escapa y entrecomilla)
+                        $wpdb->prepare() 
+                  (Bereinigt, escapet u. Anführungszeichen)
                                 |
                                 v
-                 [Cadena SQL 100% Segura y Lista]
+                  [100 % sicherer und fertiger SQL-String]
                                 |
                                 v
-               $wpdb->get_results() / $wpdb->query()
+                $wpdb->get_results() / $wpdb->query()
 
 ```
 
-### Marcadores de posición admitidos
+### Unterstützte Platzhalter
 
-`$wpdb->prepare()` soporta un conjunto estricto de marcadores. Es crucial utilizar el correcto según el tipo de dato esperado en la base de datos:
+`$wpdb->prepare()` unterstützt eine sterile Auswahl an Platzhaltern. Es ist wichtig, den passenden Platzhalter für den in der Datenbank erwarteten Datentyp zu verwenden:
 
-* **`%s` (String):** Para cadenas de texto, fechas, horas y cualquier dato que no sea estrictamente numérico. **Nota importante:** `$wpdb->prepare()` añade las comillas simples automáticamente. Nunca debes escribir `'%s'` en tu consulta.
-* **`%d` (Decimal/Integer):** Para números enteros. Si pasas una cadena o un decimal, lo convertirá a un entero.
-* **`%f` (Float):** Para números con decimales.
-* **`%i` (Identificador):** Introducido en WordPress 6.2. Sirve para escapar nombres de tablas o nombres de columnas dinámicamente. Nunca debe usarse para valores de datos.
+* **`%s` (String):** Für Textzeichenketten, Datumsangaben, Uhrzeiten und alle Daten, die nicht strikt numerisch sind. **Wichtiger Hinweis:** `$wpdb->prepare()` fügt die einfachen Anführungszeichen automatisch hinzu. Du solltest in deiner Abfrage niemals `'%s'` schreiben.
+* **`%d` (Decimal/Integer):** Für ganze Zahlen. Wenn du einen String oder eine Dezimalzahl übergibst, wird diese in eine Ganzzahl konvertiert.
+* **`%f` (Float):** Für Dezimalzahlen.
+* **`%i` (Bezeichner):** Eingeführt in WordPress 6.2. Dient dem dynamischen Escapen von Tabellen- oder Spaltennamen. Darf niemals für Datenwerte verwendet werden.
 
-### Ejemplos de implementación
+### Implementierungsbeispiele
 
-#### 1. El antipatrón (Inseguro)
+#### 1. Das Antipattern (unsicher)
 
-Nunca debes interpolar variables directamente en la cadena, incluso si crees que están sanitizadas previamente.
+Interpoliere Variablen niemals direkt in den String, selbst wenn du glaubst, dass sie zuvor bereinigt wurden.
 
 ```php
 global $wpdb;
-// ❌ PELIGRO: Vulnerable a Inyección SQL
+// ❌ GEFAHR: Anfällig für SQL-Injektionen
 $sql = "SELECT * FROM {$wpdb->users} WHERE user_login = '$username'";
 $user = $wpdb->get_row( $sql );
 
 ```
 
-#### 2. La forma correcta
+#### 2. Der korrekte Weg
 
-Utiliza `$wpdb->prepare()`. Puedes pasar los argumentos secuencialmente o como un array.
+Nutze `$wpdb->prepare()`. Du kannst die Argumente sequenziell oder als Array übergeben.
 
 ```php
 global $wpdb;
-// ✅ Seguro: Pasando argumentos secuencialmente
+// ✅ Sicher: Argumente sequenziell übergeben
 $sql = $wpdb->prepare( 
     "SELECT * FROM {$wpdb->users} WHERE user_login = %s AND user_status = %d", 
     $username, 
@@ -195,7 +195,7 @@ $sql = $wpdb->prepare(
 );
 $user = $wpdb->get_row( $sql );
 
-// ✅ Seguro: Pasando un array de argumentos (útil para datos dinámicos)
+// ✅ Sicher: Ein Array von Argumenten übergeben (nützlich für dynamische Daten)
 $args = array( $username, 0 );
 $sql = $wpdb->prepare( 
     "SELECT * FROM {$wpdb->users} WHERE user_login = %s AND user_status = %d", 
@@ -205,23 +205,23 @@ $user = $wpdb->get_row( $sql );
 
 ```
 
-### El desafío de las cláusulas LIKE
+### Die Herausforderung bei LIKE-Klauseln
 
-Un error muy común ocurre al intentar usar sentencias `LIKE` para búsquedas, ya que el carácter comodín `%` entra en conflicto con la sintaxis de los marcadores de posición de `prepare()`.
+Ein sehr häufiger Fehler tritt bei der Verwendung von `LIKE`-Anweisungen für Suchen auf, da das Wildcard-Zeichen `%` mit la Syntax der Platzhalter von `prepare()` kollidiert.
 
-Para resolver esto, WordPress dispone del método de ayuda `$wpdb->esc_like()`. Este método escapa específicamente los caracteres con significado especial en SQL (`%` y `_`) dentro de la cadena de búsqueda antes de que la pases a `prepare()`.
+Um dies zu lösen, stellt WordPress die Hilfsmethode `$wpdb->esc_like()` zur Verfügung. Diese Methode escapet gezielt Zeichen mit besonderer Bedeutung in SQL (`%` und `_`) innerhalb des Suchbegriffs, bevor du ihn an `prepare()` übergibst.
 
 ```php
 global $wpdb;
 $busqueda_usuario = 'admin';
 
-// 1. Escapamos los comodines SQL nativos de la entrada del usuario
+// 1. Wir escapen die nativen SQL-Wildcards aus der Benutzereingabe
 $termino_seguro = $wpdb->esc_like( $busqueda_usuario );
 
-// 2. Añadimos nuestros comodines para la búsqueda
+// 2. Wir fügen unsere Wildcards für die Suche hinzu
 $termino_like = '%' . $termino_seguro . '%';
 
-// 3. Preparamos la consulta
+// 3. Wir bereiten die Abfrage vor
 $sql = $wpdb->prepare(
     "SELECT post_title FROM {$wpdb->posts} WHERE post_title LIKE %s",
     $termino_like
@@ -231,19 +231,19 @@ $resultados = $wpdb->get_results( $sql );
 
 ```
 
-### Uso de %i para identificadores dinámicos
+### Verwendung von %i für dynamische Bezeichner
 
-Antes de WordPress 6.2, si necesitabas construir una consulta donde el nombre de la tabla o la columna dependía de una variable, no podías usar `prepare()` para esos elementos y debías recurrir a la función `sanitize_key()` y concatenación estricta. Ahora, con el marcador `%i`, es mucho más limpio:
+Vor WordPress 6.2 konntest du `prepare()` nicht für Tabellen- oder Spaltennamen nutzen, wenn diese von einer Variable abhingen. Du musstest auf die Funktion `sanitize_key()` und strikte Verkettung ausweichen. Mit dem Platzhalter `%i` ist dies nun deutlich eleganter gelöst:
 
 ```php
 global $wpdb;
-$columna_orden = 'post_date'; // Podría venir de una petición GET
-$orden = 'DESC'; // ASC o DESC
+$columna_orden = 'post_date'; // Könnte aus einer GET-Anfrage stammen
+$orden = 'DESC'; // ASC oder DESC
 
-// Aseguramos que el orden sea válido (prepare no maneja ASC/DESC)
+// Wir stellen sicher, dass die Sortierung gültig ist (prepare unterstützt kein ASC/DESC)
 $orden = ( strtoupper( $orden ) === 'ASC' ) ? 'ASC' : 'DESC';
 
-// Preparamos usando %i para el nombre de la columna
+// Wir bereiten die Abfrage mit %i für den Spaltennamen vor
 $sql = $wpdb->prepare(
     "SELECT ID, post_title FROM {$wpdb->posts} ORDER BY %i {$orden} LIMIT %d",
     $columna_orden,
@@ -254,72 +254,72 @@ $resultados = $wpdb->get_results( $sql );
 
 ```
 
-Al dominar `$wpdb->prepare()`, garantizas que cualquier interacción compleja de lectura o escritura que tu plugin requiera estará protegida desde su concepción, cumpliendo con los estándares de seguridad requeridos por el repositorio oficial de WordPress.
+Durch die Beherrschung von `$wpdb->prepare()` stellst du sicher, dass jede komplexe Lese- oder Schreibinteraktion deines Plugins von Anfang an geschützt ist, und erfüllst damit die Sicherheitsstandards, die für das offizielle WordPress-Verzeichnis gefordert werden.
 
-## 5.3 Creación de tablas con dbDelta
+## 5.3 Erstellung von Tabellen mit dbDelta
 
-Cuando los Custom Post Types, las taxonomías o la Metadata API nativa de WordPress no son suficientes para cubrir los requisitos de rendimiento o estructura de tu plugin, se hace necesario crear tablas personalizadas en la base de datos. Para realizar esta tarea de forma segura y estandarizada, WordPress proporciona la función `dbDelta()`.
+Wenn Custom Post Types, Taxonomien oder die native Metadata-API von WordPress nicht ausreichen, um die Performance- oder Strukturanforderungen deines Plugins zu erfüllen, wird das Erstellen benutzerdefinierter Datenbanktabellen erforderlich. Um diese Aufgabe sicher und standardisiert durchzuführen, stellt WordPress die Funktion `dbDelta()` bereit.
 
-Ubicada en `wp-admin/includes/upgrade.php`, `dbDelta()` es una herramienta que examina la estructura actual de la base de datos, la compara con la estructura declarada en tu código y realiza selectivamente los cambios necesarios (como añadir nuevas columnas o modificar tipos de datos) sin alterar ni borrar la información existente.
+Die in `wp-admin/includes/upgrade.php` angesiedelte Funktion `dbDelta()` prüft die aktuelle Datenbankstruktur, vergleicht sie mit der in deinem Code deklarierten Struktur und führt selektiv die erforderlichen Änderungen aus (z. B. das Hinzufügen neuer Spalten oder das Ändern von Datentypen), ohne vorhandene Daten zu beeinträchtigen oder zu löschen.
 
-El flujo operativo de la función se puede representar de la siguiente manera:
+Der Arbeitsablauf der Funktion lässt sich wie folgt darstellen:
 
 ```text
-       [Estructura SQL deseada]
-                  |
-                  v
-         +-----------------+
-         |    dbDelta()    | <--- [Lee estructura real de la BD]
-         +-----------------+
-                  |
-        Is table missing?
-        /               \
-     (Sí)               (No)
-     /                     \
-[CREATE TABLE]        [Compara columnas]
-                            |
-                     ¿Hay diferencias?
-                     /               \
-                  (Sí)               (No)
-                  /                     \
-       [ALTER TABLE]               [No hace nada]
+       [Gewünschte SQL-Struktur]
+                   |
+                   v
+          +-----------------+
+          |    dbDelta()    | <--- [Liest reale DB-Struktur aus]
+          +-----------------+
+                   |
+         Fehlt die Tabelle?
+         /               \
+      (Ja)               (Nein)
+      /                     \
+[CREATE TABLE]        [Vergleicht Spalten]
+                             |
+                      Gibt es Unterschiede?
+                      /               \
+                   (Ja)               (Nein)
+                   /                     \
+        [ALTER TABLE]               [Tut nichts]
 
 ```
 
-### Las reglas estrictas de sintaxis de dbDelta()
+### Die strengen Syntaxregeln von dbDelta()
 
-La función `dbDelta()` es sumamente selectiva y sensible a la sintaxis del esquema SQL que recibe. Si no se respetan de manera estricta sus reglas de formateo, la función fallará silenciosamente, no creará la tabla o recreará la estructura en cada ejecución, afectando severamente el rendimiento.
+Die Funktion `dbDelta()` reagiert äußerst empfindlich auf die Syntax des übergebenen SQL-Schemas. Wenn die Formatierungsregeln nicht strikt eingehalten werden, schlägt die Funktion stillschweigend fehl, erstellt die Tabelle nicht oder baut die Struktur bei jedem Aufruf neu auf, was die Performance erheblich beeinträchtigt.
 
-Para que `dbDelta()` procese correctamente tu sentencia `CREATE TABLE`, debes cumplir los siguientes requisitos:
+Damit `dbDelta()` dein `CREATE TABLE`-Statement korrekt verarbeitet, musst du folgende Anforderungen erfüllen:
 
-1. **Un elemento por línea:** Debes colocar cada definición de columna y cada declaración de clave en su propia línea dentro del bloque SQL.
-2. **Dos espacios en PRIMARY KEY:** Debe haber exactamente dos espacios entre las palabras clave `PRIMARY KEY` y la definición del campo entre paréntesis: `PRIMARY KEY  (id)`. Un solo espacio romperá el analizador sintáctico interno de la función.
-3. **Dos espacios en índices convencionales:** Al declarar un índice ordinario, debes usar la palabra clave `KEY` en lugar de `INDEX`, seguida de dos espacios, el nombre del índice, otros dos espacios y la columna afectada: `KEY mi_indice  (columna)`.
-4. **Tipos de datos en minúsculas:** Los tipos de datos de SQL (como `int`, `bigint`, `varchar`, `text`, `datetime`) deben escribirse estrictamente en minúsculas.
-5. **Sin acentos graves (backticks):** No utilices el carácter de acento grave (```) para envolver los nombres de las tablas o de las columnas, práctica común en exportaciones directas de phpMyAdmin.
-6. **Longitudes explícitas:** Especifica siempre la longitud de los campos de texto ajustables, por ejemplo, `varchar(255)`.
+1. **Ein Element pro Zeile:** Jede Spaltendefinition und jede Indexdeklaration muss auf einer eigenen Zeile innerhalb des SQL-Blocks stehen.
+2. **Zwei Leerzeichen bei PRIMARY KEY:** Zwischen den Schlüsselwörtern `PRIMARY KEY` und der Definition des Felds in Klammern müssen genau zwei Leerzeichen stehen: `PRIMARY KEY  (id)`. Ein einzelnes Leerzeichen führt zum Fehlschlagen des internen Parsers.
+3. **Zwei Leerzeichen bei herkömmlichen Indizes:** Verwende bei der Deklaration eines gewöhnlichen Index das Schlüsselwort `KEY` statt `INDEX`, gefolgt von zwei Leerzeichen, dem Indexnamen, zwei weiteren Leerzeichen und der betroffenen Spalte: `KEY mi_indice  (columna)`.
+4. **Kleingeschriebene Datentypen:** SQL-Datentypen (wie `int`, `bigint`, `varchar`, `text`, `datetime`) müssen strikt in Kleinbuchstaben geschrieben werden.
+5. **Keine Backticks (Azent grave):** Verwende keine Backticks (```) zur Umschließung von Tabellen- oder Spaltennamen, wie es bei Exporten aus phpMyAdmin üblich ist.
+6. **Explizite Längenangaben:** Gib siempre la longitud de los campos de texto ajustables, por ejemplo, `varchar(255)`.
 
-### Implementación práctica en la activación del plugin
+### Praktische Implementierung bei der Plugin-Aktivierung
 
-El momento idóneo para crear o actualizar el esquema de base de datos de un plugin es durante su rutina de activación, utilizando el hook `register_activation_hook()`.
+Der ideale Zeitpunkt zum Erstellen oder Aktualisieren des Datenbankschemas eines Plugins ist während seiner Aktivierungsroutine, unter Verwendung des Hooks `register_activation_hook()`.
 
-A continuación se detalla una implementación profesional que incorpora el juego de caracteres nativo del sitio mediante `$wpdb->get_charset_collate()` para asegurar la compatibilidad idiomática de los datos almacenados:
+Es folgt eine professionelle Implementierung, die die nativen Zeichensatz-Einstellungen des Systems mittels `$wpdb->get_charset_collate()` einbezieht, um die sprachliche Kompatibilität der gespeicherten Daten zu gewährleisten:
 
 ```php
 <?php
 /**
- * Ejecuta la creación o actualización de la tabla personalizada.
+ * Führt die Erstellung oder Aktualisierung der benutzerdefinierten Tabelle aus.
  */
 function un_plugin_crear_tabla_personalizada() {
     global $wpdb;
 
-    // Definir el nombre de la tabla anteponiendo el prefijo dinámico
+    // Definiert den Tabellennamen mit dem dynamischen Präfix
     $nombre_tabla = $wpdb->prefix . 'registro_envios';
 
-    // Obtener la colación y el conjunto de caracteres correctos de la instalación
+    // Ruft die korrekte Zeichensatz-Kollation der Installation ab
     $charset_collate = $wpdb->get_charset_collate();
 
-    // Construcción del esquema siguiendo las reglas estrictas de dbDelta
+    // Aufbau des Schemas gemäß den strengen Regeln von dbDelta
     $sql = "CREATE TABLE $nombre_tabla (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         id_usuario bigint(20) NOT NULL,
@@ -330,84 +330,84 @@ function un_plugin_crear_tabla_personalizada() {
         KEY id_usuario  (id_usuario)
     ) $charset_collate;";
 
-    // dbDelta no está cargada por defecto en el entorno global de WordPress
+    // dbDelta wird im globalen WordPress-Umfeld standardmäßig nicht geladen
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-    // Ejecuta la abstracción de actualización del esquema
+    // Führt die Abstraktion zur Schemaaktualisierung aus
     dbDelta( $sql );
 }
 
-// Vincula la función al ciclo de vida de activación del plugin
+// Verknüpft die Funktion mit dem Aktivierungs-Lifecycle des Plugins
 register_activation_hook( __FILE__, 'un_plugin_crear_tabla_personalizada' );
 
 ```
 
-### Verificación de la creación de la tabla
+### Überprüfung der Tabellenerstellung
 
-Para validar si `dbDelta()` completó correctamente la operación, puedes inspeccionar el arreglo que retorna la función o verificar directamente la propiedad `$wpdb->last_error` inmediatamente después de la llamada:
+Um zu validieren, ob `dbDelta()` die Operation korrekt abgeschlossen hat, kannst du das von der Funktion zurückgegebene Array prüfen oder unmittelbar nach dem Aufruf die Eigenschaft `$wpdb->last_error` auswerten:
 
 ```php
 $resultado = dbDelta( $sql );
 
 if ( ! empty( $wpdb->last_error ) ) {
-    // Manejo de errores o logging en entornos de desarrollo
+    // Fehlerbehandlung oder Logging in Entwicklungsumgebungen
     error_log( 'Error en dbDelta: ' . $wpdb->last_error );
 }
 
 ```
 
-El valor devuelto por `dbDelta()` es un array asociativo donde las llaves son los nombres de las tablas y los valores contienen cadenas de texto descriptivas con las acciones exactas realizadas (por ejemplo, `"Created table $nombre_tabla"` o `"Added column $nombre_tabla.nueva_columna"`). Si la estructura de la base de datos ya coincide plenamente con la consulta provista, el array retornado estará vacío, garantizando que no se consumieron recursos innecesarios del servidor MySQL.
+Der Rückgabewert von `dbDelta()` ist ein assoziatives Array, bei dem die Schlüssel die Tabellennamen sind und die Werte beschreibende Texte der durchgeführten Aktionen enthalten (z. B. `"Created table $nombre_tabla"` oder `"Added column $nombre_tabla.nueva_columna"`). Wenn die Datenbankstruktur bereits vollständig mit dem übergebenen SQL übereinstimmt, ist das zurückgegebene Array leer, was garantiert, dass keine unnötiger Ressourcen des MySQL-Servers verbraucht wurden.
 
-## 5.4 Actualización de esquemas de datos
+## 5.4 Aktualisierung von Datenschemata
 
-A medida que tu plugin evoluciona y se publican nuevas versiones, es altamente probable que las tablas personalizadas que creaste en versiones iniciales requieran modificaciones: añadir una nueva columna, modificar el tipo de dato de un campo existente o incorporar un nuevo índice para optimizar consultas.
+Mit der Weiterentwicklung deines Plugins und der Veröffentlichung neuer Versionen ist es sehr wahrscheinlich, dass die in früheren Versionen erstellten benutzerdefinierten Tabellen angepasst werden müssen: Hinzufügen einer neuen Spalte, Ändern des Datentyps eines bestehenden Felds oder Integrieren eines neuen Index zur Abfrageoptimierung.
 
-Como vimos en la lección anterior, la función `dbDelta()` es destructivamente segura; es decir, altera la estructura existente sin purgar los datos. Sin embargo, procesar `dbDelta()` es una operación costosa a nivel de rendimiento. Si ejecutas la rutina de actualización en cada carga de página o incluso en cada inicialización del panel de administración, el tiempo de respuesta de WordPress se verá severamente degradado.
+Wie wir im vorherigen Abschnitt gesehen haben, es la función `dbDelta()` zerstörungsfrei. Sie ändert die bestehende Struktur, ohne Daten zu löschen. Dennoch ist das Ausführen von `dbDelta()` eine performanceintensive Operation. Wenn du diese Routine bei jedem Seitenaufruf oder bei jeder Initialisierung des Admin-Bereichs ausführst, wird die Antwortzeit von WordPress erheblich beeinträchtigt.
 
-La solución arquitectónica estándar en WordPress es implementar un **sistema de control de versiones de la base de datos**.
+Die architektonische Standardlösung in WordPress besteht darin, ein **Versionskontrollsystem für die Datenbank** zu implementieren.
 
-### El flujo de actualización basado en versiones
+### Der versionsbasierte Aktualisierungsfluss
 
-El concepto fundamental radica en definir la versión de la estructura de base de datos actual en el código fuente de tu plugin y compararla con la versión almacenada en la base de datos (utilizando la Options API). Solo si la versión del código es superior a la guardada en la base de datos, se dispara la rutina de actualización.
+Das Grundprinzip besteht darin, die aktuelle Version des Datenbankschemas im Quellcode deines Plugins zu definieren und sie mit der in der Datenbank gespeicherten Version (über die Options-API) zu vergleichen. Nur wenn die Version im Code neuer ist als die in der Datenbank gespeicherte Version, wird die Update-Routine ausgelöst.
 
 ```text
-[Inicialización del Plugin] (Hook: plugins_loaded)
+[Plugin-Initialisierung] (Hook: plugins_loaded)
                |
                v
-  Obtener 'plugin_db_version' desde la BD
+  plugin_db_version aus der DB abrufen
                |
                v
- ¿Versión en código > Versión en BD?
-          /               \
-       (Sí)               (No)
-       /                     \
-[Ejecutar dbDelta()]   [Continuar ejecución normal]
-       |                     (Sin impacto en rendimiento)
-[Actualizar 'plugin_db_version' en BD]
+  Version im Code > Version in der DB?
+           /               \
+        (Ja)               (Nein)
+        /                     \
+[dbDelta() ausführen]   [Normale Ausführung fortsetzen]
+        |               (Ohne Performance-Auswirkung)
+[plugin_db_version in DB aktualisieren]
 
 ```
 
-### Implementación del sistema de control de versiones
+### Implementierung des Versionskontrollsystems
 
-Para materializar esta lógica, necesitas establecer una constante global (o propiedad de clase) que defina la versión del esquema, y una rutina anclada al hook `plugins_loaded` que realice la comprobación de forma temprana en el ciclo de vida de WordPress.
+Um diese Logik umzusetzen, musst du eine globale Konstante (oder Klasseneigenschaft) definieren, die die Schemaversion angibt, sowie eine Überprüfungsroutine, die frühzeitig im WordPress-Lebenszyklus an den Hook `plugins_loaded` angehängt wird.
 
-A continuación, se detalla una estructura profesional para gestionar este proceso:
+Es folgt eine professionelle Struktur zur Verwaltung dieses Prozesses:
 
 ```php
 <?php
-// 1. Definir la versión actual de la base de datos en el código
+// 1. Definiert die aktuelle Datenbankversion im Code
 define( 'MI_PLUGIN_DB_VERSION', '1.2.0' );
 
 /**
- * Función principal de actualización del esquema.
- * Contiene la estructura SQL más reciente.
+ * Hauptfunktion für die Schemaaktualisierung.
+ * Enthält die neueste SQL-Struktur.
  */
 function mi_plugin_actualizar_esquema() {
     global $wpdb;
     $nombre_tabla = $wpdb->prefix . 'registro_envios';
     $charset_collate = $wpdb->get_charset_collate();
 
-    // Nueva estructura SQL (ej. hemos añadido la columna 'notas_internas')
+    // Neue SQL-Struktur (z. B. wir haben die Spalte 'notas_internas' hinzugefügt)
     $sql = "CREATE TABLE $nombre_tabla (
         id bigint(20) NOT NULL AUTO_INCREMENT,
         id_usuario bigint(20) NOT NULL,
@@ -422,37 +422,37 @@ function mi_plugin_actualizar_esquema() {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta( $sql );
 
-    // 2. Actualizar la versión en la base de datos tras ejecutar dbDelta
+    // 2. Aktualisiert die Version in der Datenbank nach dem Ausführen von dbDelta
     update_option( 'mi_plugin_db_version', MI_PLUGIN_DB_VERSION );
 }
 
 /**
- * Comprueba si es necesario actualizar la base de datos.
+ * Prüft, ob ein Datenbank-Update erforderlich ist.
  */
 function mi_plugin_comprobar_actualizacion_db() {
-    // Recuperar la versión instalada (devuelve false si no existe)
+    // Ruft die installierte Version ab (gibt false zurück, falls nicht vorhanden)
     $version_instalada = get_option( 'mi_plugin_db_version' );
 
-    // 3. Comparar las versiones
+    // 3. Vergleicht die Versionen
     if ( $version_instalada !== MI_PLUGIN_DB_VERSION ) {
         mi_plugin_actualizar_esquema();
     }
 }
 
-// 4. Anclar la comprobación al inicio de la carga de los plugins
+// 4. Hängt die Überprüfung an den Beginn des Plugin-Ladevorgangs an
 add_action( 'plugins_loaded', 'mi_plugin_comprobar_actualizacion_db' );
 
 ```
 
-### Manejo de actualizaciones complejas (Migraciones)
+### Umgang mit komplexen Updates (Migrationen)
 
-Aunque `dbDelta()` es excelente para gestionar columnas e índices, hay operaciones estructurales que no puede resolver automáticamente, como:
+Obwohl `dbDelta()` hervorragend für die Verwaltung von Spalten und Indizes geeignet ist, gibt es strukturelle Änderungen, die sie nicht automatisch lösen kann, wie:
 
-* Renombrar una columna existente.
-* Eliminar una columna (Drop column).
-* Migrar o transformar datos de una tabla a otra.
+* Umbenennen einer bestehenden Spalte.
+* Löschen einer Spalte (Drop column).
+* Migrieren oder Transformieren von Daten zwischen Tabellen.
 
-Para estos casos excepcionales donde `dbDelta()` no es suficiente, tu rutina de comprobación de versiones debe ejecutar sentencias SQL directas utilizando `$wpdb->query()`. Es vital segmentar estas operaciones por versión para asegurar que un usuario que actualiza desde la versión 1.0 hasta la 3.0 pase por todos los pasos intermedios secuencialmente:
+Für diese Ausnahmefälle, in denen `dbDelta()` nicht ausreicht, muss deine Versionsprüfungsroutine direkte SQL-Statements mittels `$wpdb->query()` ausführen. Es ist wichtig, diese Operationen nach Versionen zu segmentieren, um sicherzustellen, dass un Benutzer, der von Version 1.0 auf 3.0 aktualisiert, alle Zwischenschritte nacheinander durchläuft:
 
 ```php
 function mi_plugin_migraciones_especificas() {
@@ -460,24 +460,24 @@ function mi_plugin_migraciones_especificas() {
     $version_instalada = get_option( 'mi_plugin_db_version' );
     $nombre_tabla = $wpdb->prefix . 'registro_envios';
 
-    // Si viene de una versión anterior a 1.5.0, borrar una columna obsoleta
+    // Falls die vorherige Version älter als 1.5.0 ist, eine veraltete Spalte löschen
     if ( version_compare( $version_instalada, '1.5.0', '<' ) ) {
         $wpdb->query( "ALTER TABLE $nombre_tabla DROP COLUMN columna_obsoleta" );
     }
 
-    // Actualizar finalmente el esquema estructural estándar
+    // Schließlich das Standard-Strukturschema aktualisieren
     mi_plugin_actualizar_esquema();
 }
 
 ```
 
-Implementar este patrón garantiza que las tablas de tu plugin estén siempre sincronizadas con la lógica del código de manera predecible, automatizada y respetando los recursos de la instalación de WordPress del usuario.
+Die Implementierung dieses Musters stellt sicher, dass die Tabellen deines Plugins stets synchron mit der Codelogik bleiben, und zwar auf vorhersehbare, automatisierte Weise und unter Schonung der Serverressourcen auf Seiten des Benutzers.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este capítulo hemos profundizado en la capa de persistencia de datos de WordPress, dominando las herramientas que el núcleo ofrece para interactuar con la base de datos sin comprometer la seguridad ni la estabilidad de la plataforma:
+In diesem Kapitel haben wir uns eingehend mit der Datenpersistenzschicht von WordPress befasst und die Werkzeuge beherrscht, die der Core zur Interaktion mit der Datenbank bietet, ohne die Sicherheit oder Stabilität der Plattform zu gefährden:
 
-1. **La clase `$wpdb`:** Comprendimos cómo esta instancia global actúa como interfaz de comunicación, ofreciendo métodos eficientes (`get_var`, `get_results`, `insert`, `update`) para manipular información.
-2. **Consultas Seguras:** Adoptamos el uso estricto de `$wpdb->prepare()` para sanitizar, escapar y blindar cualquier variable dinámica frente a ataques de inyección SQL, incluyendo el uso de `esc_like` y comodines dinámicos.
-3. **Creación de Esquemas:** Exploramos `dbDelta()` y sus rígidas reglas sintácticas para construir y desplegar tablas personalizadas de forma no destructiva durante la activación del plugin.
-4. **Mantenimiento y Control de Versiones:** Establecimos una arquitectura basada en `plugins_loaded` y la Options API para actualizar las estructuras de datos de manera silenciosa, secuencial y óptima para el rendimiento del servidor en cada nueva versión del plugin.
+1. **Die Klasse `$wpdb`:** Wir haben verstanden, wie diese globale Instanz als Kommunikationsschnittstelle fungiert und effiziente Methoden (`get_var`, `get_results`, `insert`, `update`) zur Datenmanipulation bereitstellt.
+2. **Sichere Abfragen:** Wir haben die strikte Verwendung von `$wpdb->prepare()` eingeführt, um alle dynamischen Variablen vor SQL-Injektionsangriffen zu bereinigen und zu schützen, einschließlich der Verwendung von `esc_like` und dynamischen Platzhaltern.
+3. **Erstellung von Schemata:** Wir haben `dbDelta()` und seine strengen Syntaxregeln untersucht, um während der Plugin-Aktivierung benutzerdefinierte Tabellen zerstörungsfrei zu erstellen und bereitzustellen.
+4. **Wartung und Versionskontrolle:** Wir haben eine auf `plugins_loaded` und der Options-API basierende Architektur etabliert, um Datenschemata bei jeder neuen Plugin-Version geräuschlos, sequenziell und auf Serverperformance optimiert zu aktualisieren.

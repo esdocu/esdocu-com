@@ -1,16 +1,16 @@
-La web moderna exige interfaces rápidas y reactivas donde las páginas no necesiten recargarse para interactuar con el servidor. En este capítulo, exploraremos cómo integrar AJAX de forma nativa y segura en tus plugins de WordPress. Desmitificaremos el archivo `admin-ajax.php` y aprenderemos a enrutar peticiones asíncronas con ganchos dinámicos para usuarios autenticados (`wp_ajax_`) y visitantes anónimos (`wp_ajax_nopriv_`). Además, blindaremos estas interacciones contra ataques CSRF utilizando Nonces y modernizaremos el flujo de comunicación devolviendo datos estructurados en formato JSON. Prepárate para dar vida al frontend.
+Das moderne Web verlangt nach schnellen und reaktionsfähigen Benutzeroberflächen, bei denen Seiten nicht neu geladen werden müssen, um mit dem Server zu interagieren. In diesem Kapitel werden wir untersuchen, wie du AJAX nativ und sicher in deine WordPress-Plugins integrierst. Wir entmystifizieren die Datei `admin-ajax.php` und lernen, asynchrone Anfragen mit dynamischen Hooks für authentifizierte Benutzer (`wp_ajax_`) und anonyme Besucher (`wp_ajax_nopriv_`) zu routen. Darüber hinaus werden wir diese Interaktionen mittels Nonces gegen CSRF-Angriffe absichern und den Kommunikationsfluss modernisieren, indem wir strukturierte Daten im JSON-Format zurückgeben. Bereite dich darauf vor, dem Frontend Leben einzuhauchen.
 
-## 9.1 El archivo admin-ajax.php
+## 9.1 Die Datei admin-ajax.php
 
-En el ecosistema de WordPress, la implementación tradicional de peticiones asíncronas gira en torno a un único archivo centralizador: `admin-ajax.php`. Situado en el directorio `/wp-admin/` del núcleo de WordPress, este archivo actúa como el enrutador principal para capturar, procesar y devolver respuestas a todas las solicitudes AJAX que ocurren dentro de la plataforma.
+Im WordPress-Ökosystem dreht sich die traditionelle Implementierung asynchroner Anfragen um eine einzige zentrale Datei: `admin-ajax.php`. Diese Datei befindet sich im Verzeichnis `/wp-admin/` des WordPress-Cores und fungiert als Haupt-Router, um alle AJAX-Anfragen innerhalb der Plattform abzufangen, zu verarbeiten und Antworten darauf zurückzugeben.
 
-### El falso mito del nombre "admin"
+### Der falsche Mythos des Namens „admin“
 
-Uno de los puntos de confusión más comunes para los desarrolladores que se inician en la creación de plugins es la ubicación y el nombre de este archivo. Dado que reside dentro de la carpeta `wp-admin` y lleva el prefijo "admin", es intuitivo pensar que solo debe utilizarse para peticiones asíncronas dentro del panel de control de WordPress.
+Einer der häufigsten Punkte der Verwirrung für Entwickler, die mit der Plugin-Erstellung beginnen, ist der Speicherort und der Name dieser Datei. Da sie sich im Ordner `wp-admin` befindet und das Präfix „admin“ trägt, liegt der Gedanke nahe, dass sie nur für asynchrone Anfragen innerhalb des WordPress-Dashboards verwendet werden sollte.
 
-Sin embargo, esto es un remanente histórico de la arquitectura de WordPress. **`admin-ajax.php` es el endpoint oficial y estándar para procesar solicitudes AJAX tanto en el *backend* (panel de administración) como en el *frontend* (la parte pública del sitio web)**.
+Dies ist jedoch ein historisches Überbleibsel der WordPress-Architektur. **`admin-ajax.php` ist der offizielle und standardmäßige Endpunkt zur Verarbeitung von AJAX-Anfragen sowohl im *Backend* (Admin-Bereich) als auch im *Frontend* (der öffentlichen Website)**.
 
-Para asegurar que tu código sea robusto y portátil, nunca debes "hardcodear" la ruta hacia este archivo en tu JavaScript. En su lugar, la práctica estándar es generar la URL dinámicamente desde PHP usando la función `admin_url()` y pasarla al frontend mediante `wp_localize_script()` o `wp_add_inline_script()`.
+Um sicherzustellen, dass dein Code robust und portabel ist, solltest du den Pfad zu dieser Datei niemals fest in dein JavaScript hineinschreiben. Stattdessen ist es üblich, die URL dynamisch über PHP mit der Funktion `admin_url()` zu generieren und sie über `wp_localize_script()` oder `wp_add_inline_script()` an das Frontend zu übergeben.
 
 ```php
 // Ejemplo de cómo exponer la URL de admin-ajax.php a un archivo JavaScript
@@ -25,7 +25,7 @@ function mi_plugin_encolar_scripts() {
         true 
     );
 
-    // Pasamos variables de PHP a JavaScript
+    // Wir übergeben Variablen von PHP an JavaScript
     wp_localize_script( 'mi-script-ajax', 'MiPluginConfig', array(
         'ajax_url' => admin_url( 'admin-ajax.php' )
     ) );
@@ -33,74 +33,74 @@ function mi_plugin_encolar_scripts() {
 
 ```
 
-### El parámetro `action`: El corazón del enrutamiento
+### Der Parameter `action`: Das Herzstück des Routings
 
-Para que `admin-ajax.php` sepa qué hacer con una solicitud entrante, requiere obligatoriamente que se le pase un parámetro llamado `action`. Este parámetro puede enviarse a través del método GET o POST.
+Damit `admin-ajax.php` weiß, was mit einer eingehenden Anfrage zu tun ist, muss zwingend ein Parameter namens `action` übergeben werden. Dieser Parameter kann über die GET- oder POST-Methode gesendet werden.
 
-El archivo `admin-ajax.php` intercepta este parámetro `action` y lo utiliza para construir el nombre de un *Action Hook* específico de forma dinámica. Todo el flujo de trabajo depende de esta concatenación.
+Die Datei `admin-ajax.php` fängt diesen `action`-Parameter ab und verwendet ihn, um dynamisch den Namen eines spezifischen *Action-Hooks* zu konstruieren. Der gesamte Workflow hängt von dieser Verkettung ab.
 
-A continuación, se muestra una representación visual del ciclo de vida de una petición dentro de `admin-ajax.php`:
+Es folgt eine visuelle Darstellung des Lebenszyklus einer Anfrage innerhalb von `admin-ajax.php`:
 
 ```text
 +-----------------------+
-|  JavaScript (Cliente) |
+|  JavaScript (Client)  |
 +-----------------------+
            |
-           | 1. Petición HTTP (GET o POST)
-           | payload: { action: 'procesar_formulario', datos: '...' }
+           | 1. HTTP-Anfrage (GET oder POST)
+           | payload: { action: 'procesar_formulario', daten: '...' }
            v
 +-----------------------+
 | wp-admin/admin-ajax.php|
 +-----------------------+
            |
-           | 2. Carga el núcleo de WordPress (wp-load.php)
-           | 3. Lee la variable $_REQUEST['action']
+           | 2. Lädt den WordPress-Core (wp-load.php)
+           | 3. Liest die Variable $_REQUEST['action']
            v
 +-----------------------+
-|  Mecanismo de Ruteo   |
+|  Routing-Mechanismus  |
 +-----------------------+
            |
-           +-- ¿El usuario tiene una sesión de WP activa?
+           +-- Hat der Benutzer eine aktive WP-Sitzung?
            |
-           |---> [SÍ]:  Dispara el hook -> wp_ajax_procesar_formulario
+           |---> [JA]:   Löst den Hook aus -> wp_ajax_procesar_formulario
            |
-           |---> [NO]:  Dispara el hook -> wp_ajax_nopriv_procesar_formulario
+           |---> [NEIN]: Löst den Hook aus -> wp_ajax_nopriv_procesar_formulario
            v
 +-----------------------+
-|  Función de tu Plugin |
+| Funktion deines Plugins|
 +-----------------------+
            |
-           | 4. Procesa los datos
-           | 5. Imprime la respuesta (ej. JSON)
-           | 6. Finaliza la ejecución (wp_die)
+           | 4. Verarbeitet die Daten
+           | 5. Gibt die Antwort aus (z. B. JSON)
+           | 6. Beendet die Ausführung (wp_die)
            v
 +-----------------------+
-|  JavaScript (Cliente) | <--- Recibe la respuesta asíncrona
+|  JavaScript (Client)  | <--- Empfängt die asynchrone Antwort
 +-----------------------+
 
 ```
 
-### Impacto en el rendimiento y ciclo de carga
+### Auswirkungen auf die Performance und den Ladezyklus
 
-Es imperativo comprender qué ocurre en el servidor cuando se hace una llamada a `admin-ajax.php`. Este archivo no es un script ligero; en su primera línea de ejecución, incluye `wp-load.php`.
+Es ist unerlässlich zu verstehen, was auf dem Server passiert, wenn ein Aufruf an `admin-ajax.php` erfolgt. Diese Datei ist kein leichtgewichtiges Skript; in ihrer ersten Ausführungszeile bindet sie `wp-load.php` ein.
 
-Esto significa que **cada petición AJAX enviada a `admin-ajax.php` arranca el entorno completo de WordPress**. Se conecta a la base de datos, carga todos los plugins activos, inicializa el tema actual y dispara la mayoría de los hooks regulares de inicialización (como `init` o `wp_loaded`).
+Das bedeutet, dass **jede an `admin-ajax.php` gesendete AJAX-Anfrage die gesamte WordPress-Umgebung startet**. Sie verbindet sich mit der Datenbank, lädt alle aktiven Plugins, initialisiert das aktuelle Theme und löst die meisten regulären Initialisierungs-Hooks (wie `init` o `wp_loaded`) aus.
 
-Aunque esto proporciona una enorme comodidad porque tienes a tu disposición todas las funciones nativas de WordPress y de otros plugins durante tu petición AJAX, también introduce un *overhead* (sobrecarga) significativo de rendimiento. Para tareas de altísima frecuencia (como un autoguardado que se ejecuta cada segundo, o un rastreador de eventos del ratón), enviar peticiones constantes a `admin-ajax.php` puede agotar rápidamente los recursos de un servidor estándar.
+Obwohl dies enormen Komfort bietet, weil dir während der AJAX-Anfrage alle nativen Funktionen von WordPress und anderen Plugins zur Verfügung stehen, bringt es auch einen erheblichen Performance-*Overhead* (Zusatzaufwand) mit sich. Bei sehr hochfrequenten Aufgaben (wie einem automatischen Speichern, das jede Sekunde ausgeführt wird, oder einem Maus-Event-Tracker) kann das ständige Senden von Anfragen an `admin-ajax.php` die Ressourcen eines Standard-Servers schnell erschöpfen.
 
-Para esos casos extremos, los desarrolladores avanzados suelen evaluar el uso de endpoints personalizados de la REST API (que veremos en el Capítulo 13) o, en arquitecturas muy específicas, archivos PHP aislados, aunque esto último sacrifica la seguridad y abstracción que provee el núcleo de WordPress. Para la inmensa mayoría de interacciones estándar (envío de formularios, carga de más posts, validaciones en vivo), `admin-ajax.php` es y seguirá siendo la herramienta principal de trabajo.
+Für solche Extremfälle prüfen erfahrene Entwickler oft die Verwendung benutzerdefinierter REST-API-Endpunkte (die wir in Kapitel 13 behandeln werden) oder, in sehr spezifischen Architekturen, isolierte PHP-Dateien, obwohl Letzteres die Sicherheit und Abstraktion opfert, die der WordPress-Core bietet. Für die überwiegende Mehrheit der Standardinteraktionen (Formularübermittlung, Laden weiterer Beiträge, Live-Validierungen) ist und bleibt `admin-ajax.php` das Hauptarbeitswerkzeug.
 
-## 9.2 Hooks para usuarios logueados
+## 9.2 Hooks für angemeldete Benutzer
 
-Como vimos en la arquitectura de `admin-ajax.php`, WordPress determina cómo procesar una petición basándose en dos factores: el parámetro `action` enviado desde el cliente y el estado de la sesión del usuario.
+Wie wir in la arquitectura von `admin-ajax.php` gesehen haben, bestimmt WordPress die Verarbeitung einer Anfrage basierend auf zwei Faktoren: dem vom Client gesendeten Parameter `action` und dem Status der Benutzersitzung.
 
-Cuando WordPress detecta que la petición proviene de un usuario que ha iniciado sesión (es decir, existe una cookie de autenticación válida en la solicitud), dispara un Action Hook dinámico específico para usuarios autenticados.
+Wenn WordPress erkennt, dass die Anfrage von einem angemeldeten Benutzer stammt (d. h. ein gültiges Authentifizierungs-Cookie in der Anfrage vorhanden ist), löst es einen dynamischen Action-Hook aus, der speziell für authentifizierte Benutzer gedacht ist.
 
-### El patrón `wp_ajax_{action}`
+### Das Muster `wp_ajax_{action}`
 
-El núcleo de WordPress toma el prefijo `wp_ajax_` y le concatena exactamente el valor que hayas pasado en el parámetro `action` de tu petición AJAX.
+Der WordPress-Core nimmt das Präfix `wp_ajax_` und hängt genau den Wert an, den du im Parameter `action` deiner AJAX-Anfrage übergeben hast.
 
-Si tu código JavaScript envía una petición HTTP a `admin-ajax.php` con el siguiente cuerpo (payload):
+Wenn dein JavaScript-Code eine HTTP-Anfrage an `admin-ajax.php` mit dem folgenden Payload sendet:
 
 ```javascript
 {
@@ -110,177 +110,177 @@ Si tu código JavaScript envía una petición HTTP a `admin-ajax.php` con el sig
 
 ```
 
-WordPress, internamente, ejecutará la función `do_action()` buscando específicamente este gancho:
+WordPress führt intern die Funktion `do_action()` aus und sucht dabei speziell nach diesem Hook:
 
 ```php
 do_action( 'wp_ajax_guardar_preferencias_usuario' );
 
 ```
 
-Por lo tanto, la tarea del desarrollador del plugin es "enganchar" (hook) una función de PHP a este action dinámico para interceptar la llamada y procesar los datos.
+Daher besteht die Aufgabe des Plugin-Entwicklers darin, eine PHP-Funktion an diese dynamische Action anzuhängen (zu hooken), um den Aufruf abzufangen und die Daten zu verarbeiten.
 
-### Implementación práctica
+### Praktische Implementierung
 
-La estructura fundamental para registrar y manejar una petición AJAX para un usuario logueado consta de dos partes: el registro del hook y la función *callback*.
+Die grundlegende Struktur zum Registrieren und Verarbeiten einer AJAX-Anfrage für einen angemeldeten Benutzer besteht aus zwei Teilen: der Registrierung des Hooks und der *Callback*-Funktion.
 
 ```php
-// 1. Enganchamos nuestra función al action dinámico
-// Nota: 'guardar_preferencias_usuario' debe coincidir EXACTAMENTE con el valor de 'action' en JS.
+// 1. Wir hängen unsere Funktion an die dynamische Action an
+// Hinweis: 'guardar_preferencias_usuario' muss EXAKT mit dem Wert von 'action' in JS übereinstimmen.
 add_action( 'wp_ajax_guardar_preferencias_usuario', 'mi_plugin_guardar_preferencias' );
 
-// 2. Definimos la función callback
+// 2. Wir definieren die Callback-Funktion
 function mi_plugin_guardar_preferencias() {
     
-    // Verificamos si el dato esperado existe en la petición POST
+    // Wir prüfen, ob die erwarteten Daten in der POST-Anfrage existieren
     if ( isset( $_POST['color_favorito'] ) ) {
         
         $color = sanitize_text_field( $_POST['color_favorito'] );
-        $user_id = get_current_user_id(); // Funciona perfectamente porque estamos en wp_ajax_
+        $user_id = get_current_user_id(); // Funktioniert einwandfrei, da wir uns in wp_ajax_ befinden
         
-        // Guardamos el dato como metadato del usuario (Visto en el Cap. 4)
+        // Wir speichern die Daten als Benutzermetadaten (siehe Kap. 4)
         update_user_meta( $user_id, 'color_favorito_ui', $color );
         
-        // Enviamos una respuesta exitosa
-        echo 'Preferencias guardadas correctamente.';
+        // Wir senden eine Erfolgsmeldung
+        echo 'Einstellungen erfolgreich gespeichert.';
         
     } else {
-        // Manejamos el error si falta el dato
-        echo 'Error: No se recibió el color.';
+        // Wir behandeln den Fehler, falls die Daten fehlen
+        echo 'Fehler: Es wurde keine Farbe empfangen.';
     }
 
-    // 3. ¡Obligatorio! Finalizar la ejecución
+    // 3. Obligatorisch! Die Ausführung beenden
     wp_die(); 
 }
 
 ```
 
-### La importancia de finalizar la ejecución (`wp_die`)
+### Die Wichtigkeit, die Ausführung zu beenden (`wp_die`)
 
-El error más común al iniciarse en el desarrollo de AJAX en WordPress es olvidar incluir `wp_die()` (o `exit`/`die()`) al final de la función callback.
+Der häufigste Fehler beim Einstieg in die AJAX-Entwicklung in WordPress ist das Vergessen von `wp_die()` (oder `exit`/`die()`) am Ende der Callback-Funktion.
 
-Si omites la terminación explícita del script, WordPress continuará su ciclo de ejecución normal y, por defecto, el archivo `admin-ajax.php` imprimirá un `0` al final de la respuesta, o en algunos casos, cargará el resto del HTML del sitio.
+Wenn du die explizite Beendigung des Skripts auslässt, setzt WordPress seinen normalen Ausführungszyklus fort und standardmäßig gibt die Datei `admin-ajax.php` eine `0` am Ende der Antwort aus oder lädt in einigen Fällen das restliche HTML der Website.
 
 ```text
-Resultado SIN wp_die():
-"Preferencias guardadas correctamente.0"  <-- Ese '0' romperá tus validaciones en JavaScript.
+Ergebnis OHNE wp_die():
+"Einstellungen erfolgreich gespeichert.0"  <-- Diese '0' wird deine JavaScript-Validierungen stören.
 
-Resultado CON wp_die():
-"Preferencias guardadas correctamente."
+Ergebnis MIT wp_die():
+"Einstellungen erfolgreich gespeichert."
 
 ```
 
-### Contexto del usuario autenticado
+### Kontext des authentifizierten Benutzers
 
-Dado que el hook `wp_ajax_{action}` **solo** se dispara si el usuario tiene una sesión activa, cuentas con una ventaja significativa: puedes utilizar con total confianza funciones nativas que dependen de la sesión del usuario.
+Da der Hook `wp_ajax_{action}` **nur** ausgelöst wird, wenn der Benutzer eine aktive Sitzung hat, hast du einen entscheidenden Vorteil: Du kannst Funktionen, die von der Benutzersitzung abhängen, völlig vertrauensvoll nutzen.
 
-Por ejemplo, `get_current_user_id()` devolverá siempre un ID válido (mayor que 0). Asimismo, es el momento ideal para verificar las capacidades (*capabilities*) del usuario antes de procesar cualquier acción destructiva o de guardado, asegurando que, aunque el usuario esté logueado, tenga los permisos específicos para esa acción.
+Beispielsweise gibt `get_current_user_id()` immer eine gültige ID (größer als 0) zurück. Dies ist auch der ideale Zeitpunkt, um die Fähigkeiten (*capabilities*) des Benutzers zu überprüfen, bevor du eine destruktive Aktion oder einen Speichervorgang ausführst. So wird sichergestellt, dass der Benutzer, selbst wenn er eingeloggt ist, die spezifischen Rechte für diese Aktion besitzt.
 
 ```php
 function mi_plugin_borrar_registro() {
-    // Aunque el usuario esté logueado (wp_ajax_), ¿tiene permiso para hacer ESTO?
+    // Der Benutzer ist zwar eingeloggt (wp_ajax_), aber hat er das Recht, DIES zu tun?
     if ( ! current_user_can( 'manage_options' ) ) {
-        echo 'No tienes permisos suficientes.';
+        echo 'Du hast nicht genügend Berechtigungen.';
         wp_die();
     }
     
-    // Lógica para borrar el registro...
+    // Logik zum Löschen des Eintrags...
     wp_die();
 }
 
 ```
 
-*Nota: Veremos la gestión profunda de permisos en el Capítulo 12 y la sanitización/seguridad estricta (Nonces) en la sección 9.4 y el Capítulo 10. Por ahora, debes asimilar que `wp_ajax_` garantiza que hay una sesión, pero no garantiza de quién es esa sesión ni sus privilegios dentro del sitio.*
+*Hinweis: Wir werden uns in Kapitel 12 mit der detaillierten Rechteverwaltung und in Abschnitt 9.4 sowie Kapitel 10 mit der strengen Bereinigung/Sicherheit (Nonces) befassen. Vorerst musst du verinnerlichen, dass `wp_ajax_` zwar garantiert, dass eine Sitzung vorhanden ist, aber nicht, wem diese Sitzung gehört oder welche Privilegien sie auf der Website besitzt.*
 
-## 9.3 Hooks para usuarios sin sesión
+## 9.3 Hooks für Benutzer ohne Sitzung
 
-En la sección anterior vimos cómo WordPress atiende las peticiones AJAX de los usuarios que han iniciado sesión. Sin embargo, una gran parte de las interacciones asíncronas en un sitio web ocurren en el *frontend* público por parte de visitantes anónimos: enviar un formulario de contacto, cargar más productos en una tienda, votar en una encuesta o filtrar un portafolio.
+Im vorherigen Abschnitt haben wir gesehen, wie WordPress AJAX-Anfragen von Benutzern verarbeitet, die eine aktive Sitzung haben. Ein großer Teil der asynchronen Interaktionen auf einer Website findet jedoch im öffentlichen *Frontend* durch anonyme Besucher statt: das Absenden eines Kontaktformulars, das Laden weiterer Produkte in einem Shop, das Abstimmen bei einer Umfrage oder das Filtern eines Portfolios.
 
-Para manejar estas solicitudes donde no existe una cookie de autenticación válida, WordPress proporciona una variante específica del Action Hook: el sufijo `nopriv` (sin privilegios).
+Um diese Anfragen zu verarbeiten, bei denen kein gültiges Authentifizierungs-Cookie vorhanden ist, WordPress eine spezifische Variante des Action-Hooks anbietet: das Suffix `nopriv` (ohne Privilegien).
 
-### El patrón `wp_ajax_nopriv_{action}`
+### Das Muster `wp_ajax_nopriv_{action}`
 
-Cuando una petición AJAX llega a `admin-ajax.php` y WordPress determina que el usuario **no** está autenticado, buscará y ejecutará el Action Hook dinámico estructurado de la siguiente manera:
+Wenn eine AJAX-Anfrage an `admin-ajax.php` gesendet wird und WordPress feststellt, dass der Benutzer **nicht** authentifiziert ist, sucht und führt es den dynamischen Action-Hook aus, der wie folgt aufgebaut ist:
 
 ```php
 do_action( 'wp_ajax_nopriv_' . $_REQUEST['action'] );
 
 ```
 
-Si retomamos el ejemplo de la petición desde JavaScript con el parámetro `action: 'procesar_formulario_contacto'`, el hook que debes utilizar en tu plugin será `wp_ajax_nopriv_procesar_formulario_contacto`.
+Greifen wir das Beispiel der Anfrage aus JavaScript mit dem Parameter `action: 'procesar_formulario_contacto'` wieder auf, so lautet der Hook, den du in deinem Plugin verwenden musst, `wp_ajax_nopriv_procesar_formulario_contacto`.
 
-### Soportando a ambos tipos de usuarios
+### Unterstützung beider Benutzertypen
 
-Uno de los escenarios más habituales en el desarrollo de plugins es crear una funcionalidad AJAX que deba estar disponible tanto para usuarios registrados como para visitantes anónimos (por ejemplo, un botón de "Cargar más entradas" en el blog).
+Eines der häufigsten Szenarien bei der Plugin-Entwicklung ist die Erstellung einer AJAX-Funktionalität, die sowohl für registrierte Benutzer als auch für anonyme Besucher verfügbar sein soll (z. B. ein Button „Weitere Beiträge laden“ im Blog).
 
-Dado que WordPress separa estrictamente el enrutamiento según el estado de la sesión, si solo registras el hook `wp_ajax_nopriv_`, la función **fallará** (devolverá un error 400 o un `0`) si un administrador logueado intenta usarla.
+Da WordPress das Routing streng nach dem Sitzungsstatus trennt, schlägt die Funktion **fehl** (gibt einen Fehler 400 oder eine `0` zurück), wenn du nur den Hook `wp_ajax_nopriv_` registrierst und ein angemeldeter Administrator versucht, sie zu nutzen.
 
-Para que una acción sea universal, debes enlazar la misma función *callback* a **ambos** hooks simultáneamente:
+Damit eine Aktion universell funktioniert, musst du dieselbe *Callback*-Funktion gleichzeitig an **beide** Hooks anhängen:
 
 ```php
-// 1. Hook para usuarios CON sesión iniciada
+// 1. Hook für Benutzer MIT aktiver Sitzung
 add_action( 'wp_ajax_cargar_mas_posts', 'mi_plugin_cargar_posts' );
 
-// 2. Hook para usuarios SIN sesión (anónimos)
+// 2. Hook für Benutzer OHNE Sitzung (anonym)
 add_action( 'wp_ajax_nopriv_cargar_mas_posts', 'mi_plugin_cargar_posts' );
 
-// 3. La función callback compartida
+// 3. Die gemeinsame Callback-Funktion
 function mi_plugin_cargar_posts() {
     
-    // Aquí va la lógica para consultar y devolver los posts
+    // Hier folgt die Logik zum Abfragen und Ausgeben der Beiträge
     $pagina = isset( $_POST['pagina'] ) ? intval( $_POST['pagina'] ) : 1;
     
-    // ... ejecución de WP_Query ...
+    // ... Ausführung von WP_Query ...
     
-    echo 'HTML de los nuevos posts...';
+    echo 'HTML der neuen Beiträge...';
     
-    wp_die(); // Siempre finalizar la ejecución
+    wp_die(); // Ausführung immer beenden
 }
 
 ```
 
-### Contexto de seguridad y confianza cero
+### Sicherheitskontext und Zero-Trust
 
-Trabajar con `wp_ajax_nopriv_` implica un cambio drástico en el paradigma de seguridad. Mientras que con `wp_ajax_` tienes la certeza de que *alguien* validado está haciendo la petición, con `nopriv` estás abriendo una puerta directa a tu servidor para cualquier persona (o bot) en internet.
+Die Arbeit mit `wp_ajax_nopriv_` erfordert eine drastische Änderung des Sicherheitsparadigmas. Während du bei `wp_ajax_` die Gewissheit hast, dass *jemand* Validiertes die Anfrage stellt, öffnest du mit `nopriv` eine direkte Tür zu deinem Server für jeden Menschen (oder Bot) im Internet.
 
-Consideraciones críticas al usar este hook:
+Kritische Überlegungen bei der Verwendung dieses Hooks:
 
-1. **El usuario es un fantasma:** Funciones como `get_current_user_id()` devolverán siempre `0`. No puedes depender de las *capabilities* de WordPress (`current_user_can()`) para proteger la ejecución del código.
-2. **Sanitización agresiva:** Puesto que la entrada proviene de fuentes completamente no confiables, la validación y sanitización de los datos recibidos en `$_POST` o `$_GET` debe ser paranoica. Nunca confíes en que el JavaScript de tu frontend es el único que está enviando datos a este endpoint.
-3. **Límites de tasa (Rate Limiting):** Si tu endpoint `nopriv` realiza operaciones pesadas en la base de datos o envía correos electrónicos, considera implementar un sistema de control de ráfagas (rate limiting) transitorio para evitar ataques de denegación de servicio (DDoS) a nivel de aplicación.
+1. **Der Benutzer ist ein Phantom:** Funktionen wie `get_current_user_id()` geben immer `0` zurück. Du kannst dich nicht auf die *Capabilities* von WordPress (`current_user_can()`) verlassen, um die Codeausführung zu schützen.
+2. **Aggressive Bereinigung (Sanitization):** Da die Eingabe aus völlig unzuverlässigen Quellen stammt, muss die Validierung und Bereinigung der in `$_POST` oder `$_GET` empfangenen Daten paranoid sein. Vertraue niemals darauf, dass das JavaScript deines Frontends das einzige ist, das Daten an diesen Endpunkt sendet.
+3. **Ratenbegrenzung (Rate Limiting):** Wenn dein `nopriv`-Endpunkt komplexe Datenbankoperationen durchführt oder E-Mails versendet, solltest du ein temporäres Ratenbegrenzungssystem implementieren, um Denial-of-Service-Angriffe (DDoS) auf Anwendungsebene zu verhindern.
 
-El diseño de doble hook de WordPress no es un capricho; es una barrera de seguridad "por defecto". Al obligarte a registrar explícitamente `wp_ajax_nopriv_`, WordPress evita que expongas accidentalmente funciones administrativas o destructivas a visitantes anónimos. Si olvidas añadir el hook `nopriv`, el visitante simplemente recibirá un `0` y tu código seguro no se ejecutará.
+Das Doppel-Hook-Design von WordPress ist keine Laune; es ist eine standardmäßige Sicherheitsbarriere. Indem WordPress dich zwingt, `wp_ajax_nopriv_` explizit zu registrieren, wird verhindert, dass du versehentlich administrative oder destruktive Funktionen für anonyme Besucher freigibst. Wenn du vergisst, den `nopriv`-Hook hinzuzufügen, erhält der Besucher einfach eine `0` und dein sicherer Code wird nicht ausgeführt.
 
-## 9.4 Uso de Nonces para seguridad AJAX
+## 9.4 Verwendung von Nonces für die AJAX-Sicherheit
 
-Incluso si utilizas el hook correcto (`wp_ajax_`) y compruebas los permisos del usuario con `current_user_can()`, tu endpoint AJAX sigue siendo vulnerable a un tipo de ataque específico: **CSRF** (Cross-Site Request Forgery o Falsificación de Petición en Sitios Cruzados).
+Selbst wenn du den richtigen Hook (`wp_ajax_`) verwendest und die Benutzerrechte mit `current_user_can()` überprüfst, bleibt dein AJAX-Endpunkt für eine bestimmte Art von Angriff anfällig: **CSRF** (Cross-Site Request Forgery oder Website-übergreifende Anforderungsfälschung).
 
-Un atacante podría engañar a un administrador autenticado para que haga clic en un enlace malicioso o visite una página de terceros que ejecute un script silencioso enviando una petición a tu `admin-ajax.php`. Como el navegador del administrador adjuntará automáticamente sus cookies de sesión, WordPress creerá que la petición es legítima.
+Ein Angreifer könnte einen authentifizierten Administrator dazu verleiten, auf einen bösartigen Link zu klicken oder eine Website eines Drittanbieters zu besuchen, die im Hintergrund ein Skript ausführt und eine Anfrage an deine `admin-ajax.php` sendet. Da der Browser des Administrators automatisch dessen Sitzungscookies anhängt, geht WordPress davon aus, dass die Anfrage legitim ist.
 
-Para bloquear este vector de ataque, WordPress utiliza **Nonces** (números usados una sola vez, aunque en WordPress son tokens criptográficos basados en tiempo). Un nonce garantiza que la petición AJAX fue generada intencionalmente por tu interfaz y no por un agente externo.
+Um diesen Angriffsvektor zu blockieren, verwendet WordPress **Nonces** (Zahlen, die nur einmal verwendet werden, obwohl es sich in WordPress um zeitbasierte kryptografische Token handelt). Ein Nonce garantiert, dass die AJAX-Anfrage absichtlich von deiner Oberfläche generiert wurde und nicht von einem externen Akteur.
 
-### El flujo de seguridad del Nonce en AJAX
+### Der Sicherheits-Workflow des Nonces in AJAX
 
-La implementación de nonces en llamadas asíncronas requiere una coordinación exacta entre PHP (que genera y luego verifica el token) y JavaScript (que lo recibe y lo envía de vuelta).
+Die Implementierung von Nonces bei asynchronen Aufrufen erfordert eine genaue Abstimmung zwischen PHP (das den Token generiert und später überprüft) und JavaScript (das ihn empfängt und wieder zurücksendet).
 
 ```text
-[ SERVIDOR - PHP ]                            [ CLIENTE - Navegador ]
-1. Genera el Nonce   -----------------------> 2. Inyecta el Nonce en JS
+[ SERVER - PHP ]                              [ CLIENT - Browser ]
+1. Generiert das Nonce ---------------------> 2. Injiziert das Nonce in JS
    wp_create_nonce()                             (wp_localize_script)
                                                           |
                                                           v
-[ SERVIDOR - PHP ]                            [ CLIENTE - Navegador ]
-5. Verifica el Nonce <----------------------- 3. JS lee la variable global
-   check_ajax_referer()                       4. Envía petición AJAX con
-   [Válido] -> Procesa y responde                el nonce en el payload
-   [Inválido] -> Finaliza con error 403
+[ SERVER - PHP ]                              [ CLIENT - Browser ]
+5. Überprüft das Nonce <--------------------- 3. JS liest die globale Variable
+   check_ajax_referer()                       4. Sendet AJAX-Anfrage mit
+   [Gültig] -> Verarbeitet und antwortet         dem Nonce im Payload
+   [Ungültig] -> Beendet mit Fehler 403
 
 ```
 
-### 1. Generación e inyección del Nonce (PHP)
+### 1. Generierung und Injektion des Nonces (PHP)
 
-El primer paso es crear el token en el backend y pasarlo al frontend. Como vimos en la sección 9.1, la herramienta ideal para esto es `wp_localize_script()` (o `wp_add_inline_script()`).
+Der erste Schritt besteht darin, das Token im Backend zu erstellen und an das Frontend zu übergeben. Wie wir in Abschnitt 9.1 gesehen haben, ist das ideale Werkzeug hierfür `wp_localize_script()` (oder `wp_add_inline_script()`).
 
-Es crucial darle al nonce una "acción" descriptiva. Esta acción es una cadena de texto que actúa como firma; el mismo texto deberá usarse para verificarlo después.
+Es ist wichtig, dem Nonce eine aussagekräftige „Aktion“ (Action) zuzuweisen. Diese Aktion ist eine Zeichenkette, die als Signatur dient; derselbe Text muss später bei der Überprüfung verwendet werden.
 
 ```php
 add_action( 'wp_enqueue_scripts', 'mi_plugin_scripts_con_nonce' );
@@ -288,20 +288,20 @@ add_action( 'wp_enqueue_scripts', 'mi_plugin_scripts_con_nonce' );
 function mi_plugin_scripts_con_nonce() {
     wp_enqueue_script( 'mi-script', plugin_dir_url( __FILE__ ) . 'app.js', array('jquery'), '1.0', true );
 
-    // Generamos el nonce y lo pasamos al frontend
+    // Wir generieren das Nonce und übergeben es an das Frontend
     wp_localize_script( 'mi-script', 'MiPluginGlobal', array(
         'ajax_url'  => admin_url( 'admin-ajax.php' ),
-        'seguridad' => wp_create_nonce( 'borrar_registro_nonce' ) // <- Generación
+        'seguridad' => wp_create_nonce( 'borrar_registro_nonce' ) // <- Generierung
     ) );
 }
 
 ```
 
-### 2. Envío del Nonce en la petición (JavaScript)
+### 2. Senden des Nonces in der Anfrage (JavaScript)
 
-En tu archivo JavaScript, debes recoger ese token de la variable global que creamos (`MiPluginGlobal.seguridad`) y adjuntarlo a los datos que envías mediante POST o GET a `admin-ajax.php`.
+In deiner JavaScript-Datei musst du dieses Token aus der von uns erstellten globalen Variable (`MiPluginGlobal.seguridad`) abrufen und an die Daten anhängen, die du per POST oder GET an `admin-ajax.php` sendest.
 
-Por convención estándar en WordPress, la clave del objeto de datos suele llamarse `nonce` o `security`.
+Nach den Standardkonventionen in WordPress wird der Schlüssel des Datenobjekts normalerweise `nonce` oder `security` genannt.
 
 ```javascript
 jQuery(document).ready(function($) {
@@ -309,9 +309,9 @@ jQuery(document).ready(function($) {
         e.preventDefault();
 
         var datos = {
-            action: 'mi_plugin_borrar_item', // El hook de ruteo
+            action: 'mi_plugin_borrar_item', // Der Routing-Hook
             item_id: 42,
-            security: MiPluginGlobal.seguridad // El token de verificación
+            security: MiPluginGlobal.seguridad // Das Verifizierungs-Token
         };
 
         $.post( MiPluginGlobal.ajax_url, datos, function( respuesta ) {
@@ -322,118 +322,118 @@ jQuery(document).ready(function($) {
 
 ```
 
-### 3. Verificación en el Callback (PHP)
+### 3. Überprüfung im Callback (PHP)
 
-Finalmente, dentro de la función que maneja tu petición AJAX, la primera línea de defensa antes de procesar cualquier dato debe ser la verificación del nonce.
+Schließlich muss innerhalb der Funktion, die deine AJAX-Anfrage verarbeitet, die erste Verteidigungslinie vor der Verarbeitung jeglicher Daten die Überprüfung des Nonces sein.
 
-WordPress proporciona una función específica y altamente optimizada para peticiones asíncronas: `check_ajax_referer()`.
+WordPress stellt eine spezifische und für asynchrone Anfragen hochgradig optimierte Funktion zur Verfügung: `check_ajax_referer()`.
 
 ```php
 add_action( 'wp_ajax_mi_plugin_borrar_item', 'mi_plugin_callback_borrar' );
 
 function mi_plugin_callback_borrar() {
     
-    // 1. Verificar el Nonce
+    // 1. Nonce überprüfen
     // check_ajax_referer( $action, $query_arg, $die )
-    // $action: El mismo texto usado en wp_create_nonce()
-    // $query_arg: El nombre de la clave en $_REQUEST (en JS lo llamamos 'security')
+    // $action: Derselbe Text, der in wp_create_nonce() verwendet wurde
+    // $query_arg: Der Name des Schlüssels in $_REQUEST (in JS haben wir ihn 'security' genannt)
     check_ajax_referer( 'borrar_registro_nonce', 'security' );
 
-    // Si el nonce es inválido o ha expirado, check_ajax_referer() hace un wp_die()
-    // automáticamente y devuelve un error 403 Forbidden.
-    // El código a partir de aquí SOLO se ejecuta si el nonce es válido.
+    // Wenn das Nonce ungültig oder abgelaufen ist, check_ajax_referer() automatisch
+    // ein wp_die() aus und gibt einen Fehler 403 Forbidden zurück.
+    // Der Code ab hier wird NUR ausgeführt, wenn das Nonce gültig ist.
 
-    // 2. Comprobar permisos
+    // 2. Berechtigungen prüfen
     if ( ! current_user_can( 'delete_posts' ) ) {
-        wp_die( 'No tienes permisos suficientes.' );
+        wp_die( 'Du hast nicht genügend Berechtigungen.' );
     }
 
-    // 3. Sanitizar entrada
+    // 3. Eingabe bereinigen
     $item_id = intval( $_POST['item_id'] );
 
-    // 4. Lógica de negocio (borrar el item...)
+    // 4. Geschäftslogik (Eintrag loeschen...)
     // ...
 
-    echo 'Registro borrado con seguridad.';
+    echo 'Eintrag sicher gelöscht.';
     wp_die();
 }
 
 ```
 
-### Consideraciones sobre la caché y Nonces anónimos
+### Überlegungen zum Cache und anonymen Nonces
 
-Como exploraremos con mayor profundidad en el Capítulo 10, los nonces de WordPress tienen un tiempo de vida máximo (por defecto de 24 horas) y están ligados a la sesión del usuario actual.
+Wie wir in Kapitel 10 noch genauer untersuchen werden, Nonces in WordPress eine maximale Lebensdauer (standardmäßig 24 Stunden) haben und an die Sitzung des aktuellen Benutzers gebunden sind.
 
-Sin embargo, hay una trampa arquitectónica crítica cuando trabajas con `wp_ajax_nopriv_`: **los nonces para visitantes anónimos son los mismos para todos**. Además, si utilizas un plugin de caché de páginas (como WP Rocket o W3 Total Cache), el HTML generado junto con el bloque de `wp_localize_script` se guardará estáticamente.
+Es gibt jedoch eine kritische architektonische Falle bei der Arbeit mit `wp_ajax_nopriv_`: **Die Nonces für anonyme Besucher sind für alle gleich**. Wenn du außerdem ein Page-Caching-Plugin verwendest (wie WP Rocket oder W3 Total Cache), wird das generierte HTML zusammen mit dem `wp_localize_script`-Block statisch gespeichert.
 
-Si un visitante anónimo carga la página y la caché sirve una versión generada hace más de 24 horas, el nonce incluido en el JavaScript habrá expirado. Todas las peticiones AJAX de ese visitante fallarán con un error 403. Para solucionar este problema en el frontend público, existen dos enfoques: configurar la exclusión de caché para páginas con alta interacción AJAX, o cargar el nonce dinámicamente mediante una petición inicial vía REST API antes de ejecutar la acción principal.
+Wenn ein anonymer Besucher die Seite lädt und der Cache eine vor mehr als 24 Stunden generierte Version ausliefert, ist das im JavaScript enthaltene Nonce abgelaufen. Alle AJAX-Anfragen dieses Besuchers schlagen mit einem 403-Fehler fehl. Um dieses Problem im öffentlichen Frontend zu lösen, gibt es zwei Ansätze: das Konfigurieren von Cache-Ausschlüssen für Seiten mit hoher AJAX-Interaktion oder das dynamische Laden des Nonces über eine erste Anfrage via REST-API vor dem Ausführen der Hauptaktion.
 
-## 9.5 Retorno de respuestas JSON
+## 9.5 Rückgabe von JSON-Antworten
 
-A medida que el desarrollo web ha evolucionado hacia interfaces más reactivas y aplicaciones de una sola página (SPA), la práctica de devolver fragmentos completos de HTML desde el servidor ha ido cediendo terreno frente a la transmisión de datos estructurados. JSON (JavaScript Object Notation) es el estándar indiscutible para esta tarea.
+Da sich die Webentwicklung hin zu reaktionsfähigeren Oberflächen und Single-Page-Applications (SPA) entwickelt hat, hat die Praxis, komplette HTML-Fragmente vom Server zurückzugeben, gegenüber der Übertragung strukturierter Daten an Boden verloren. JSON (JavaScript Object Notation) ist der unbestrittene Standard für diese Aufgabe.
 
-Aunque puedes utilizar la función nativa de PHP `json_encode()` seguida de un `wp_die()` para lograr esto, WordPress ofrece un conjunto de funciones especializadas que simplifican enormemente este proceso, manejando automáticamente las cabeceras HTTP y la terminación del script.
+Obwohl du die native PHP-Funktion `json_encode()` gefolgt von einem `wp_die()` verwenden kannst, um dies zu erreichen, WordPress eine Reihe von spezialisierten Funktionen bietet, die diesen Prozess erheblich vereinfachen, da sie automatisch die HTTP-Header und die Skriptbeendigung verwalten.
 
-### La tríada de funciones JSON en WordPress
+### Die Triade der JSON-Funktionen in WordPress
 
-WordPress pone a tu disposición tres funciones principales para retornar respuestas JSON desde un callback de AJAX:
+WordPress stellt dir drei Hauptfunktionen zur Verfügung, um JSON-Antworten aus einem AJAX-Callback zurückzugeben:
 
-1. **`wp_send_json( $respuesta, $status_code = null )`**: Envía la respuesta JSON de vuelta al cliente y termina la ejecución. Es útil cuando necesitas una estructura de datos completamente personalizada.
-2. **`wp_send_json_success( $data = null, $status_code = null )`**: Envía una respuesta de éxito estandarizada.
-3. **`wp_send_json_error( $data = null, $status_code = null )`**: Envía una respuesta de error estandarizada.
+1. **`wp_send_json( $respuesta, $status_code = null )`**: Sendet die JSON-Antwort an den Client zurück und beendet die Ausführung. Nützlich, wenn du eine vollständig benutzerdefinierte Datenstruktur benötigst.
+2. **`wp_send_json_success( $data = null, $status_code = null )`**: Sendet eine standardisierte Erfolgsantwort.
+3. **`wp_send_json_error( $data = null, $status_code = null )`**: Sendet eine standardisierte Fehlerantwort.
 
-La ventaja fundamental de utilizar `wp_send_json_success()` y `wp_send_json_error()` radica en que envuelven tus datos en una estructura predecible. Internamente, estas funciones generan un objeto con una propiedad booleana `success` y colocan tu carga útil dentro de una propiedad `data`.
+Der wesentliche Vorteil bei der Verwendung von `wp_send_json_success()` und `wp_send_json_error()` liegt darin, dass sie deine Daten in eine vorhersehbare Struktur einpacken. Intern erzeugen diese Funktionen ein Objekt mit einer booleschen Eigenschaft `success` und platzieren deinen Payload innerhalb einer Eigenschaft `data`.
 
-Además, **estas funciones ejecutan `wp_die()` automáticamente por ti**, por lo que tu código queda más limpio y menos propenso a errores por olvido.
+Zudem **führen diese Funktionen automatisch `wp_die()` für dich aus**, wodurch dein Code sauberer und weniger anfällig für Fehler durch Vergessen wird.
 
-### Implementación en el backend (PHP)
+### Implementierung im Backend (PHP)
 
-Veamos cómo refactorizar un endpoint de procesamiento de formulario para utilizar estas funciones semánticas:
+Sehen wir uns an, wie man einen Endpunkt zur Formularverarbeitung refaktoriert, um diese semantischen Funktionen zu verwenden:
 
 ```php
 add_action( 'wp_ajax_procesar_formulario', 'mi_plugin_procesar_json' );
 add_action( 'wp_ajax_nopriv_procesar_formulario', 'mi_plugin_procesar_json' );
 
 function mi_plugin_procesar_json() {
-    // 1. Verificación de seguridad
+    // 1. Sicherheitsüberprüfung
     if ( ! check_ajax_referer( 'mi_formulario_nonce', 'security', false ) ) {
-        // Retorna: { "success": false, "data": "Token de seguridad inválido." }
-        wp_send_json_error( 'Token de seguridad inválido.' );
+        // Gibt zurück: { "success": false, "data": "Ungültiges Sicherheits-Token." }
+        wp_send_json_error( 'Ungültiges Sicherheits-Token.' );
     }
 
-    // 2. Validación de datos
+    // 2. Datenvalidierung
     if ( empty( $_POST['email'] ) || ! is_email( $_POST['email'] ) ) {
-        wp_send_json_error( 'Por favor, introduce un correo electrónico válido.' );
+        wp_send_json_error( 'Bitte gib eine gültige E-Mail-Adresse ein.' );
     }
 
     $email = sanitize_email( $_POST['email'] );
 
-    // 3. Lógica de negocio (ej. guardar en base de datos)
+    // 3. Geschäftslogik (z. B. in der Datenbank speichern)
     $guardado = mi_plugin_guardar_email_db( $email );
 
     if ( ! $guardado ) {
-        wp_send_json_error( 'Hubo un problema en el servidor al guardar los datos.' );
+        wp_send_json_error( 'Beim Speichern der Daten auf dem Server ist ein Problem aufgetreten.' );
     }
 
-    // 4. Respuesta exitosa
-    // Puedes enviar arrays asociativos complejos si lo necesitas
+    // 4. Erfolgreiche Antwort
+    // Du kannst bei Bedarf komplexe assoziative Arrays senden
     $respuesta = array(
-        'mensaje'  => '¡Suscripción completada con éxito!',
+        'mensaje'  => 'Abonnement erfolgreich abgeschlossen!',
         'email'    => $email,
         'fecha'    => current_time( 'mysql' )
     );
 
-    // Retorna: { "success": true, "data": { "mensaje": "...", "email": "...", ... } }
+    // Gibt zurück: { "success": true, "data": { "mensaje": "...", "email": "...", ... } }
     wp_send_json_success( $respuesta );
     
-    // No es necesario añadir wp_die() aquí.
+    // Ein zusätzliches wp_die() ist hier nicht erforderlich.
 }
 
 ```
 
-### Manejo de la respuesta en el frontend (JavaScript)
+### Handhabung der Antwort im Frontend (JavaScript)
 
-Al utilizar esta convención en tu código PHP, la lógica en tu JavaScript se vuelve mucho más robusta y fácil de leer. Puedes confiar en la propiedad `success` para bifurcar el flujo de tu interfaz de usuario.
+Wenn du diese Konvention in deinem PHP-Code verwendest, wird die Logik in deinem JavaScript viel robuster und einfacher zu lesen. Du kannst dich auf die Eigenschaft `success` verlassen, um den Fluss deiner Benutzeroberfläche zu steuern.
 
 ```javascript
 jQuery(document).ready(function($) {
@@ -450,23 +450,23 @@ jQuery(document).ready(function($) {
             url: MiPluginGlobal.ajax_url,
             type: 'POST',
             data: datos,
-            dataType: 'json', // Esperamos explícitamente JSON
+            dataType: 'json', // Wir erwarten explizit JSON
             beforeSend: function() {
-                // Mostrar un spinner de carga
-                $('#mensaje-ui').text('Procesando...');
+                // Einen Lade-Spinner anzeigen
+                $('#mensaje-ui').text('Wird verarbeitet...');
             },
             success: function( response ) {
-                // WordPress garantiza la estructura { success: boolean, data: mixed }
+                // WordPress garantiert die Struktur { success: boolean, data: mixed }
                 if ( response.success ) {
-                    // response.data contiene el array asociativo que pasamos en PHP
+                    // response.data enthält das assoziative Array, das wir in PHP übergeben haben
                     $('#mensaje-ui')
                         .removeClass('error')
                         .addClass('exito')
                         .text( response.data.mensaje );
                     
-                    console.log('Registrado el: ' + response.data.fecha);
+                    console.log('Registriert am: ' + response.data.fecha);
                 } else {
-                    // response.data contiene el mensaje de error del wp_send_json_error()
+                    // response.data enthält die Fehlermeldung aus wp_send_json_error()
                     $('#mensaje-ui')
                         .removeClass('exito')
                         .addClass('error')
@@ -474,8 +474,8 @@ jQuery(document).ready(function($) {
                 }
             },
             error: function() {
-                // Maneja errores de red o del servidor (ej. un error 500)
-                $('#mensaje-ui').text('Error crítico de comunicación con el servidor.');
+                // Behandelt Netzwerk- oder Serverfehler (z. B. einen Fehler 500)
+                $('#mensaje-ui').text('Kritischer Fehler bei der Kommunikation mit dem Server.');
             }
         });
     });
@@ -483,12 +483,12 @@ jQuery(document).ready(function($) {
 
 ```
 
-Adoptar `wp_send_json_success` y `wp_send_json_error` no solo estandariza tus comunicaciones cliente-servidor, sino que prepara tu código para ser más fácilmente migrado o integrado con la REST API de WordPress (Capítulo 13) y herramientas modernas de frontend, las cuales asumen JSON como formato predeterminado.
+Die Einführung von `wp_send_json_success` und `wp_send_json_error` standardisiert nicht nur deine Client-Server-Kommunikation, sondern bereitet deinen Code auch darauf vor, einfacher migriert oder in die WordPress REST API (Kapitel 13) und moderne Frontend-Tools integriert zu werden, die JSON als Standardformat voraussetzen.
 
-## Resumen del capítulo
+## Kapitelzusammenfassung
 
-En este capítulo hemos desmitificado la integración de peticiones asíncronas dentro de WordPress, comprendiendo que el archivo `admin-ajax.php` es el enrutador universal tanto para el panel de administración como para la parte pública del sitio.
+In diesem Kapitel haben wir die Integration von asynchronen Anfragen in WordPress entmystifiziert und verstanden, dass die Datei `admin-ajax.php` der universelle Router sowohl für den Admin-Bereich als auch für den öffentlichen Teil der Website ist.
 
-Hemos establecido las bases del ruteo mediante el parámetro obligatorio `action`, y cómo WordPress bifurca la ejecución dependiendo de la sesión del usuario a través de los ganchos dinámicos `wp_ajax_{action}` y `wp_ajax_nopriv_{action}`.
+Wir haben die Grundlagen des Routings über den obligatorischen Parameter `action` gelegt und gelernt, wie WordPress die Ausführung in Abhängigkeit von der Benutzersitzung über die dynamischen Hooks `wp_ajax_{action}` und `wp_ajax_nopriv_{action}` verzweigt.
 
-Además, hemos abordado los pilares irrenunciables de la seguridad AJAX: la necesidad imperativa de generar y verificar **Nonces** para proteger nuestro código contra falsificaciones de peticiones a través de sitios (CSRF). Finalmente, modernizamos el flujo de datos adoptando la respuesta estandarizada en formato **JSON** mediante funciones nativas que automatizan el envío de cabeceras, la estructuración de la respuesta y la terminación segura del script. Dominar estos fundamentos te permitirá construir interfaces dinámicas seguras sin comprometer el rendimiento del ecosistema.
+Darüber hinaus haben wir uns mit den unverzichtbaren Säulen der AJAX-Sicherheit befasst: der zwingenden Notwendigkeit, **Nonces** zu generieren und zu überprüfen, um unseren Code vor CSRF-Angriffen (Website-übergreifende Anforderungsfälschung) zu schützen. Schließlich haben wir den Datenfluss modernisiert, indem wir die standardisierte Antwort im **JSON**-Format über native Funktionen eingeführt haben, die das Senden von Headern, die Strukturierung der Antwort und die sichere Beendigung des Skripts automatisieren. Das Beherrschen dieser Grundlagen ermöglicht es dir, sichere dynamische Oberflächen zu erstellen, ohne die Leistung des Ökosystems zu beeinträchtigen.

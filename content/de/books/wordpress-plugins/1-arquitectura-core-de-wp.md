@@ -1,69 +1,69 @@
-Para dominar el desarrollo de plugins, debemos comprender el terreno donde se ejecutarán. WordPress es un ecosistema impulsado por eventos con un ciclo de vida estricto. En este capítulo, desentrañaremos su maquinaria interna.
+Um die Plugin-Entwicklung zu meistern, müssen wir das Terrain verstehen, auf dem sie ausgeführt wird. WordPress ist ein eventgesteuertes Ökosystem mit einem strikten Lebenszyklus. In diesem Kapitel werden wir seine interne Funktionsweise entschlüsseln.
 
-Exploraremos el proceso de inicialización y la secuencia de carga del núcleo. Entenderemos cómo el motor `WP_Query` procesa las peticiones y cómo la jerarquía de plantillas decide el renderizado visual. Finalmente, trazaremos la frontera arquitectónica inquebrantable entre temas (presentación) y plugins (lógica). Dominar estos cimientos te permitirá inyectar tu código de forma precisa, escalable y profesional.
+Wir werden den Initialisierungsprozess und die Ladesequenz des Cores untersuchen. Wir werden verstehen, wie die `WP_Query`-Engine Anfragen verarbeitet und wie die Template-Hierarchie über das visuelle Rendering entscheidet. Schließlich ziehen wir die unverrückbare architektonische Grenze zwischen Themes (Präsentation) und Plugins (Logik). Wenn du diese Grundlagen beherrschst, kannst du deinen Code präzise, skalierbar und professionell einbinden.
 
-## 1.1 Archivos y carga del núcleo
+## 1.1 Dateien und Laden des Cores
 
-Para desarrollar plugins robustos y eficientes, es imperativo comprender qué ocurre exactamente desde que el servidor recibe una petición HTTP hasta que tu código entra en ejecución. WordPress no es un monolito estático; es un sistema impulsado por eventos (*event-driven*) cuyo ciclo de vida se construye dinámicamente en cada petición mediante un proceso de inicialización o *bootstrap*.
+Um robuste und effiziente Plugins zu entwickeln, ist es unerlässlich zu verstehen, was genau passiert, sobald der Server eine HTTP-Anfrage empfängt, bis dein Code ausgeführt wird. WordPress ist kein statischer Monolith, sondern ein eventgesteuertes (*event-driven*) System, dessen Lebenszyklus bei jeder Anfrage durch einen Initialisierungsprozess (oder *Bootstrap*) dynamisch aufgebaut wird.
 
-### El flujo de inicialización (Bootstrap)
+### Der Initialisierungsfluss (Bootstrap)
 
-La carga del núcleo de WordPress sigue una cascada estricta de inclusiones de archivos. En una instalación estándar, cualquier petición al *front-end* atraviesa la siguiente secuencia de archivos principales:
+Das Laden des WordPress-Cores folgt einer strikten Kaskade von Datei-Includes. Bei einer Standardinstallation durchläuft jede Anfrage an das Frontend die folgende Sequenz von Hauptdateien:
 
 ```text
-[Petición HTTP]
+[HTTP-Anfrage]
        |
        v
   index.php
-       |-- Define WP_USE_THEMES (true)
+       |-- Definiert WP_USE_THEMES (true)
        v
   wp-blog-header.php
-       |-- Coordina la carga del entorno y la plantilla
+       |-- Koordiniert das Laden der Umgebung und des Templates
        |
        |----> wp-load.php
-       |        |-- Busca y carga wp-config.php
+       |        |-- Sucht und lädt wp-config.php
        |        v
        |      wp-config.php
-       |        |-- Define constantes de entorno y DB
+       |        |-- Definiert Umgebungs- und DB-Konstanten
        |        v
        |      wp-settings.php
-       |        |-- EJECUTA LA INICIALIZACIÓN DEL NÚCLEO
+       |        |-- FÜHRT DIE CORE-INITIALISIERUNG AUS
        |
-       |----> wp() (Configura WP_Query - Se verá en 1.2)
+       |----> wp() (Konfiguriert WP_Query - siehe 1.2)
        |
-       |----> wp-includes/template-loader.php (Jerarquía - Se verá en 1.3)
+       |----> wp-includes/template-loader.php (Hierarchie - siehe 1.3)
 
 ```
 
-### Anatomía de `wp-settings.php`
+### Anatomie von `wp-settings.php`
 
-El archivo `wp-settings.php` (ubicado en la raíz) es el verdadero motor de arranque de WordPress. Como desarrollador de plugins, este es el archivo más crítico del proceso de carga, ya que determina exactamente en qué momento tu código cobra vida y qué APIs están disponibles en ese instante.
+Die Datei `wp-settings.php` (im Root-Verzeichnis) ist der eigentliche Anlasser von WordPress. Für dich als Plugin-Entwickler ist dies die kritischste Datei im Ladevorgang, da sie genau bestimmt, zu welchem Zeitpunkt dein Code zum Leben erweckt wird und welche APIs in diesem Moment verfügbar sind.
 
-La secuencia interna de `wp-settings.php` se ejecuta en el siguiente orden:
+Die interne Sequenz von `wp-settings.php` wird in der folgenden Reihenfolge ausgeführt:
 
-1. **Inicialización temprana:** Se configuran las constantes de directorios, el control de versiones y se incluye la API de compatibilidad.
-2. **Conexión a la Base de Datos:** Se instancia la clase global `$wpdb`. A partir de este momento, se pueden realizar consultas a la base de datos.
-3. **Caché de objetos:** Se inicializa `WP_Cache` si está configurado.
-4. **Carga de Must-Use Plugins:** Se buscan y cargan los archivos PHP del directorio `/wp-content/mu-plugins/`. Estos plugins se ejecutan antes que los plugins regulares y no pueden ser desactivados desde el panel.
-5. **Carga de Plugins Activos:** Se consulta la tabla `wp_options` para obtener el *array* serializado de la opción `active_plugins`. WordPress itera sobre este array y hace un `include_once` de cada archivo principal de los plugins regulares.
-6. **Disparo del hook `plugins_loaded`:** Primer *Action Hook* general disponible.
-7. **Carga de Pluggable Functions:** Se cargan funciones redefinibles del núcleo (como `wp_mail` o `wp_get_current_user`).
-8. **Configuración del Tema:** Se dispara `setup_theme` y se incluye el archivo `functions.php` del tema activo.
-9. **Disparo del hook `init`:** El núcleo ha terminado de cargar en su gran mayoría. Autenticación, taxonomías y *Custom Post Types* deben registrarse aquí.
-10. **Disparo del hook `wp_loaded`:** WordPress está completamente cargado y parseado, justo antes de empezar a procesar la URL de la petición.
+1. **Frühe Initialisierung:** Verzeichnis-Konstanten und Versionskontrolle werden konfiguriert und die Kompatibilitäts-API wird eingebunden.
+2. **Datenbankverbindung:** Die globale Klasse `$wpdb` wird instanziiert. Ab diesem Moment können Datenbankabfragen durchgeführt werden.
+3. **Objekt-Cache:** `WP_Cache` wird initialisiert, falls konfiguriert.
+4. **Laden von Must-Use-Plugins:** Die PHP-Dateien im Verzeichnis `/wp-content/mu-plugins/` werden gesucht und geladen. Diese Plugins werden vor den regulären Plugins ausgeführt und können im Admin-Bereich nicht deaktiviert werden.
+5. **Laden aktiver Plugins:** Die Tabelle `wp_options` wird abgefragt, um das serialisierte *Array* der Option `active_plugins` zu erhalten. WordPress iteriert über dieses Array und bindet jede Hauptdatei der regulären Plugins per `include_once` ein.
+6. **Auslösen des Hooks `plugins_loaded`:** Der erste allgemeine verfügbare *Action Hook*.
+7. **Laden überschreibbarer Funktionen (Pluggable Functions):** Überschreibbare Core-Funktionen (wie `wp_mail` oder `wp_get_current_user`) werden geladen.
+8. **Theme-Konfiguration:** `setup_theme` wird ausgelöst und die Datei `functions.php` des aktiven Themes wird eingebunden.
+9. **Auslösen des Hooks `init`:** Der Core ist nun größtenteils geladen. Authentifizierung, Taxonomien und *Custom Post Types* sollten hier registriert werden.
+10. **Auslösen des Hooks `wp_loaded`:** WordPress ist vollständig geladen und geparst, direkt bevor mit der Verarbeitung der Anfrage-URL begonnen wird.
 
-### El problema de la dependencia prematura
+### Das Problem der vorzeitigen Abhängigkeit
 
-Un error frecuente al desarrollar plugins es intentar utilizar funciones del núcleo antes de que hayan sido declaradas. Dado que los plugins regulares se cargan en el **Paso 5**, tu archivo principal se evalúa *antes* de que el tema cargue y *antes* de que las funciones *pluggables* o de usuario estén disponibles.
+Ein häufiger Fehler bei der Entwicklung von Plugins is der Versuch, Core-Funktionen zu nutzen, bevor sie deklariert wurden. Da reguläre Plugins im **Schritt 5** geladen werden, wird deine Hauptdatei ausgewertet, *bevor* das Theme geladen wird und *bevor* Pluggable- oder Benutzerfunktionen verfügbar sind.
 
-Considera el siguiente anti-patrón:
+Betrachte das folgende Antipattern:
 
 ```php
 <?php
-/* Plugin Name: Mi Plugin Defectuoso */
+/* Plugin Name: Mein fehlerhaftes Plugin */
 
-// ERROR: Esto provocará un Fatal Error porque wp_get_current_user() 
-// aún no ha sido definida cuando este archivo es incluido en el Paso 5.
+// FEHLER: Dies führt zu einem Fatal Error, da wp_get_current_user() 
+// noch nicht definiert ist, wenn diese Datei in Schritt 5 eingebunden wird.
 $user = wp_get_current_user();
 if ( $user->ID == 1 ) {
     // ...
@@ -71,143 +71,142 @@ if ( $user->ID == 1 ) {
 
 ```
 
-La solución arquitectónica correcta es diferir la ejecución del código enganchándolo a un momento posterior en el ciclo de vida, utilizando la API de Hooks (que abordaremos en profundidad en el Capítulo 2):
+Die richtige architektonische Lösung besteht darin, die Codeausführung auf einen späteren Zeitpunkt im Lebenszyklus zu verschieben, indem du die Hooks-API verwendest (die wir in Kapitel 2 im Detail besprechen werden):
 
 ```php
 <?php
-/* Plugin Name: Mi Plugin Correcto */
+/* Plugin Name: Mein korrektes Plugin */
 
-// Correcto: Envolvemos la lógica en una función y le indicamos al núcleo
-// que la ejecute durante el hook 'init' (Paso 9), cuando todo ya está cargado.
+// Korrekt: Wir verpacken die Logik in eine Funktion und weisen den Core an,
+// sie während des Hooks 'init' (Schritt 9) auszuführen, wenn alles geladen ist.
 add_action( 'init', 'mi_plugin_verificar_usuario' );
 
 function mi_plugin_verificar_usuario() {
     $user = wp_get_current_user();
     if ( $user->ID == 1 ) {
-        // Lógica segura
+        // Sichere Logik
     }
 }
 
 ```
 
-### Carga parcial con `SHORTINIT`
+### Teilladen mit `SHORTINIT`
 
-En escenarios de alto rendimiento donde necesites interceptar peticiones extremadamentes rápidas saltándote la carga completa de plugins y temas (por ejemplo, endpoints personalizados de recolección de datos crudos antes de la REST API), WordPress ofrece la constante `SHORTINIT`.
+In High-Performance-Szenarien, in denen du extrem schnelle Anfragen abfangen musst, indem du das vollständige Laden von Plugins und Themes überspringst (z. B. bei benutzerdefinierten Endpunkten zur Rohdatenerfassung vor der REST-API), bietet WordPress die Konstante `SHORTINIT`.
 
-Si defines `define('SHORTINIT', true);` justo antes de cargar `wp-load.php` en un script independiente, el proceso dentro de `wp-settings.php` se detendrá a la mitad:
+Wenn du `define('SHORTINIT', true);` direkt vor dem Laden von `wp-load.php` in einem eigenständigen Script definierst, stoppt der Prozess in `wp-settings.php` auf halbem Weg:
 
 ```php
 <?php
-// custom-endpoint.php en la raíz de WordPress
+// custom-endpoint.php im WordPress-Root
 define( 'SHORTINIT', true );
 require_once( $_SERVER['DOCUMENT_ROOT'] . '/wp-load.php' );
 
-// En este punto:
-// - $wpdb ESTÁ disponible.
-// - wp_options ESTÁ disponible.
-// - Los plugins y temas NO se han cargado.
-// - La API de REST/AJAX NO se ha inicializado.
+// Zu diesem Zeitpunkt:
+// - Ist $wpdb verfügbar.
+// - Ist wp_options verfügbar.
+// - Wurden Plugins und Themes NICHT geladen.
+// - Wurde die REST-/AJAX-API NICHT initialisiert.
 
 global $wpdb;
 $resultados = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}options LIMIT 5" );
 
-// Procesar y devolver JSON, saliendo inmediatamente.
+// Verarbeiten, JSON zurückgeben und sofort beenden.
 wp_send_json_success( $resultados );
 
 ```
 
-Comprender la carga del núcleo y la línea de tiempo de `wp-settings.php` te permite inyectar el código de tu plugin en el momento algorítmicamente perfecto, evitando conflictos de dependencias y optimizando los tiempos de respuesta del servidor.
+Das Verständnis des Core-Ladevorgangs und des Ablaufs in `wp-settings.php` ermöglicht es dir, deinen Plugin-Code zum algorithmisch perfekten Zeitpunkt einzubinden, wodurch Abhängigkeitskonflikte vermieden und die Serverantwortzeiten optimiert werden.
 
-## 1.2 El flujo de peticiones (WP Query)
+## 1.2 Der Anfragefluss (WP Query)
 
-Una vez que `wp-settings.php` ha terminado de cargar el núcleo, los plugins y el tema activo (como vimos en la sección anterior), el sistema ya está listo para responder a la pregunta fundamental de cualquier gestor de contenidos: *¿Qué está pidiendo exactamente el usuario y cómo obtengo esos datos?*
+Sobald `wp-settings.php` das Laden des Cores, der Plugins und des aktiven Themes abgeschlossen hat (wie im vorherigen Abschnitt beschrieben), ist das System bereit, die grundlegende Frage jedes Content-Management-Systems zu beantworten: *Was genau fordert der Benutzer an und wie erhalte ich diese Daten?*
 
-En WordPress, la transición de una URL amigable a una colección de objetos de la base de datos es gestionada por dos clases monumentales: `WP` (encargada del enrutamiento y parseo) y `WP_Query` (encargada de la extracción de datos).
+In WordPress wird der Übergang von einer benutzerfreundlichen URL zu einer Sammlung von Datenbankobjekten durch zwei monumentale Klassen verwaltet: `WP` (zuständig für Routing und Parsing) und `WP_Query` (zuständig für die Datenextraktion).
 
-### El ciclo de vida de la petición
+### Der Lebenszyklus einer Anfrage
 
-Para un desarrollador de plugins, comprender este flujo es vital para poder interceptar y modificar las consultas antes de que impacten en la base de datos o en el rendimiento del servidor. El proceso sigue este esquema lógico:
+Für einen Plugin-Entwickler ist es wichtig, diesen Ablauf zu verstehen, um Abfragen abzufangen und zu modifizieren, bevor sie sich auf die Datenbank oder die Serverleistung auswirken. Der Prozess folgt diesem logischen Schema:
 
 ```text
 https://x.com/masnoticia?lang=en
                            |
                            v
 +---------------------------------------------------+
-| 1. Clase WP (Parseo de la Petición)               |
-|    - Compara la URL con las Rewrite Rules.        |
-|    - Extrae las variables (Query Vars).           |
-|      Ej: array( 'category_name' => 'noticias' )   |
+| 1. Klasse WP (Parsing der Anfrage)                 |
+|    - Vergleicht die URL mit den Rewrite Rules.     |
+|    - Extrahiert die Variablen (Query Vars).       |
+|      Bsp: array( 'category_name' => 'news' )      |
 +---------------------------------------------------+
                            |
                            |--> Hook: 'request'
                            v
 +---------------------------------------------------+
-| 2. Clase WP_Query (Construcción de la Consulta)   |
-|    - Recibe las Query Vars de la clase WP.        |
-|    - Hook: 'pre_get_posts' <--------------------- | [PUNTO DE INYECCIÓN ÓPTIMO]
-|    - Traduce las Query Vars a SQL nativo.         |
-|    - Ejecuta SQL a través de $wpdb.               |
-|    - Llena el array $posts con los resultados.    |
+| 2. Klasse WP_Query (Aufbau der Abfrage)            |
+|    - Empfängt die Query Vars der Klasse WP.        |
+|    - Hook: 'pre_get_posts' <--------------------- | [OPTIMALER EINBINDUNGSPUNKT]
+|    - Übersetzt die Query Vars in natives SQL.     |
+|    - Führt SQL über $wpdb aus.                    |
+|    - Füllt das Array $posts mit den Ergebnissen.  |
 +---------------------------------------------------+
                            |
                            v
 +---------------------------------------------------+
-| 3. Establecimiento de Contexto Global             |
-|    - Configura variables: $wp_query, $post.       |
-|    - Define Etiquetas Condicionales (is_archive,  |
-|      is_single, is_category, etc.).               |
+| 3. Festlegen des globalen Kontextes                |
+|    - Konfiguriert Variablen: $wp_query, $post.     |
+|    - Definiert Conditional Tags (is_archive,       |
+|      is_single, is_category etc.).                |
 +---------------------------------------------------+
                            |
                            v
-              [Carga de la Jerarquía de Plantillas]
+               [Laden der Template-Hierarchie]
 
 ```
 
-### La fase de Parseo (Clase `WP`)
+### Die Parsing-Phase (Klasse `WP`)
 
-Cuando la ejecución llega a la función `wp()` en el archivo `wp-blog-header.php`, se instancia la clase global `$wp`. Su método principal es `main()`, el cual invoca a `parse_request()`.
+Wenn die Ausführung die Funktion `wp()` in der Datei `wp-blog-header.php` erreicht, wird die globale Klasse `$wp` instanziiert. Ihre Hauptmethode ist `main()`, welche wiederum `parse_request()` aufruft.
 
-En este punto, WordPress toma la URL solicitada y la pasa a través de sus reglas de reescritura (*Rewrite Rules*, gestionadas por la clase `WP_Rewrite`). Si encuentra una coincidencia, transforma la URL amigable en un *array* estructurado de variables reconocidas por el núcleo, conocidas como **Query Vars**.
+An diesem Punkt nimmt WordPress die angeforderte URL und gleicht sie mit seinen Umschreibungsregeln (*Rewrite Rules*, verwaltet von der Klasse `WP_Rewrite`) ab. Wenn eine Übereinstimmung gefunden wird, verwandelt es die lesbare URL in ein strukturiertes *Array* von Variablen, die vom Core erkannt werden, bekannt als **Query Vars**.
 
-Como desarrollador de plugins, puedes registrar tus propias Query Vars personalizadas enganchándote al filtro `query_vars`, lo que permite que el núcleo entienda parámetros en la URL que de otro modo descartaría.
+Als Plugin-Entwickler kannst du deine eigenen benutzerdefinierten Query Vars registrieren, indem du dich in den Filter `query_vars` einklinkst. Dadurch versteht der Core Parameter in der URL, die er sonst verwerfen würde.
 
-### La fase de Consulta (Clase `WP_Query`)
+### Die Abfragephase (Klasse `WP_Query`)
 
-Una vez que las Query Vars están definidas, se pasan a una instancia global de `WP_Query`, almacenada en la variable global `$wp_query`. Este es el motor de búsqueda principal de WordPress.
+Sobald die Query Vars definiert sind, werden sie an eine globale Instanz von `WP_Query` übergeben, die in der globalen Variable `$wp_query` gespeichert ist. Dies ist die Hauptsuchmaschine von WordPress.
 
-`WP_Query` toma ese *array* inofensivo de variables y realiza el trabajo pesado: construye una sentencia `SELECT` de SQL compleja (teniendo en cuenta taxonomías, metadatos, paginación y estados de publicación) y la ejecuta contra la base de datos.
+`WP_Query` nimmt dieses harmlose *Array* von Variablen und erledigt die Schwerstarbeit: Es baut ein komplexes SQL-`SELECT`-Statement auf (unter Berücksichtigung von Taxonomien, Metadaten, Paginierung und Veröffentlichungsstatus) und führt es auf der Datenbank aus.
 
-Además de recuperar los posts, `WP_Query` es responsable de establecer el estado de la página. Calcula el número total de posts encontrados (`$wp_query->found_posts`) para la paginación y establece banderas booleanas conocidas como **Etiquetas Condicionales** (`is_front_page()`, `is_tax()`, `is_404()`).
+Neben dem Abrufen der Posts ist `WP_Query` auch für das Festlegen des Seitenstatus verantwortlich. Es berechnet die Gesamtzahl der gefundenen Beiträge (`$wp_query->found_posts`) für die Paginierung und setzt boolesche Flags, die als **Conditional Tags** bekannt sind (`is_front_page()`, `is_tax()`, `is_404()`).
 
-### El Hook maestro: `pre_get_posts`
+### Der Master-Hook: `pre_get_posts`
 
-El error más común de los desarrolladores junior de WordPress es intentar alterar el contenido de una página creando una *nueva* consulta secundaria en la plantilla usando funciones obsoletas o destructivas como `query_posts()`, o instanciando un nuevo `WP_Query` e ignorando la consulta principal. Esto duplica el trabajo de la base de datos (se ejecuta la consulta principal que WordPress preparó, se descarta, y se ejecuta la nueva).
+Der häufigste Fehler von Junior-WordPress-Entwicklern ist der Versuch, den Inhalt einer Seite zu verändern, indem sie eine *neue* sekundäre Abfrage im Template mit veralteten oder destruktiven Funktionen wie `query_posts()` erstellen oder ein neues `WP_Query` instanziieren und dabei die Hauptabfrage ignorieren. Dies verdoppelt die Arbeit für die Datenbank (die von WordPress vorbereitete Hauptabfrage wird ausgeführt, verworfen und die neue wird ausgeführt).
 
-La forma correcta y performante de modificar lo que WordPress va a buscar es interceptar las Query Vars *antes* de que se conviertan en SQL. Esto se logra con el *Action Hook* `pre_get_posts`.
+Der korrekte und performante Weg, die Suche von WordPress zu modifizieren, besteht darin, die Query Vars abzufangen, *bevor* sie in SQL übersetzt werden. Dies erreichst du mit dem *Action Hook* `pre_get_posts`.
 
-Este hook se dispara pasando el objeto `WP_Query` por referencia, permitiendo alterarlo dinámicamente.
+Dieser Hook wird aufgerufen und übergibt das `WP_Query`-Objekt per Referenz, was eine dynamische Änderung ermöglicht.
 
 ```php
 /**
- * Modifica la consulta principal para incluir un Custom Post Type
- * en los resultados de búsqueda, excluyendo el área de administración.
+ * Modifiziert die Hauptabfrage, um einen Custom Post Type in die Suchergebnisse aufzunehmen, schließt jedoch den Admin-Bereich aus.
  */
 add_action( 'pre_get_posts', 'mi_plugin_ampliar_busqueda' );
 
 function mi_plugin_ampliar_busqueda( $query ) {
-    // 1. Regla de oro: No afectar el panel de administración
+    // 1. Goldene Regel: Den Admin-Bereich nicht beeinflussen
     if ( is_admin() ) {
         return;
     }
 
-    // 2. Regla de oro: Modificar SOLO la consulta principal, no menús ni widgets
+    // 2. Goldene Regel: NUR die Hauptabfrage ändern, keine Menüs oder Widgets
     if ( ! $query->is_main_query() ) {
         return;
     }
 
-    // 3. Aplicar la lógica condicional deseada
+    // 3. Gewünschte bedingte Logik anwenden
     if ( $query->is_search() ) {
-        // Obtenemos los tipos de post actuales que se están buscando
+        // Wir rufen die aktuellen Post-Types ab, nach denen gesucht wird
         $post_types = $query->get( 'post_type' );
         
         if ( empty( $post_types ) ) {
@@ -216,159 +215,157 @@ function mi_plugin_ampliar_busqueda( $query ) {
             $post_types = array( $post_types );
         }
 
-        // Añadimos nuestro Custom Post Type 'portfolio'
+        // Wir fügen unseren Custom Post Type 'portfolio' hinzu
         $post_types[] = 'portfolio';
         
-        // Asignamos el nuevo valor a las Query Vars
+        // Wir weisen den Query Vars den neuen Wert zu
         $query->set( 'post_type', $post_types );
     }
 }
 
 ```
 
-Al utilizar `pre_get_posts`, estás manipulando la petición nativa en la capa de abstracción adecuada. Cuando `WP_Query` finalmente compile el SQL, incluirá tu tipo de post `portfolio` de forma nativa, consumiendo exactamente los mismos recursos de base de datos que la petición original.
+Durch die Verwendung von `pre_get_posts` manipulierst du die native Anfrage auf der richtigen Abstraktionsebene. Wenn `WP_Query` schließlich das SQL kompiliert, wird dein Post-Type `portfolio` nativ einbezogen, was exakt dieselben Datenbankressourcen verbraucht wie die ursprüngliche Anfrage.
 
-### El Bucle (The Loop) y el estado Global
+### The Loop (Die Schleife) und der globale Zustand
 
-Una vez que `WP_Query` finaliza su ejecución, la aplicación entra en la fase de renderizado. El famoso "Loop" de WordPress (`while ( have_posts() ) : the_post();`) no es más que una iteración sobre los resultados de la instancia global `$wp_query`.
+Sobald `WP_Query` seine Ausführung beendet, geht die Anwendung in die Rendering-Phase über. Der berühmte „Loop“ von WordPress (`while ( have_posts() ) : the_post();`) ist nichts anderes als eine Iteration über die Ergebnisse der globalen Instanz `$wp_query`.
 
-La función `the_post()` extrae el post actual del array de resultados y lo asigna a la variable global `$post`, haciéndola disponible para todas las funciones del tema (las *Template Tags* como `the_title()` o `the_content()`), cerrando así el ciclo desde la URL de entrada hasta el HTML de salida.
+Die Funktion `the_post()` extrahiert den aktuellen Beitrag aus dem Ergebnis-Array und weist ihn der globalen Variable `$post` zu, wodurch er für alle Theme-Funktionen (die *Template Tags* wie `the_title()` oder `the_content()`) verfügbar wird. Dies schließt den Kreis von der Eingangs-URL bis zum Ausgabe-HTML.
 
-## 1.3 Jerarquía de plantillas
+## 1.3 Template-Hierarchie
 
-Si `WP_Query` es el cerebro que determina *qué* datos ha solicitado el usuario, la Jerarquía de Plantillas es el motor de renderizado que decide *cómo* se presentarán esos datos. Una vez que la consulta a la base de datos concluye y las variables globales (`$wp_query`, `$post`) están pobladas, la ejecución llega al archivo `wp-includes/template-loader.php`.
+Wenn `WP_Query` das Gehirn ist, das bestimmt, *welche* Daten der Benutzer angefordert hat, dann ist die Template-Hierarchie die Rendering-Engine, die entscheidet, *wie* diese Daten präsentiert werden. Sobald die Datenbankabfrage abgeschlossen und die globalen Variablen (`$wp_query`, `$post`) befüllt sind, erreicht die Ausführung die Datei `wp-includes/template-loader.php`.
 
-Para un desarrollador de plugins, comprender esta jerarquía no es solo una cuestión de diseño visual; es fundamental para saber cómo inyectar vistas personalizadas, proveer plantillas por defecto para Custom Post Types (CPTs) o secuestrar por completo el proceso de renderizado cuando la lógica del plugin lo exige.
+Für einen Plugin-Entwickler ist das Verständnis dieser Hierarchie nicht nur eine Frage des visuellen Designs. Es ist grundlegend, um zu wissen, wie man benutzerdefinierte Ansichten einbindet, Standard-Templates für Custom Post Types (CPTs) bereitstellt oder den Rendering-Prozess komplett kapert, wenn die Logik des Plugins dies erfordert.
 
-### El árbol de decisión (La Cascada)
+### Der Entscheidungsbaum (Die Kaskade)
 
-WordPress utiliza las Etiquetas Condicionales (*Conditional Tags*) generadas durante la consulta para buscar el archivo `.php` adecuado en el directorio del tema activo (y luego en el tema padre, si aplica). La búsqueda siempre procede desde el archivo más específico al más general, cayendo inexorablemente hacia `index.php` si no encuentra coincidencias previas.
+WordPress verwendet die während der Abfrage generierten Conditional Tags, um nach der passenden `.php`-Datei im Verzeichnis des aktiven Themes (und gegebenenfalls des Parent-Themes) zu suchen. Die Suche geht immer vom spezifischsten zum allgemeinsten Dokument über und landet unweigerlich bei der `index.php`, wenn keine vorherigen Übereinstimmungen gefunden werden.
 
-Este es el árbol de decisión simplificado para una petición de un Custom Post Type llamado `portfolio`:
+Dies ist der vereinfachte Entscheidungsbaum für die Anfrage eines Custom Post Types namens `portfolio`:
 
 ```text
-[URL: /portfolio/mi-proyecto-destacado/]
+[URL: /portfolio/mein-projekt/]
                     |
                     v
-1. ¿Es un post singular? (is_single)
+1. Ist es ein einzelner Beitrag? (is_single)
    |
-   |-- Busca: single-portfolio-mi-proyecto-destacado.php (Por slug)
-   |-- Si no existe, busca: single-portfolio.php (Por tipo de post)
-   |-- Si no existe, busca: single.php (Cualquier post singular)
-   |-- Si no existe, busca: singular.php (Cualquier post o página)
-   |-- Si no existe, usa: index.php (El salvavidas absoluto)
+   |-- Sucht: single-portfolio-mein-projekt.php (nach Slug)
+   |-- Falls nicht vorhanden, sucht: single-portfolio.php (nach Post-Type)
+   |-- Falls nicht vorhanden, sucht: single.php (jeder einzelne Beitrag)
+   |-- Falls nicht vorhanden, sucht: singular.php (jeder Beitrag oder jede Seite)
+   |-- Falls nicht vorhanden, nutzt: index.php (die absolute Rettungsleine)
 
 ```
 
-La función del núcleo encargada de recorrer este árbol y comprobar la existencia de los archivos físicos es `locate_template()`.
+Die Core-Funktion, die dafür zuständig ist, diesen Baum zu durchlaufen und die Existenz der physischen Dateien zu prüfen, lautet `locate_template()`.
 
-### Intercepción desde un Plugin: El filtro `template_include`
+### Abfangen über ein Plugin: Der Filter `template_include`
 
-El ecosistema de WordPress dicta una separación de responsabilidades: los plugins manejan la lógica y los datos, mientras que los temas manejan la presentación. Sin embargo, cuando desarrollas un plugin que introduce nuevas estructuras de datos (como un sistema de tickets, un foro o un catálogo de productos), a menudo el tema activo no cuenta con las plantillas específicas (`single-ticket.php`, por ejemplo) para renderizarlas correctamente.
+Das WordPress-Ökosystem schreibt eine klare Aufteilung der Verantwortlichkeiten vor: Plugins verwalten Logik und Daten, während Themes für die Präsentation zuständig sind. Wenn du jedoch ein Plugin entwickelst, das neue Datenstrukturen einführt (wie ein Ticketsystem, un Forum oder einen Produktkatalog), verfügt das aktive Theme oft nicht über die spezifischen Templates (z. B. `single-ticket.php`), um diese korrekt darzustellen.
 
-Para solucionar esto, los plugins pueden inyectar sus propias plantillas utilizando el filtro `template_include`. Este filtro se dispara justo antes de que WordPress haga el `include` del archivo que ha encontrado en el tema. Recibe como argumento la ruta absoluta de dicho archivo y espera que devuelvas una ruta absoluta (ya sea la misma u otra diferente).
+Um dies zu lösen, können Plugins ihre eigenen Templates über den Filter `template_include` einschleusen. Dieser Filter wird direkt vor dem `include` der im Theme gefundenen Datei durch WordPress ausgelöst. Er erhält den absoluten Pfad dieser Datei als Argument und erwartet, dass du einen absoluten Pfad zurückgibst (entweder denselben oder einen anderen).
 
 ```php
 /**
- * Sobrescribe la plantilla del tema con una plantilla provista por el plugin
- * para el Custom Post Type 'portfolio'.
+ * Überschreibt das Theme-Template mit einem vom Plugin bereitgestellten Template für den Custom Post Type 'portfolio'.
  */
 add_filter( 'template_include', 'mi_plugin_cargar_plantilla_portfolio' );
 
 function mi_plugin_cargar_plantilla_portfolio( $template ) {
-    // 1. Verificamos si estamos en la vista singular de nuestro CPT
+    // 1. Wir prüfen, ob wir uns in der Einzelansicht unseres CPTs befinden
     if ( is_singular( 'portfolio' ) ) {
         
-        // 2. Definimos la ruta de la plantilla dentro del directorio de nuestro plugin
+        // 2. Wir definieren den Pfad des Templates im Verzeichnis unseres Plugins
         $plugin_template = plugin_dir_path( __FILE__ ) . 'templates/single-portfolio.php';
         
-        // 3. (Buena práctica) Permitimos que el tema anule nuestra plantilla
-        // si el desarrollador del tema ha creado un archivo 'single-portfolio.php'
+        // 3. (Best Practice) Wir erlauben dem Theme, unser Template zu überschreiben, falls der Theme-Entwickler eine Datei 'single-portfolio.php' erstellt hat
         $theme_template = locate_template( array( 'single-portfolio.php' ) );
         
         if ( $theme_template ) {
-            return $theme_template; // Gana el tema
+            return $theme_template; // Theme gewinnt
         } elseif ( file_exists( $plugin_template ) ) {
-            return $plugin_template; // Gana el plugin
+            return $plugin_template; // Plugin gewinnt
         }
     }
     
-    // 4. Si no es nuestro CPT o no encontramos archivos, devolvemos la plantilla original
+    // 4. Falls es nicht unser CPT ist oder wir keine Dateien finden, geben wir das originale Template zurück
     return $template;
 }
 
 ```
 
-Este patrón de diseño (buscar primero en el tema y luego hacer *fallback* al plugin) es exactamente la arquitectura que utilizan grandes plugins como WooCommerce para integrar sus vistas sin romper la jerarquía nativa.
+Dieses Entwurfsmuster (zuerst im Theme suchen und dann ein Fallback auf das Plugin machen) entspricht exakt der Architektur, die große Plugins wie WooCommerce verwenden, um ihre Ansichten zu integrieren, ohne die native Hierarchie zu stören.
 
-### `template_redirect` vs `template_include`
+### `template_redirect` vs. `template_include`
 
-Es crucial no confundir estos dos *hooks*, ya que operan en momentos distintos y tienen propósitos diferentes:
+Es ist wichtig, diese beiden *Hooks* nicht zu verwechseln, da sie zu unterschiedlichen Zeiten ausgeführt werden und unterschiedliche Zwecke erfüllen:
 
-* **`template_redirect` (Action):** Se dispara *antes* de que WordPress empiece a buscar qué archivo cargar. Es el lugar ideal para realizar redirecciones HTTP, comprobar permisos de acceso a una página y bloquearla, o procesar envíos de formularios. No se usa para cargar archivos de interfaz.
-* **`template_include` (Filter):** Se dispara *después* de que WordPress haya decidido qué archivo usar, pero justo antes de cargarlo. Su único propósito es alterar la ruta del archivo `.php` que se va a procesar para generar el HTML.
+* **`template_redirect` (Action):** Wird ausgelöst, *bevor* WordPress mit der Suche nach der zu ladenden Datei beginnt. Dies ist der ideale Ort, um HTTP-Weiterleitungen einzurichten, Zugriffsberechtigungen für eine Seite zu prüfen und diese gegebenenfalls zu sperren oder Formularübermittlungen zu verarbeiten. Er wird nicht zum Laden von Interface-Dateien verwendet.
+* **`template_include` (Filter):** Wird ausgelöst, *nachdem* WordPress entschieden hat, welche Datei verwendet werden soll, aber kurz vor dem Laden dieser Datei. Sein einziger Zweck besteht darin, den Pfad der zu verarbeitenden `.php`-Datei zu ändern, um das HTML zu generieren.
 
-### Inyección de contenido vs Inyección de plantilla
+### Content-Injektion vs. Template-Injektion
 
-Cuando necesitas mostrar datos de tu plugin en el *front-end*, tienes dos opciones arquitectónicas principales. La elección correcta depende del nivel de control que necesites:
+Wenn du Daten deines Plugins im Frontend anzeigen musst, hast du zwei architektonische Hauptoptionen. Die richtige Wahl hängt vom gewünschten Kontrollniveau ab:
 
-1. **Filtro `the_content`:** Añades tu HTML al final o al principio del contenido del post.
+1. **Filter `the_content`:** Du fügst dein HTML am Ende oder am Anfang des Beitragsinhalts hinzu.
 
-* *Ventaja:* 100% de compatibilidad con cualquier tema. El tema sigue controlando la cabecera, el pie de página, las barras laterales y el contenedor principal.
-* *Desventaja:* Tienes poco control sobre el diseño general de la página completa.
+* *Vorteil:* 100 % Kompatibilität mit jedem Theme. Das Theme kontrolliert weiterhin den Header, den Footer, die Sidebars und den Hauptcontainer.
+* *Nachteil:* Du hast wenig Kontrolle über das Gesamtdesign der gesamten Seite.
 
-1. **Filtro `template_include`:** Cargas un archivo `.php` completo desde tu plugin.
+2. **Filter `template_include`:** Du lädst eine komplette `.php`-Datei aus deinem Plugin.
 
-* *Ventaja:* Control absoluto sobre el HTML. Puedes omitir *sidebars*, invocar `get_header()` modificado, o crear diseños de pantalla completa.
-* *Desventaja:* Riesgo de romper el diseño visual del sitio si tu plantilla no incluye las envolturas CSS (*wrappers*) que el tema activo espera, requiriendo que el usuario adapte su CSS.
+* *Vorteil:* Absolute Kontrolle über das HTML. Du kannst Sidebars weglassen, einen modifizierten `get_header()`-Aufruf tätigen oder Fullscreen-Layouts erstellen.
+* *Nachteil:* Risiko, das visuelle Design der Website zu zerstören, wenn dein Template nicht die CSS-Wrapper enthält, die das aktive Theme erwartet, was erfordert, dass der Benutzer sein CSS anpasst.
 
-## 1.4 Diferencias entre plugins y temas
+## 1.4 Unterschiede zwischen Plugins und Themes
 
-En el desarrollo para WordPress, existe una máxima arquitectónica conocida como la separación de responsabilidades (*Separation of Concerns*). Aunque técnicamente el motor de PHP de WordPress permite ejecutar casi cualquier código tanto desde un tema como desde un plugin, violar esta separación conduce a ecosistemas frágiles, código difícil de mantener y usuarios atrapados en arquitecturas deficientes.
+In der WordPress-Entwicklung gibt es ein architektonisches Prinzip, das als Separation of Concerns (Trennung der Belange) bekannt ist. Obwohl die PHP-Engine von WordPress es technisch erlaubt, fast jeden Code sowohl über ein Theme als auch über ein Plugin auszuführen, führt die Verletzung dieser Trennung zu instabilen Ökosystemen, schwer wartbarem Code und Benutzern, die in mangelhaften Architekturen gefangen sind.
 
-La regla de oro es simple, pero estricta: **Los temas controlan la presentación; los plugins controlan la funcionalidad y los datos.**
+Die goldene Regel ist einfach, aber strikt: **Themes steuern die Präsentation; Plugins steuern die Funktionalität und die Daten.**
 
-### El anti-patrón de `functions.php`
+### Das Antipattern von `functions.php`
 
-El archivo `functions.php` de un tema se comporta, a nivel técnico, exactamente igual que un plugin. Se carga durante el proceso de inicialización (paso 8, como vimos en la sección 1.1) y tiene acceso a la gran mayoría de los *hooks* de WordPress. Esta similitud es el origen del error más frecuente entre desarrolladores de temas: incluir lógica de negocio en el tema.
+Die Datei `functions.php` eines Themes verhält sich technisch gesehen genauso wie ein Plugin. Sie wird während des Initialisierungsprozesses geladen (Schritt 8, siehe Abschnitt 1.1) und hat Zugriff auf die allermeisten WordPress-Hooks. Diese Ähnlichkeit ist der Ursprung des häufigsten Fehlers unter Theme-Entwicklern: die Aufnahme von Geschäftslogik in das Theme.
 
-Si registras un *Custom Post Type* (CPT) de "Portafolio" o "Testimonios" dentro de `functions.php`, estás creando un problema grave de portabilidad conocido como *Vendor Lock-in* (dependencia del proveedor). Si el usuario decide cambiar de tema en el futuro para renovar el diseño visual de su sitio web, perderá instantáneamente el acceso a todos los datos de su Portafolio. Los datos seguirán en la base de datos, pero la interfaz de WordPress no sabrá cómo mostrarlos ni administrarlos porque el código que registraba el CPT desapareció con el tema antiguo.
+Wenn du einen *Custom Post Type* (CPT) für „Portfolio“ oder „Testimonials“ in der `functions.php` registrierst, erzeugst du ein schwerwiegendes Portabilitätsproblem namens *Vendor Lock-in* (Anbieter-Lock-in). Wenn der Benutzer in Zukunft das Theme wechselt, um das visuelle Design seiner Website zu erneuern, verliert er sofort den Zugriff auf alle Daten seines Portfolios. Die Daten verbleiben zwar in der Datenbank, aber das WordPress-Admin-Interface weiß nicht, wie sie angezeigt oder verwaltet werden sollen, weil der Code zur Registrierung des CPTs mit dem alten Theme verschwunden ist.
 
-Cualquier característica que genere o gestione datos que deban sobrevivir a un cambio de diseño visual **debe** ir en un plugin.
+Jedes Feature, das Daten generiert oder verwaltet, die einen Wechsel des visuellen Designs überdauern sollen, **muss** in ein Plugin ausgelagert werden.
 
-### Tabla comparativa de responsabilidades
+### Vergleichstabelle der Verantwortlichkeiten
 
-Para clarificar los límites, la siguiente tabla detalla qué elementos pertenecen estrictamente a cada componente del ecosistema:
+Um die Grenzen zu verdeutlichen, zeigt die folgende Tabelle im Detail, welche Elemente strikt zu den einzelnen Komponenten des Ökosystems gehören:
 
-| Característica / Tarea | ¿Dónde debe programarse? | Razón Arquitectónica |
+| Feature / Aufgabe | Wo sollte es programmiert werden? | Architektonischer Grund |
 | --- | --- | --- |
-| **Custom Post Types (CPTs) y Taxonomías** | Plugin | Los datos deben persistir independientemente del diseño activo. |
-| **Shortcodes y Bloques Gutenberg** | Plugin | El contenido insertado en el editor no debe romperse al cambiar de tema. |
-| **Estilos visuales principales (CSS) y Layouts** | Tema | Es la definición misma de presentación. |
-| **Modificación de la Base de Datos** | Plugin | La persistencia de datos es ajena a la capa de vista. |
-| **Peticiones a APIs externas** | Plugin | La lógica de comunicación y sincronización es funcionalidad pura. |
-| **Registro de menús y áreas de widgets** | Tema | Definen la estructura visual del esqueleto de la página. |
-| **Jerarquía de plantillas (`single.php`, etc.)** | Tema | Controlan el marcado HTML y la estructura del *front-end*. |
+| **Custom Post Types (CPTs) und Taxonomien** | Plugin | Die Daten müssen unabhängig vom aktiven Design bestehen bleiben. |
+| **Shortcodes und Gutenberg Blocks** | Plugin | In den Editor eingefügter Inhalt darf beim Theme-Wechsel nicht kaputtgehen. |
+| **Visuelle Hauptstile (CSS) und Layouts** | Theme | Das ist die eigentliche Definition der Präsentation. |
+| **Datenbankmodifikationen** | Plugin | Die Datenpersistenz hat nichts mit dem View-Layer zu tun. |
+| **Externe API-Anfragen** | Plugin | Die Kommunikations- und Synchronisationslogik ist reine Funktionalität. |
+| **Registrierung von Menüs und Widget-Bereichen** | Theme | Sie definieren die visuelle Struktur des Seitengerüsts. |
+| **Template-Hierarchie (`single.php` etc.)** | Theme | Sie steuern das HTML-Markup und die Struktur des Frontends. |
 
-### Diferencias técnicas de ejecución
+### Technische Unterschiede bei der Ausführung
 
-Más allá de la filosofía de diseño, existen diferencias técnicas fundamentales en cómo WordPress trata a ambos elementos durante su ciclo de vida:
+Abgesehen von der Design-Philosophie gibt es grundlegende technische Unterschiede darin, wie WordPress beide Elemente während ihres Lebenszyklus behandelt:
 
-1. **Orden de carga:** Los plugins siempre se cargan antes que el tema. Esto significa que un plugin puede preparar datos, registrar variables globales o establecer configuraciones que el tema luego consumirá para su renderizado. Un tema no puede inicializar funcionalidades asumiendo que el plugin se adaptará a ellas, porque el plugin ya fue ejecutado.
-2. **Multiplicidad:** Puedes tener docenas de plugins activos simultáneamente, interactuando entre sí a través de *hooks*. Sin embargo, solo puede haber **un** tema activo a la vez (o a lo sumo dos, si hay una relación *Child/Parent Theme*).
-3. **Desactivación frente a Desinstalación:** Los plugins cuentan con rutinas de ciclo de vida complejas (activación, desactivación y desinstalación) que permiten modificar la base de datos, crear tablas personalizadas al activarse y limpiarlas al desinstalarse. Los temas carecen de este ciclo de vida formal nativo; simplemente se cambian por otro.
+1. **Lade-Reihenfolge:** Plugins werden immer vor dem Theme geladen. Das bedeutet, dass ein Plugin Daten vorbereiten, globale Variablen registrieren oder Konfigurationen festlegen kann, die das Theme später für sein Rendering konsumiert. Ein Theme kann keine Funktionalitäten initialisieren unter der Annahme, dass das Plugin sich anpasst, da das Plugin bereits ausgeführt wurde.
+2. **Vielzahl:** Du kannst Dutzende von Plugins gleichzeitig aktiv haben, die über *Hooks* miteinander interagieren. Es kann jedoch immer nur **ein** Theme gleichzeitig aktiv sein (oder maximal zwei bei einer *Child/Parent-Theme*-Beziehung).
+3. **Deaktivierung vs. Deinstallation:** Plugins verfügen über komplexe Lebenszyklus-Routinen (Aktivierung, Deaktivierung und Deinstallation), mit denen sich beim Aktivieren die Datenbank ändern oder benutzerdefinierte Tabellen erstellen lassen, die bei der Deinstallation wieder bereinigt werden. Themes fehlt dieser formale native Lebenszyklus; sie werden einfach durch ein anderes Theme ersetzt.
 
-### El rol del plugin en la capa de vista
+### Die Rolle des Plugins im View-Layer
 
-Aunque los plugins se centran en la lógica, a menudo necesitan inyectar elementos visuales (por ejemplo, un formulario de contacto o un botón de pago). Como desarrollador de plugins, tu responsabilidad en la capa de presentación debe ser mínima y flexible.
+Obwohl der Schwerpunkt von Plugins auf der Logik liegt, müssen sie oft visuelle Elemente integrieren (z. B. ein Kontaktformular oder einen Payment-Button). Als Plugin-Entwickler sollte deine Verantwortung im View-Layer minimal und flexibel sein.
 
-Cuando un plugin necesita generar HTML, debe hacerlo de forma neutral. Evita forzar estilos CSS excesivamente específicos (`!important`) o estructuras de diseño rígidas. En su lugar, proporciona clases CSS semánticas y permite que el desarrollador del tema tome el control final de la apariencia. Si tu plugin requiere vistas complejas, utiliza el sistema de sobreescritura de plantillas (como el explicado en la sección 1.3), permitiendo al usuario copiar tus archivos `.php` a una carpeta dentro de su tema para modificarlos libremente de forma segura.
+Wenn ein Plugin HTML generieren muss, sollte es dies auf neutrale Weise tun. Vermeide es, übermäßig spezifische CSS-Styles (`!important`) oder starre Layout-Strukturen zu erzwingen. Stelle stattdessen semantische CSS-Klassen bereit und überlasse dem Theme-Entwickler die endgültige Kontrolle über das Design. Wenn dein Plugin komplexe Ansichten erfordert, nutze das System zur Template-Überschreibung (wie in Abschnitt 1.3 erläutert). Dies ermöglicht es dem Benutzer, deine `.php`-Dateien in einen Ordner innerhalb seines Themes zu kopieren und sie dort sicher und frei zu modifizieren.
 
-## Resumen del capítulo
+## Zusammenfassung des Kapitels
 
-En este primer capítulo hemos sentado las bases arquitectónicas necesarias para el desarrollo profesional en el ecosistema de WordPress.
+In diesem ersten Kapitel haben wir die architektonischen Grundlagen geschaffen, die für eine professionelle Entwicklung im WordPress-Ökosystem erforderlich sind.
 
-* **Secuencia de carga:** Comprendimos que WordPress es un sistema reactivo y estructurado. A través de `wp-settings.php`, el núcleo, los plugins y el tema se cargan en un orden estrictamente predecible, lo que subraya la importancia de utilizar la API de *Hooks* para ejecutar código en el momento algorítmicamente correcto, evitando errores de dependencias prematuras.
-* **El motor de datos:** Desglosamos el funcionamiento de `WP_Query` y la clase `WP`. Vimos cómo las URLs se transforman en variables de consulta y cómo el *hook* `pre_get_posts` es la única herramienta óptima y eficiente para alterar las consultas a la base de datos antes de que se ejecuten.
-* **El motor de renderizado:** Exploramos la Jerarquía de Plantillas y el árbol de decisión que utiliza WordPress para seleccionar el archivo `.php` adecuado para renderizar los datos. Además, aprendimos a inyectar nuestras propias vistas desde un plugin interceptando el proceso con el filtro `template_include`.
-* **Separación de responsabilidades:** Finalmente, delimitamos las fronteras entre temas y plugins. Definimos que el tema es exclusivamente responsable del diseño y la presentación visual, mientras que los plugins deben encapsular toda la lógica de negocio, manipulación de datos y creación de estructuras (como CPTs), garantizando así la portabilidad y escalabilidad del sitio.
+* **Lade-Reihenfolge:** Wir haben gelernt, dass WordPress ein reaktives und strukturiertes System ist. Über `wp-settings.php` werden der Core, die Plugins und das Theme in einer strikt vorhersehbaren Reihenfolge geladen. Dies unterstreicht, wie wichtig es ist, die *Hooks*-API zu nutzen, um Code zum algorithmisch richtigen Zeitpunkt auszuführen und Fehler durch vorzeitige Abhängigkeiten zu vermeiden.
+* **Die Daten-Engine:** Wir haben die Funktionsweise von `WP_Query` und der Klasse `WP` analysiert. Wir haben gesehen, wie URLs in Abfragevariablen umgewandelt werden und warum der Hook `pre_get_posts` das einzige optimale und effiziente Werkzeug ist, um Datenbankabfragen vor ihrer Ausführung zu ändern.
+* **Die Rendering-Engine:** Wir haben die Template-Hierarchie und den Entscheidungsbaum untersucht, mit dem WordPress die passende `.php`-Datei zur Darstellung der Daten auswählt. Außerdem haben wir gelernt, wie wir über ein Plugin eigene Ansichten einbinden können, indem wir den Prozess mit dem Filter `template_include` abfangen.
+* **Trennung der Belange:** Schließlich haben wir die Grenzen zwischen Themes und Plugins abgesteckt. Wir haben definiert, dass das Theme ausschließlich für das Design und die visuelle Präsentation verantwortlich ist, während Plugins die gesamte Geschäftslogik, Datenmanipulation und die Erstellung von Strukturen (wie CPTs) kapseln müssen, um so die Portabilität und Skalierbarkeit der Website zu gewährleisten.
