@@ -1,0 +1,49 @@
+{
+  "layout": {
+    "titleTemplate": "%s | Esdocu",
+    "defaultTitle": "Esdocu - Apprenez la technologie dans votre langue",
+    "description": "Documentation technique de haute qualité traduite en français. Bootstrap, Moment.js et plus encore.",
+    "ogTitle": "Esdocu - Documentation en français",
+    "twitterTitle": "Esdocu - Documentation en français"
+  },
+  "navbar": {
+    "toggleTheme": "Toggle theme"
+  },
+  "home": {
+    "heroTag": "Documentation technique en français",
+    "heroTitle1": "Apprenez la",
+    "heroTitleTech": "Technologie",
+    "heroTitle2": "dans votre langue.",
+    "heroDescription": "Esdocu propose des traductions de haute qualité des documentations techniques les plus populaires. Bootstrap, Moment.js et plus encore, tout au même endroit.",
+    "exploreDocs": "Explorer la documentation",
+    "viewOnGithub": "Voir sur GitHub",
+    "feature1Title": "Rapide et Moderne",
+    "feature1Desc": "Construit avec les dernières technologies pour une expérience de lecture fluide et rapide.",
+    "feature2Title": "Contenu Sélectionné",
+    "feature2Desc": "Nous sélectionnons et traduisons les bibliothèques les plus importantes de l'écosystème de développement.",
+    "feature3Title": "100% en Français",
+    "feature3Desc": "Nous éliminons la barrière de la langue pour que vous puissiez vous concentrer sur l'apprentissage de la programmation.",
+    "docsTitle": "Documentations Disponibles",
+    "readMore": "Lire la suite",
+    "officialTranslationsTag": "Écosystème Web",
+    "officialTranslationsTitle": "Documents Officiels en Français",
+    "officialTranslationsDesc": "Nous réalisons des traductions en français des documentations officielles les plus importantes pour promouvoir l'éducation sans barrières linguistiques.",
+    "officialDocsLabel": "Documentation Officielle",
+    "visitSite": "Visiter le site",
+    "footerText": "Esdocu. Fait avec ❤️ pour la communauté francophone."
+  },
+  "docPage": {
+    "prevChapter": "Chapitre précédent",
+    "nextChapter": "Chapitre suivant",
+    "chapterNavAria": "Navigation par chapitre",
+    "footerText": "Esdocu. Contenu sous licence MIT.",
+    "editPage": "Modifier cette page"
+  },
+  "sidebar": {
+    "navigation": "Navigation"
+  },
+  "toc": {
+    "onThisPage": "Sur cette page",
+    "content": "Contenu"
+  }
+}

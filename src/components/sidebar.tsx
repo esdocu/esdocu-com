@@ -11,9 +11,10 @@ interface SidebarProps {
   currentSlug: string[];
   items: SidebarItem[];
   root: string;
+  dict?: any;
 }
 
-export function Sidebar({ currentSlug, items, root }: SidebarProps) {
+export function Sidebar({ currentSlug, items, root, dict }: SidebarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const asideRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -73,7 +74,7 @@ export function Sidebar({ currentSlug, items, root }: SidebarProps) {
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
           <div className="fixed inset-y-0 left-0 w-72 bg-background border-r p-6 shadow-xl animate-in slide-in-from-left duration-300 overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
-              <span className="font-bold text-lg">Navegación</span>
+              <span className="font-bold text-lg">{dict?.sidebar?.navigation || "Navegación"}</span>
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>

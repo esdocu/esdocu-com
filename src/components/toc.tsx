@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button";
 
 interface TocProps {
   items: TocItem[];
+  dict?: any;
 }
 
-export function Toc({ items }: TocProps) {
+export function Toc({ items, dict }: TocProps) {
   const [activeId, setActiveId] = React.useState<string>("");
   const [isOpen, setIsOpen] = React.useState(false);
 
@@ -46,7 +47,7 @@ export function Toc({ items }: TocProps) {
   const tocContent = (
     <div className="space-y-5">
       <h4 className="font-bold uppercase text-[11px] tracking-wider text-muted-foreground/80 select-none">
-        En esta página
+        {dict?.toc?.onThisPage || "En esta página"}
       </h4>
       <nav className="flex flex-col space-y-2 border-l border-border/50">
         {filteredItems.map((item, index) => (
@@ -92,7 +93,7 @@ export function Toc({ items }: TocProps) {
           <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
           <div className="fixed inset-y-0 right-0 w-72 bg-background border-l p-6 shadow-xl animate-in slide-in-from-right duration-300 overflow-y-auto">
             <div className="flex items-center justify-between mb-8">
-              <span className="font-bold text-lg">Contenido</span>
+              <span className="font-bold text-lg">{dict?.toc?.content || "Contenido"}</span>
               <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>

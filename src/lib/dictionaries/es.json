@@ -1,0 +1,49 @@
+{
+  "layout": {
+    "titleTemplate": "%s | Esdocu",
+    "defaultTitle": "Esdocu - Aprende Tecnología en tu Idioma",
+    "description": "Documentación técnica de alta calidad traducida al español. Bootstrap, Moment.js y más.",
+    "ogTitle": "Esdocu - Documentación en Español",
+    "twitterTitle": "Esdocu - Documentación en Español"
+  },
+  "navbar": {
+    "toggleTheme": "Toggle theme"
+  },
+  "home": {
+    "heroTag": "Documentación técnica en Español",
+    "heroTitle1": "Aprende",
+    "heroTitleTech": "Tecnología",
+    "heroTitle2": "en tu Idioma.",
+    "heroDescription": "Esdocu ofrece traducciones de alta calidad de las documentaciones técnicas más populares. Bootstrap, Moment.js y más, todo en un solo lugar.",
+    "exploreDocs": "Explorar Documentación",
+    "viewOnGithub": "Ver en GitHub",
+    "feature1Title": "Rápido y Moderno",
+    "feature1Desc": "Construido con las últimas tecnologías para una experiencia de lectura fluida y veloz.",
+    "feature2Title": "Contenido Curado",
+    "feature2Desc": "Seleccionamos y traducimos las bibliotecas más importantes del ecosistema dev.",
+    "feature3Title": "100% en Español",
+    "feature3Desc": "Eliminamos la barrera del idioma para que puedas enfocarte en aprender a programar.",
+    "docsTitle": "Documentaciones Disponibles",
+    "readMore": "Leer más",
+    "officialTranslationsTag": "Ecosistema Web",
+    "officialTranslationsTitle": "Docs Oficiales en Español",
+    "officialTranslationsDesc": "Realizamos traducciones al español de las documentaciones oficiales más importantes para impulsar la educación sin barreras de idioma.",
+    "officialDocsLabel": "Documentación Oficial",
+    "visitSite": "Visitar sitio",
+    "footerText": "Esdocu. Hecho con ❤️ para la comunidad hispana."
+  },
+  "docPage": {
+    "prevChapter": "Capítulo anterior",
+    "nextChapter": "Capítulo siguiente",
+    "chapterNavAria": "Navegación de capítulos",
+    "footerText": "Esdocu. Contenido bajo licencia MIT.",
+    "editPage": "Editar esta página"
+  },
+  "sidebar": {
+    "navigation": "Navegación"
+  },
+  "toc": {
+    "onThisPage": "En esta página",
+    "content": "Contenido"
+  }
+}

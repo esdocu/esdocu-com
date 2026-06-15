@@ -60,6 +60,56 @@ Follow these steps to run the project locally:
 
    The static files will be generated in the `/out` directory.
 
+## 🌍 Multi-Language Support
+
+Esdocu supports deploying different languages as completely independent static websites on different subdomains (e.g., `esdocu.com` for Spanish, `fr.esdocu.com` for French). This is achieved using the `BUILD_LOCALE` environment variable at build time.
+
+### Adding a New Language
+
+To add support for a new language (e.g., French `fr`):
+
+1. **Create the content directory:**
+   Create a new folder in `content/` with your language code: `content/fr/`.
+   Inside this folder, create the required structure (`books/`, `categories/`, and a `translations.json` file).
+
+2. **Add the UI Dictionary:**
+   Create a new dictionary file `src/lib/dictionaries/fr.json` containing the translated UI strings.
+   Then, import and add your dictionary to the `dictionaries` object in `src/lib/i18n.ts`.
+
+### Running Locally for a Specific Language
+
+By default, running `pnpm dev` will start the Spanish (`es`) version. To run the development server for a specific language, prefix the command with the `BUILD_LOCALE` variable:
+
+```bash
+BUILD_LOCALE=fr pnpm dev
+```
+
+### Building for Production (Cloudflare Pages)
+
+The project is designed to be exported as purely static files (`output: 'export'`). To generate the build for a specific language, set the `BUILD_LOCALE` environment variable during the build process:
+
+```bash
+BUILD_LOCALE=fr pnpm build
+```
+
+**In Cloudflare Pages:**
+
+When creating the new project, use the following build configuration:
+
+```text
+Framework preset: None
+Build command: pnpm build
+Build output directory: out
+Root directory: (leave empty)
+```
+
+After creating the project (or during the setup):
+
+- Go to the project **Settings > Environment variables** and add `BUILD_LOCALE` with the value `fr` (or your target language code).
+- Go to **Custom domains** and link your language-specific subdomain (e.g., `fr.esdocu.com`).
+
+The build process will automatically use the `BUILD_LOCALE` variable to generate the static files specifically for that language.
+
 ## 📄 License
 
 This project is open-source and available under the [MIT License](LICENSE).

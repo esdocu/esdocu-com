@@ -14,30 +14,37 @@ const inter = Inter({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://esdocu.com"),
-  title: {
-    template: "%s | Esdocu",
-    default: "Esdocu - Aprende Tecnología en tu Idioma",
-  },
-  description: "Documentación técnica de alta calidad traducida al español. Bootstrap, Moment.js y más.",
-  openGraph: {
-    title: "Esdocu - Documentación en Español",
-    description: "Documentación técnica de alta calidad traducida al español. Bootstrap, Moment.js y más.",
-    url: "/",
-    siteName: "Esdocu",
-    locale: "es_ES",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Esdocu - Documentación en Español",
-    description: "Documentación técnica de alta calidad traducida al español.",
-  },
-  icons: {
-    icon: "/favicon.svg",
-  },
-};
+import { getDictionary, getLocale } from "@/lib/i18n";
+
+export function generateMetadata(): Metadata {
+  const dict = getDictionary();
+  const locale = getLocale();
+  
+  return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://esdocu.com"),
+    title: {
+      template: dict.layout.titleTemplate,
+      default: dict.layout.defaultTitle,
+    },
+    description: dict.layout.description,
+    openGraph: {
+      title: dict.layout.ogTitle,
+      description: dict.layout.description,
+      url: "/",
+      siteName: "Esdocu",
+      locale: locale === 'es' ? 'es_ES' : (locale === 'fr' ? 'fr_FR' : locale),
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: dict.layout.twitterTitle,
+      description: dict.layout.description,
+    },
+    icons: {
+      icon: "/favicon.svg",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

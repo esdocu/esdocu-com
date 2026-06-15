@@ -1,4 +1,5 @@
 import { getAllDocSlugs, getDocBySlug, getFirstArticleSlug, getSidebarForRoot, getCategoriesWithBooks, getFlatChapterSlugs } from "@/lib/docs";
+import { getDictionary } from "@/lib/i18n";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { generateSlug } from "@/lib/slugs";
@@ -21,8 +22,13 @@ interface PageProps {
   params: Promise<{ slug: string[] }>;
 }
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   const slugs = getAllDocSlugs();
+  if (slugs.length === 0) {
+    return [{ slug: ['__empty__'] }];
+  }
   return slugs.map((slug) => ({
     slug,
   }));
@@ -128,12 +134,13 @@ export default async function DocPage({ params }: PageProps) {
   const currentIndex = flatChapters.findIndex((c) => c.slug === currentSlugStr);
   const prevChapter = currentIndex > 0 ? flatChapters[currentIndex - 1] : null;
   const nextChapter = currentIndex >= 0 && currentIndex < flatChapters.length - 1 ? flatChapters[currentIndex + 1] : null;
+  const dict = getDictionary();
 
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar categoriesWithBooks={categoriesWithBooks} wide />
       <div className="w-full max-w-none px-4 md:px-6 flex gap-6 xl:gap-8">
-        <Sidebar currentSlug={slug} items={sidebarItems} root={root} />
+        <Sidebar currentSlug={slug} items={sidebarItems} root={root} dict={dict} />
         <main className="flex-1 py-6 px-2 md:py-12 md:px-4 xl:py-16 xl:px-4 max-w-none overflow-hidden">
           <div className="mb-12">
             <div className="text-sm font-medium text-primary mb-2 uppercase tracking-wider">{slug[0]}</div>
@@ -159,7 +166,7 @@ export default async function DocPage({ params }: PageProps) {
 
           {/* Previous / Next chapter navigation */}
           {(prevChapter || nextChapter) && (
-            <nav className="mt-16 pt-8 border-t grid grid-cols-1 sm:grid-cols-2 gap-4" aria-label="Navegación de capítulos">
+            <nav className="mt-16 pt-8 border-t grid grid-cols-1 sm:grid-cols-2 gap-4" aria-label={dict.docPage.chapterNavAria}>
               {prevChapter ? (
                 <Link
                   href={`/${prevChapter.slug}`}
@@ -167,7 +174,7 @@ export default async function DocPage({ params }: PageProps) {
                 >
                   <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors">
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    Capítulo anterior
+                    {dict.docPage.prevChapter}
                   </span>
                   <span className="text-sm font-medium line-clamp-2 mt-1">{prevChapter.label}</span>
                 </Link>
@@ -182,7 +189,7 @@ export default async function DocPage({ params }: PageProps) {
                 >
                   <span className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-primary transition-colors sm:flex-row-reverse">
                     <ArrowRight className="h-3.5 w-3.5" />
-                    Capítulo siguiente
+                    {dict.docPage.nextChapter}
                   </span>
                   <span className="text-sm font-medium line-clamp-2 mt-1">{nextChapter.label}</span>
                 </Link>
@@ -191,13 +198,13 @@ export default async function DocPage({ params }: PageProps) {
           )}
 
           <div className="mt-10 pt-8 border-t flex justify-between items-center text-sm text-muted-foreground">
-            <p>© {new Date().getFullYear()} Esdocu. Contenido bajo licencia MIT.</p>
+            <p>© {new Date().getFullYear()} {dict.docPage.footerText}</p>
             <a href={`https://github.com/fabiankaraben/esdocu-com/edit/main/${doc.filePath}`} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-              Editar esta página
+              {dict.docPage.editPage}
             </a>
           </div>
         </main>
-        <Toc items={doc.toc} />
+        <Toc items={doc.toc} dict={dict} />
       </div>
     </div>
   );

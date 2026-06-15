@@ -9,7 +9,9 @@ export interface SidebarItem {
   order?: number;
 }
 
-const DOCS_PATH = path.join(process.cwd(), "content");
+import { getLocale } from "./i18n";
+
+const DOCS_PATH = path.join(process.cwd(), "content", getLocale());
 const BOOKS_PATH = path.join(DOCS_PATH, "books");
 
 import { TocItem, generateSlug } from "./slugs";
@@ -102,6 +104,7 @@ export function getCategoriesWithBooks() {
 }
 
 export function getAllDocSlugs(dirPath: string = BOOKS_PATH, slugs: string[][] = []): string[][] {
+  if (!fs.existsSync(dirPath)) return slugs;
   const files = fs.readdirSync(dirPath);
 
   files.forEach((file) => {
