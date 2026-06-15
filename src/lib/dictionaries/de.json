@@ -1,0 +1,49 @@
+{
+  "layout": {
+    "titleTemplate": "%s | Esdocu",
+    "defaultTitle": "Esdocu - Lerne Technologie in deiner Sprache",
+    "description": "Hochwertige technische Dokumentation auf Deutsch übersetzt. Bootstrap, Moment.js und mehr.",
+    "ogTitle": "Esdocu - Dokumentation auf Deutsch",
+    "twitterTitle": "Esdocu - Dokumentation auf Deutsch"
+  },
+  "navbar": {
+    "toggleTheme": "Theme wechseln"
+  },
+  "home": {
+    "heroTag": "Technische Dokumentation auf Deutsch",
+    "heroTitle1": "Lerne",
+    "heroTitleTech": "Technologie",
+    "heroTitle2": "in deiner Sprache.",
+    "heroDescription": "Esdocu bietet hochwertige deutsche Übersetzungen der beliebtesten technischen Dokumentationen. Bootstrap, Moment.js und mehr, alles an einem Ort.",
+    "exploreDocs": "Dokumentation durchstöbern",
+    "viewOnGithub": "Auf GitHub ansehen",
+    "feature1Title": "Schnell und modern",
+    "feature1Desc": "Entwickelt mit den neuesten Technologien für ein flüssiges und schnelles Leseerlebnis.",
+    "feature2Title": "Kuratierte Inhalte",
+    "feature2Desc": "Wir wählen die wichtigsten Bibliotheken des Entwickler-Ökosystems aus und übersetzen sie.",
+    "feature3Title": "100% auf Deutsch",
+    "feature3Desc": "Wir beseitigen die Sprachbarriere, damit du dich ganz auf das Programmierenlernen konzentrieren kannst.",
+    "docsTitle": "Verfügbare Dokumentationen",
+    "readMore": "Mehr lesen",
+    "officialTranslationsTag": "Web-Ökosystem",
+    "officialTranslationsTitle": "Offizielle Docs auf Deutsch",
+    "officialTranslationsDesc": "Wir übersetzen die wichtigsten offiziellen Dokumentationen ins Deutsche, um Bildung ohne Sprachbarrieren zu fördern.",
+    "officialDocsLabel": "Offizielle Dokumentation",
+    "visitSite": "Website besuchen",
+    "footerText": "Esdocu. Mit ❤️ für die Community gemacht."
+  },
+  "docPage": {
+    "prevChapter": "Vorheriges Kapitel",
+    "nextChapter": "Nächstes Kapitel",
+    "chapterNavAria": "Kapitelnavigation",
+    "footerText": "Esdocu. Inhalte unter MIT-Lizenz.",
+    "editPage": "Diese Seite bearbeiten"
+  },
+  "sidebar": {
+    "navigation": "Navigation"
+  },
+  "toc": {
+    "onThisPage": "Auf dieser Seite",
+    "content": "Inhalt"
+  }
+}

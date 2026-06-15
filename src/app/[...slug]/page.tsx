@@ -37,7 +37,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const doc = getDocBySlug(slug);
-  
+
   const title = doc?.title || "Documentación";
   const description = doc?.data?.description || "Documentación técnica en español.";
   const path = `/${slug.join("/")}`;
@@ -109,7 +109,7 @@ const mdxComponents: any = {
 
 export default async function DocPage({ params }: PageProps) {
   const { slug } = await params;
-  
+
   // If it's a root path (e.g., /momentjs), redirect to the first article
   if (slug.length === 1) {
     const firstArticle = getFirstArticleSlug(slug[0]);
@@ -149,11 +149,11 @@ export default async function DocPage({ params }: PageProps) {
               <p className="text-xl text-muted-foreground leading-relaxed">{doc.data.description}</p>
             )}
           </div>
-          
+
           <div className="prose-custom">
-            <MDXRemote 
-              source={doc.content} 
-              components={mdxComponents} 
+            <MDXRemote
+              source={doc.content}
+              components={mdxComponents}
               options={{
                 mdxOptions: {
                   remarkPlugins: [remarkGfm, remarkMath],
@@ -199,7 +199,7 @@ export default async function DocPage({ params }: PageProps) {
 
           <div className="mt-10 pt-8 border-t flex justify-between items-center text-sm text-muted-foreground">
             <p>© {new Date().getFullYear()} {dict.docPage.footerText}</p>
-            <a href={`https://github.com/fabiankaraben/esdocu-com/edit/main/${doc.filePath}`} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
+            <a href={`https://github.com/esdocu/esdocu-com/edit/main/${doc.filePath}`} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
               {dict.docPage.editPage}
             </a>
           </div>

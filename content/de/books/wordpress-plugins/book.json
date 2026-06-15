@@ -19,13 +19,13 @@
   "language": "de",
   "chapters": [
     {
-      "slug": "arquitectura-core-de-wp",
+      "slug": "wp-core-architektur",
       "title": "WP-Core-Architektur",
       "order": 1,
       "description": "Überblick über die interne Struktur von WordPress, seinen Core, Themes und die Interaktion von Plugins in diesem spezifischen Ökosystem, unter der Annahme bereits fundierter PHP-Kenntnisse."
     },
     {
-      "slug": "anatomia-de-un-plugin",
+      "slug": "anatomie-eines-plugins",
       "title": "Anatomie eines Plugins",
       "order": 2,
       "description": "Verstehe die grundlegenden Elemente eines Plugins, von den obligatorischen Headern bis hin zu den Aktivierungs-, Deaktivierungs- und Deinstallations-Hooks für einen sauberen Lebenszyklus."
@@ -37,79 +37,79 @@
       "description": "Lerne, wie du Standard-Inhaltstypen erweiterst, indem du Custom Post Types und benutzerdefinierte Taxonomien erstellst und verwaltest, um komplexe Datenstrukturen agil zu organisieren."
     },
     {
-      "slug": "metadatos-y-campos-propios",
+      "slug": "metadaten-und-custom-fields",
       "title": "Metadaten und Custom Fields",
       "order": 4,
       "description": "Beherrsche die Metadaten-API, um die Informationen von Beiträgen, Benutzern und Taxonomie-Begriffen zu erweitern. Erstelle und verwalte Custom Fields ohne Abhängigkeit von Drittanbieter-Plugins für maximale Kontrolle."
     },
     {
-      "slug": "la-base-de-datos-wpdb",
+      "slug": "die-datenbank-wpdb",
       "title": "Die Datenbank (WPDB)",
       "order": 5,
       "description": "Nutze die Klasse wpdb, um sichere und effiziente SQL-Abfragen durchzuführen. Entdecke, wie du benutzerdefinierte Tabellen erstellst und modifizierst, wenn die native Struktur von WordPress an ihre Grenzen stößt."
     },
     {
-      "slug": "api-de-opciones-y-ajustes",
+      "slug": "optionen-und-settings-api",
       "title": "Optionen und Settings API",
       "order": 6,
       "description": "Implementiere Konfigurations-Panels mithilfe der Options API und Settings API. Verwalte die globalen Einstellungen deines Plugins standardisiert und nahtlos integriert im Dashboard."
     },
     {
-      "slug": "menus-y-paginas-de-admin",
+      "slug": "admin-menues-und-seiten",
       "title": "Admin-Menüs und -Seiten",
       "order": 7,
-      "description": "Construye interfaces de administración profesionales. Agrega menús principales, submenús y páginas de opciones personalizadas manteniendo la coherencia visual con el ecosistema."
+      "description": "Erstelle professionelle Admin-Oberflächen. Füge Hauptmenüs, Untermenüs und benutzerdefinierte Optionsseiten hinzu und wahre dabei die visuelle Konsistenz mit dem Ökosystem."
     },
     {
-      "slug": "shortcodes-y-bloques",
+      "slug": "shortcodes-und-bloecke",
       "title": "Shortcodes und Blöcke",
       "order": 8,
       "description": "Entwickle interaktive Elemente für das Frontend. Erkunde die klassische Shortcode API und mache den ersten Schritt zur Entwicklung nativer Blöcke für den Gutenberg-Editor in PHP."
     },
     {
-      "slug": "integracion-de-ajax-en-wp",
+      "slug": "ajax-integration-in-wp",
       "title": "AJAX-Integration in WP",
       "order": 9,
       "description": "Verbessere die Benutzererfahrung durch die Implementierung asynchroner Anfragen mit AJAX. Beherrsche das native Routing sowohl für authentifizierte Benutzer als auch für anonyme Besucher."
     },
     {
-      "slug": "seguridad-integral",
+      "slug": "ganzheitliche-sicherheit",
       "title": "Ganzheitliche Sicherheit",
       "order": 10,
       "description": "Schütze deine Entwicklungen vor gängigen Schwachstellen. Lerne die unverzichtbaren Techniken zur Bereinigung, Validierung und zum Escapen von Daten, die für ein professionelles Plugin erforderlich sind."
     },
     {
-      "slug": "cache-y-transients-api",
+      "slug": "cache-und-transients-api",
       "title": "Cache und Transients API",
       "order": 11,
       "description": "Optimiere die Ladezeit und reduziere den Ressourcenverbrauch. Nutze die Transients API, um Ergebnisse rechenintensiver Abfragen oder API-Aufrufe mit einer Ablaufzeit zwischenzuspeichern."
     },
     {
-      "slug": "roles-y-capacidades",
+      "slug": "rollen-und-capabilities",
       "title": "Rollen und Capabilities",
       "order": 12,
       "description": "Steuere, wer was in deinem Plugin tun darf. Verwalte das Benutzersystem, füge benutzerdefinierte Capabilities hinzu und schränke den Zugriff auf sensible Funktionen granular ein."
     },
     {
-      "slug": "la-rest-api-de-wordpress",
+      "slug": "die-wordpress-rest-api",
       "title": "Die WordPress-REST-API",
       "order": 13,
       "description": "Verbinde dein Plugin mit externen Anwendungen. Entdecke, wie du benutzerdefinierte Endpunkte registrierst, die Authentifizierung verwaltest und Antworten über die leistungsstarke WP-REST-API strukturierst."
     },
     {
-      "slug": "wp-cron-y-tareas-de-fondo",
+      "slug": "wp-cron-und-hintergrundaufgaben",
       "title": "WP-Cron und Hintergrundaufgaben",
       "order": 14,
       "description": "Automatisiere wiederkehrende Prozesse auf dem Server. Plane Events, beherrsche das Pseudo-Cron-System von WordPress und lerne, Hintergrundaufgaben optimiert und sicher auszuführen."
     },
     {
-      "slug": "internacionalizacion-i18n",
+      "slug": "internationalisierung-i18n",
       "title": "Internationalisierung (i18n)",
       "order": 15,
       "description": "Bereite deinen Code auf ein globales Publikum vor. Implementiere Übersetzungsfunktionen, generiere Sprachdateien und stelle sicher, dass dein Plugin bereit ist, universell lokalisiert zu werden."
     },
     {
-      "slug": "publicacion-y-mantenimiento",
+      "slug": "veroeffentlichung-und-wartung",
       "title": "Veröffentlichung und Wartung",
       "order": 16,
       "description": "Bringe deine Entwicklung in das offizielle Repository. Lerne die Genehmigungsanforderungen, die Nutzung von SVN, das Versionsmanagement und Best Practices kennen, um auf dem neuesten Stand zu bleiben."
@@ -119,42 +119,42 @@
     {
       "title": "Teil 1: Grundlagen und Ökosystem",
       "chapterSlugs": [
-        "arquitectura-core-de-wp",
-        "anatomia-de-un-plugin"
+        "wp-core-architektur",
+        "anatomie-eines-plugins"
       ]
     },
     {
       "title": "Teil 2: Datenmanipulation",
       "chapterSlugs": [
         "custom-post-types-cpts",
-        "metadatos-y-campos-propios",
-        "la-base-de-datos-wpdb",
-        "api-de-opciones-y-ajustes"
+        "metadaten-und-custom-fields",
+        "die-datenbank-wpdb",
+        "optionen-und-settings-api"
       ]
     },
     {
       "title": "Teil 3: Benutzeroberfläche und Benutzererfahrung (UI/UX)",
       "chapterSlugs": [
-        "menus-y-paginas-de-admin",
-        "shortcodes-y-bloques",
-        "integracion-de-ajax-en-wp"
+        "admin-menues-und-seiten",
+        "shortcodes-und-bloecke",
+        "ajax-integration-in-wp"
       ]
     },
     {
       "title": "Teil 4: Sicherheit, Leistung und Kontrolle",
       "chapterSlugs": [
-        "seguridad-integral",
-        "cache-y-transients-api",
-        "roles-y-capacidades"
+        "ganzheitliche-sicherheit",
+        "cache-und-transients-api",
+        "rollen-und-capabilities"
       ]
     },
     {
       "title": "Teil 5: Integration und fortgeschrittene Funktionen",
       "chapterSlugs": [
-        "la-rest-api-de-wordpress",
-        "wp-cron-y-tareas-de-fondo",
-        "internacionalizacion-i18n",
-        "publicacion-y-mantenimiento"
+        "die-wordpress-rest-api",
+        "wp-cron-und-hintergrundaufgaben",
+        "internationalisierung-i18n",
+        "veroeffentlichung-und-wartung"
       ]
     }
   ]

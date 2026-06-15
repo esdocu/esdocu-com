@@ -1,9 +1,11 @@
 import es from './dictionaries/es.json';
 import fr from './dictionaries/fr.json';
+import de from './dictionaries/de.json';
 
 const dictionaries = {
   es,
-  fr
+  fr,
+  de
 };
 
 export type Locale = keyof typeof dictionaries;

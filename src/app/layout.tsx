@@ -51,8 +51,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = getLocale();
+
   return (
-    <html lang="es" suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
+    <html lang={locale} suppressHydrationWarning className={`${outfit.variable} ${inter.variable}`}>
       <head>
         {/* Google tag (gtag.js) */}
         {process.env.NODE_ENV === "production" && (

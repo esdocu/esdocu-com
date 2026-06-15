@@ -53,9 +53,9 @@ export function Navbar({ categoriesWithBooks = [], wide = false }: NavbarProps) 
                 <div className="absolute top-full left-0 w-48 rounded-md shadow-lg bg-background border hidden group-hover:block transition-all z-50">
                   <div className="py-2">
                     {category.books.map((book: any) => (
-                      <Link 
+                      <Link
                         key={book.slug}
-                        href={`/${book.slug}/${book.chapters?.[0]?.slug || 'comenzando'}`} 
+                        href={`/${book.slug}/${book.chapters?.[0]?.slug || 'comenzando'}`}
                         className="block px-4 py-2 hover:bg-muted transition-colors"
                       >
                         {book.title}
@@ -80,7 +80,7 @@ export function Navbar({ categoriesWithBooks = [], wide = false }: NavbarProps) 
             <span className="sr-only">Toggle theme</span>
           </Button>
           <Button variant="ghost" size="icon" asChild className="rounded-full">
-            <a href="https://github.com/fabiankaraben/esdocu-com" target="_blank" rel="noreferrer">
+            <a href="https://github.com/esdocu/esdocu-com" target="_blank" rel="noreferrer">
               <ExternalLink className="h-5 w-5" />
             </a>
           </Button>
@@ -105,9 +105,9 @@ export function Navbar({ categoriesWithBooks = [], wide = false }: NavbarProps) 
                   <div className="font-semibold text-muted-foreground">{category.title}</div>
                   <div className="flex flex-col pl-4 space-y-2 border-l">
                     {category.books.map((book: any) => (
-                      <Link 
+                      <Link
                         key={book.slug}
-                        href={`/${book.slug}/${book.chapters?.[0]?.slug || 'comenzando'}`} 
+                        href={`/${book.slug}/${book.chapters?.[0]?.slug || 'comenzando'}`}
                         onClick={() => setIsMenuOpen(false)}
                         className="hover:text-primary transition-colors py-1"
                       >

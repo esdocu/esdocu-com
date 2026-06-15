@@ -36,12 +36,12 @@ export default function Home() {
 
             <div className="flex flex-wrap items-center justify-center gap-4 animate-in fade-in slide-in-from-bottom-10 duration-1000">
               <Button size="lg" asChild className="rounded-full px-8">
-                <Link href="/bootstrap/comenzando">
+                <Link href="#docs">
                   {dict.home.exploreDocs} <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" asChild className="rounded-full px-8">
-                <a href="https://github.com/fabiankaraben/esdocu-com" target="_blank" rel="noreferrer">
+                <a href="https://github.com/esdocu/esdocu-com" target="_blank" rel="noreferrer">
                   {dict.home.viewOnGithub}
                 </a>
               </Button>
@@ -73,7 +73,7 @@ export default function Home() {
         </section>
 
         {/* Documentation Grid */}
-        <section className="py-24">
+        <section id="docs" className="py-24">
           <div className="container mx-auto px-4 text-center">
             <h2 className="text-3xl md:text-5xl font-bold mb-16">{dict.home.docsTitle}</h2>
 
