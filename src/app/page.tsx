@@ -187,7 +187,7 @@ function OfficialTranslationCard({ title, url, description, color, gradient, dic
       className="group relative block p-8 rounded-2xl border bg-card hover:shadow-2xl transition-all duration-500 overflow-hidden text-left h-full border-muted/50 hover:border-primary/30"
     >
       {/* Background glow using the gradient custom to each technology */}
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-20 blur-3xl group-hover:opacity-40 transition-opacity duration-500`} />
+      <div className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${gradient} opacity-20 blur-3xl group-hover:opacity-40 transition-opacity duration-500`} />
 
       {/* Premium subtle corner accent line matching the theme color of the tech */}
       <div className={`absolute top-0 left-0 w-1.5 h-0 ${color} group-hover:h-full transition-all duration-500 rounded-tl-2xl rounded-bl-2xl`} />

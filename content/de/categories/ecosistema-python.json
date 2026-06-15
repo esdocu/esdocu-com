@@ -1,0 +1,9 @@
+{
+  "slug": "ecosistema-python",
+  "locale": "de",
+  "title": "Python-Ökosystem",
+  "shortTitle": "Python",
+  "description": "Entdecke Dokumentation auf Spanisch über Bibliotheken, Frameworks und wichtige Tools des Python-Ökosystems.",
+  "icon": "terminal",
+  "order": 2
+}
