@@ -15,7 +15,11 @@ export function AdScript() {
     pathname === "/mejor-app-para-leer-la-biblia" ||
     pathname === "/mejor-pagina-para-leer-la-biblia" ||
     pathname === "/mejor-app-para-leer-libros" ||
-    pathname === "/mejor-hosting"
+    pathname === "/mejor-hosting" ||
+    pathname === "/biblia-online-gratis" ||
+    pathname === "/biblia-reina-valera-online" ||
+    pathname === "/biblia-sin-internet" ||
+    pathname === "/escuchar-la-biblia"
   ) {
     return null;
   }

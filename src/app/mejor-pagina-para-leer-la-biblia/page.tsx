@@ -1,15 +1,15 @@
 import ExportedImage from "next-image-export-optimizer";
-import { Check, X, Star, Globe, Shield, BookOpen, Clock, Heart, Volume2, Search, ArrowRight, BookMarked, Sparkles, AlertCircle } from "lucide-react";
+import { Check, X, Star, Globe, Shield, BookOpen, Clock, Heart, Volume2, Search, ArrowRight, BookMarked, Sparkles, AlertCircle, Smartphone } from "lucide-react";
 import { ForceLightTheme } from "./force-light-theme";
 import { ComparisonTable } from "./comparison-table";
 import type { Metadata } from "next";
 
 // SEO Metadata for the landing page
 export const metadata: Metadata = {
-  title: "Mejores páginas para leer la Biblia en 2026 - Comparativa",
+  title: "Mejor página para leer la Biblia en 2026 - Comparativa",
   description: "Descubre cuál es la mejor página web para leer y estudiar la Biblia este año. Análisis completo de VeoBible, YouVersion, Bible Gateway y Bible Hub.",
   openGraph: {
-    title: "Mejores páginas para leer la Biblia en 2026 - Comparativa Completa",
+    title: "Mejor página para leer la Biblia en 2026 - Comparativa Completa",
     description: "Comparamos las mejores web bíblicas: VeoBible, YouVersion, Bible Gateway y Bible Hub. Encuentra el sitio ideal para tu lectura diaria sin distracciones.",
     type: "website",
     url: "/mejor-pagina-para-leer-la-biblia",
@@ -83,26 +83,23 @@ export default function BibleWebLandingPage() {
       {/* Force Light Theme Client Component */}
       <ForceLightTheme />
 
-      {/* JSON-LD Structured Data for Google Rich Snippets (Stars Rating) */}
+      {/* JSON-LD Structured Data for Google Rich Snippets */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Product",
-            "name": "Mejores páginas para leer la Biblia en 2026",
+            "@type": "Article",
+            "headline": "Mejor página para leer la Biblia en 2026",
             "image": "https://esdocu.com/images/veobible-mockup.png",
             "description": "Análisis comparativo de las mejores páginas web para leer la Biblia. Comparamos VeoBible, YouVersion, Bible Gateway y Bible Hub.",
-            "brand": {
-              "@type": "Brand",
+            "author": {
+              "@type": "Person",
               "name": "Biblia Comparada"
             },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "128",
-              "bestRating": "5",
-              "worstRating": "1"
+            "publisher": {
+              "@type": "Organization",
+              "name": "Esdocu"
             }
           })
         }}
@@ -181,7 +178,7 @@ export default function BibleWebLandingPage() {
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-extrabold tracking-tight text-slate-950 leading-tight">
-                Mejores páginas para leer la <br className="hidden sm:inline" />
+                Mejor página para leer la <br className="hidden sm:inline" />
                 <span className="bg-linear-to-r from-amber-600 to-amber-500 bg-clip-text text-transparent">
                   Biblia en 2026
                 </span>
@@ -510,7 +507,51 @@ export default function BibleWebLandingPage() {
           </div>
         </section>
 
-        {/* Section 4: Final Call to Action */}
+        {/* Section 4: Funciones Clave de la Página Ganadora */}
+        <section className="py-20 bg-[#FAF9F5] border-t border-slate-200/60 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12">
+              ¿Qué hace a VeoBible la mejor página para leer la Biblia?
+            </h2>
+            <div className="prose prose-slate prose-lg max-w-none text-slate-600">
+              <p>
+                Al evaluar la <strong>mejor página web para leer la Biblia</strong>, la experiencia de usuario es fundamental. Las plataformas modernas deben ser rápidas y adaptables. VeoBible destaca en la web porque está construida con tecnología de última generación que ofrece:
+              </p>
+              <ul className="grid grid-cols-1 md:grid-cols-2 gap-6 list-none pl-0 mt-8">
+                <li className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mt-0 mb-3">
+                    <Globe className="h-5 w-5 text-amber-600" />
+                    Carga Ultra Rápida
+                  </h4>
+                  <p className="m-0 text-sm">Diseñada sin elementos pesados ni scripts innecesarios. Al cambiar de libro o capítulo, el texto se carga de manera instantánea, sin tiempos de espera molestos.</p>
+                </li>
+                <li className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mt-0 mb-3">
+                    <Smartphone className="h-5 w-5 text-amber-600" />
+                    Diseño Adaptativo Web
+                  </h4>
+                  <p className="m-0 text-sm">No importa si estás en un monitor ultra ancho o en un celular antiguo; la interfaz, los márgenes y el tamaño de letra se ajustan automáticamente para una lectura óptima.</p>
+                </li>
+                <li className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mt-0 mb-3">
+                    <BookMarked className="h-5 w-5 text-amber-600" />
+                    Sincronización en la Nube
+                  </h4>
+                  <p className="m-0 text-sm">Inicia sesión en la página web y todos tus marcadores, notas y progreso de lectura estarán allí, sincronizados en tiempo real con la aplicación móvil.</p>
+                </li>
+                <li className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                  <h4 className="flex items-center gap-2 font-bold text-slate-900 mt-0 mb-3">
+                    <Shield className="h-5 w-5 text-amber-600" />
+                    100% Libre de Banners
+                  </h4>
+                  <p className="m-0 text-sm">A diferencia de otras páginas web gratuitas, VeoBible no utiliza banners laterales ni pop-ups molestos que interrumpen tu devocional y ensucian la pantalla.</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 5: Final Call to Action */}
         <section className="py-20 px-6 bg-linear-to-b from-[#FAF9F5] to-amber-50/20 text-center relative overflow-hidden border-t border-slate-200/50">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_100%,rgba(217,119,6,0.05)_0%,transparent_100%)]" />
 

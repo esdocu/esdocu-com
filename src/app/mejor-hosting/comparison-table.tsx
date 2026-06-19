@@ -14,7 +14,6 @@ interface CompetitorData {
   ssl: React.ReactNode;
   support: string;
   easeOfUse: string;
-  score: React.ReactNode;
 }
 
 export function ComparisonTable() {
@@ -39,16 +38,6 @@ export function ComparisonTable() {
       ),
       support: "Chat 24/7, tiempos de espera variables.",
       easeOfUse: "Buena para WordPress (upsells frecuentes)",
-      score: (
-        <div className="flex items-center gap-0.5 text-violet-600">
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(7.5)</span>
-        </div>
-      ),
     },
     siteground: {
       name: "SiteGround",
@@ -69,16 +58,6 @@ export function ComparisonTable() {
       ),
       support: "Excelente, respuesta rápida y técnica.",
       easeOfUse: "Buena (Precio sube mucho al renovar)",
-      score: (
-        <div className="flex items-center gap-0.5 text-violet-600">
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(8.2)</span>
-        </div>
-      ),
     },
     godaddy: {
       name: "GoDaddy",
@@ -99,16 +78,6 @@ export function ComparisonTable() {
       ),
       support: "Disponible 24/7, calidad inconsistente.",
       easeOfUse: "Regular (Interfaz saturada de ventas)",
-      score: (
-        <div className="flex items-center gap-0.5 text-violet-600">
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 fill-violet-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(6.0)</span>
-        </div>
-      ),
     },
   };
 
@@ -229,20 +198,7 @@ export function ComparisonTable() {
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.easeOfUse}</td>
             </tr>
-            <tr>
-              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Nota</td>
-              <td className="py-4 px-3 font-semibold text-violet-700 bg-violet-50/10 border-x border-violet-100/20">
-                <div className="flex items-center gap-0.5 text-violet-600">
-                  <Star className="h-3.5 w-3.5 fill-violet-500" />
-                  <Star className="h-3.5 w-3.5 fill-violet-500" />
-                  <Star className="h-3.5 w-3.5 fill-violet-500" />
-                  <Star className="h-3.5 w-3.5 fill-violet-500" />
-                  <Star className="h-3.5 w-3.5 fill-violet-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold text-[10px]">(9.6)</span>
-                </div>
-              </td>
-              <td className="py-4 px-3 text-slate-600">{selectedCompetitor.score}</td>
-            </tr>
+
           </tbody>
         </table>
       </div>
@@ -375,49 +331,7 @@ export function ComparisonTable() {
               <td className="py-5 px-6 text-slate-600">Regular (Interfaz saturada de ventas)</td>
             </tr>
 
-            <tr>
-              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20">Valoración General</td>
-              <td className="py-5 px-6 font-semibold text-violet-700 bg-violet-50/20 border-x border-violet-100/30">
-                <div className="flex items-center gap-1 text-violet-600">
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold">(9.6 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-violet-600">
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(7.5 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-violet-600">
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(8.2 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-violet-600">
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 fill-violet-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(6.0 / 10)</span>
-                </div>
-              </td>
-            </tr>
+
           </tbody>
         </table>
       </div>

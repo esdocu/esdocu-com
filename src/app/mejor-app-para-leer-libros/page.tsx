@@ -96,13 +96,6 @@ export default function BooksLandingPage() {
             "brand": {
               "@type": "Brand",
               "name": "Lectura Digital"
-            },
-            "aggregateRating": {
-              "@type": "AggregateRating",
-              "ratingValue": "4.8",
-              "reviewCount": "154",
-              "bestRating": "5",
-              "worstRating": "1"
             }
           })
         }}

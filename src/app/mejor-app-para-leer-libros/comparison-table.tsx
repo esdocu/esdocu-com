@@ -14,7 +14,6 @@ interface CompetitorData {
   audio: string;
   price: string;
   easeOfUse: string;
-  score: React.ReactNode;
 }
 
 export function ComparisonTable() {
@@ -35,16 +34,6 @@ export function ComparisonTable() {
       audio: "Audible integrado (requiere suscripción de pago).",
       price: "Gratis (Libros de la tienda son de pago)",
       easeOfUse: "Regular (La tienda y catálogo abruman)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(8.4)</span>
-        </div>
-      ),
     },
     googlebooks: {
       name: "Google Play Libros",
@@ -60,16 +49,6 @@ export function ComparisonTable() {
       audio: "Audiolibros de pago independientes.",
       price: "Gratis (Opción de subir tus archivos de forma gratuita)",
       easeOfUse: "Buena (Navegación directa)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(7.5)</span>
-        </div>
-      ),
     },
     wattpad: {
       name: "Wattpad",
@@ -85,16 +64,6 @@ export function ComparisonTable() {
       audio: "No disponible.",
       price: "Gratis con anuncios / Opción premium de pago",
       easeOfUse: "Baja (Los anuncios interrumpen la lectura fluida)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(6.5)</span>
-        </div>
-      ),
     },
   };
 
@@ -215,20 +184,7 @@ export function ComparisonTable() {
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.easeOfUse}</td>
             </tr>
-            <tr>
-              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Nota</td>
-              <td className="py-4 px-3 font-semibold text-indigo-700 bg-indigo-50/10 border-x border-indigo-100/20">
-                <div className="flex items-center gap-0.5 text-amber-600">
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold text-[10px]">(9.8)</span>
-                </div>
-              </td>
-              <td className="py-4 px-3 text-slate-600">{selectedCompetitor.score}</td>
-            </tr>
+
           </tbody>
         </table>
       </div>
@@ -354,49 +310,7 @@ export function ComparisonTable() {
             </tr>
 
             {/* Row 8: Calificación */}
-            <tr>
-              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20">Nota General de la App</td>
-              <td className="py-5 px-6 font-semibold text-indigo-700 bg-indigo-50/20 border-x border-indigo-100/30">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold">(9.8 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(8.4 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(7.5 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-200" />
-                  <Star className="h-4.5 w-4.5 text-slate-200" />
-                  <span className="ml-1 text-slate-700 font-bold">(6.5 / 10)</span>
-                </div>
-              </td>
-            </tr>
+
           </tbody>
         </table>
       </div>

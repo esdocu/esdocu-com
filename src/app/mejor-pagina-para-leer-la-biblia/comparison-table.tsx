@@ -14,7 +14,6 @@ interface CompetitorData {
   audio: string;
   price: string;
   easeOfUse: string;
-  score: React.ReactNode;
 }
 
 export function ComparisonTable() {
@@ -35,16 +34,6 @@ export function ComparisonTable() {
       audio: "Sí, narraciones de audio integradas por capítulo.",
       price: "100% Gratis (Donaciones)",
       easeOfUse: "Buena (Navegación limpia)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(8.2)</span>
-        </div>
-      ),
     },
     gateway: {
       name: "Bible Gateway",
@@ -60,16 +49,6 @@ export function ComparisonTable() {
       audio: "Sí, pero interrumpido por publicidad.",
       price: "Gratis con anuncios / Opción Plus de pago",
       easeOfUse: "Regular (La publicidad interrumpe la lectura)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(6.0)</span>
-        </div>
-      ),
     },
     biblehub: {
       name: "Bible Hub",
@@ -85,16 +64,6 @@ export function ComparisonTable() {
       audio: "Sí, reproducción de audio básica por capítulo.",
       price: "100% Gratis (Sostenido por anuncios)",
       easeOfUse: "Baja (Muy saturada de enlaces y tablas)",
-      score: (
-        <div className="flex items-center gap-0.5 text-amber-600">
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 fill-amber-500" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <Star className="h-3.5 w-3.5 text-slate-200" />
-          <span className="ml-1 text-slate-700 font-extrabold text-[10px]">(7.0)</span>
-        </div>
-      ),
     },
   };
 
@@ -212,20 +181,7 @@ export function ComparisonTable() {
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.easeOfUse}</td>
             </tr>
-            <tr>
-              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Nota</td>
-              <td className="py-4 px-3 font-semibold text-amber-700 bg-amber-50/10 border-x border-amber-100/20">
-                <div className="flex items-center gap-0.5 text-amber-600">
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <Star className="h-3.5 w-3.5 fill-amber-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold text-[10px]">(9.8)</span>
-                </div>
-              </td>
-              <td className="py-4 px-3 text-slate-600">{selectedCompetitor.score}</td>
-            </tr>
+
           </tbody>
         </table>
       </div>
@@ -351,50 +307,7 @@ export function ComparisonTable() {
               <td className="py-5 px-6 text-slate-600">Baja (Muy saturada de enlaces y tablas)</td>
             </tr>
 
-            {/* Row 8: Calificación de lectura */}
-            <tr>
-              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20">Nota General de la Web</td>
-              <td className="py-5 px-6 font-semibold text-amber-700 bg-amber-50/20 border-x border-amber-100/30">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <span className="ml-1 text-slate-900 font-extrabold">(9.8 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-755 font-bold">(8.2 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <Star className="h-4.5 w-4.5 text-slate-300" />
-                  <span className="ml-1 text-slate-700 font-bold">(6.0 / 10)</span>
-                </div>
-              </td>
-              <td className="py-5 px-6 text-slate-600">
-                <div className="flex items-center gap-1 text-amber-600">
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 fill-amber-500" />
-                  <Star className="h-4.5 w-4.5 text-slate-200" />
-                  <Star className="h-4.5 w-4.5 text-slate-200" />
-                  <span className="ml-1 text-slate-700 font-bold">(7.0 / 10)</span>
-                </div>
-              </td>
-            </tr>
+
           </tbody>
         </table>
       </div>

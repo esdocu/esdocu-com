@@ -43,6 +43,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: 'weekly',
         priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/biblia-online-gratis`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/biblia-reina-valera-online`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/biblia-sin-internet`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
+      },
+      {
+        url: `${baseUrl}/escuchar-la-biblia`,
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.9,
       }
     );
   }
