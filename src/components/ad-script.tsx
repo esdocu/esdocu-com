@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Script from "next/script";
+import { ES_LANDING_PAGES } from "@/lib/landing-pages";
 
 /**
  * AdScript component.
@@ -11,16 +12,9 @@ export function AdScript() {
   const pathname = usePathname();
 
   // Exclude the comparison landing pages from having ads script
-  if (
-    pathname === "/mejor-app-para-leer-la-biblia" ||
-    pathname === "/mejor-pagina-para-leer-la-biblia" ||
-    pathname === "/mejor-app-para-leer-libros" ||
-    pathname === "/mejor-hosting" ||
-    pathname === "/biblia-online-gratis" ||
-    pathname === "/biblia-reina-valera-online" ||
-    pathname === "/biblia-sin-internet" ||
-    pathname === "/escuchar-la-biblia"
-  ) {
+  const isLandingPage = ES_LANDING_PAGES.some((page) => page.path === pathname);
+  
+  if (isLandingPage) {
     return null;
   }
 

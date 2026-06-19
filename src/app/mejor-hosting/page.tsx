@@ -12,6 +12,12 @@ import {
   Headphones,
   Gauge,
   HardDrive,
+  Cloud,
+  Lock,
+  TriangleAlert,
+  Cpu,
+  Activity,
+  HelpCircle,
 } from "lucide-react";
 import { ForceLightTheme } from "./force-light-theme";
 import { ComparisonTable } from "./comparison-table";
@@ -481,6 +487,179 @@ export default function HostingLandingPage() {
                   </p>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 5: The Trap of Free Hosting */}
+        <section className="py-20 bg-slate-900 text-white px-6">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-center">
+            <div className="md:col-span-5 flex justify-center">
+              <TriangleAlert className="w-48 h-48 text-violet-400 opacity-20" />
+            </div>
+            <div className="md:col-span-7 space-y-6">
+              <span className="inline-block px-3 py-1 rounded-full bg-violet-900 text-violet-300 text-[11px] font-bold tracking-wider uppercase border border-violet-700">
+                Alerta de Seguridad
+              </span>
+              <h2 className="text-3xl font-display font-extrabold tracking-tight">
+                La trampa oculta de los "Hostings Gratuitos"
+              </h2>
+              <p className="text-slate-300 leading-relaxed text-lg">
+                Es tentador buscar en Google "hosting gratis" cuando apenas estás empezando. Sin embargo, en la industria tecnológica existe una regla de oro: <em>"Si el producto es gratis, tú (y tus usuarios) son el producto."</em>
+              </p>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <X className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm leading-relaxed">
+                    <strong>Publicidad forzada:</strong> Los servidores gratuitos inyectarán banners y pop-ups en tu sitio web sin tu permiso. Podrías terminar anunciando a tus propios competidores o contenido inapropiado.
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <X className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm leading-relaxed">
+                    <strong>Caídas constantes (Downtime):</strong> Los recursos se comparten entre miles de cuentas basura. Si un sitio vecino consume mucha memoria, el tuyo simplemente dejará de cargar mostrando un "Error 500".
+                  </span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <X className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+                  <span className="text-slate-300 text-sm leading-relaxed">
+                    <strong>Sin copias de seguridad:</strong> Si el servidor sufre un fallo técnico (o te cancelan la cuenta sin previo aviso por romper sus estrictos términos de uso), perderás el 100% de tu trabajo sin posibilidad de recuperarlo.
+                  </span>
+                </li>
+              </ul>
+              <div className="p-4 bg-violet-800/50 rounded-xl border border-violet-700/50 mt-4">
+                <p className="text-sm text-violet-200">
+                  <strong className="text-white">Conclusión:</strong> Un hosting premium barato (como Hostinger por $2.99/mes) cuesta menos que un café, pero te otorga IP limpia, SSL y profesionalismo absoluto ante los ojos de Google.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 6: LiteSpeed vs Apache */}
+        <section className="py-20 bg-[#F5F7FB] border-y border-slate-200/60 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12">
+              ¿Por qué la tecnología LiteSpeed domina en 2026?
+            </h2>
+            <div className="prose prose-slate prose-lg max-w-none text-slate-600 mb-12">
+              <p>
+                Durante años, el software de servidor más utilizado en el mundo fue <strong>Apache</strong>. Aunque sigue siendo confiable, su arquitectura quedó anticuada para las exigencias de la web moderna. Aquí es donde entra <strong>LiteSpeed Web Server (LSWS)</strong>, la tecnología detrás de los hostings más rápidos del mercado actual (como Hostinger).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4">
+                <Zap className="w-8 h-8 text-violet-500 shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-bold text-slate-900 text-lg mb-2">Hasta 10x más rápido</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    LiteSpeed está diseñado para manejar miles de conexiones concurrentes consumiendo poquísima memoria RAM. En sitios con PHP (como WordPress), LiteSpeed procesa las peticiones dinámicas de forma mucho más eficiente que Apache.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex items-start gap-4">
+                <Cloud className="w-8 h-8 text-violet-500 shrink-0 mt-1" />
+                <div>
+                  <h4 className="font-bold text-slate-900 text-lg mb-2">Caché a Nivel de Servidor (LSCache)</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    A diferencia de los plugins tradicionales de WordPress que procesan el caché usando PHP, LSCache trabaja a nivel de servidor. Esto significa que cuando un usuario visita tu web, el servidor entrega la página almacenada instantáneamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 7: Tipos de Hosting */}
+        <section className="py-20 bg-white px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12">
+              Compartido vs. VPS vs. Cloud: ¿Cuál necesitas?
+            </h2>
+            
+            <div className="space-y-8">
+              <div className="flex flex-col md:flex-row gap-6 bg-[#F5F7FB] p-8 rounded-3xl border border-slate-100">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  <Server className="w-8 h-8 text-violet-600" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-900 mb-2">Hosting Compartido (Para el 90% de los usuarios)</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                    Es como vivir en un edificio de apartamentos. Compartes el "edificio" (servidor físico) y sus recursos (agua, electricidad / RAM, CPU) con otros inquilinos (sitios web). Es muy económico y no requiere conocimientos técnicos de administración de sistemas.
+                  </p>
+                  <span className="text-xs font-bold text-violet-600 uppercase tracking-wider">Ideal para: Blogs, Portafolios, Pymes y Tiendas Iniciales.</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-6 bg-[#F5F7FB] p-8 rounded-3xl border border-slate-100">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  <Cpu className="w-8 h-8 text-violet-600" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-900 mb-2">Servidor Privado Virtual (VPS)</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                    Siguiendo la analogía, es como comprar un piso entero en el edificio. El servidor sigue siendo físico, pero tu "apartamento" está completamente aislado por software. Tienes recursos de RAM y CPU 100% garantizados que nadie más puede tocar. Requiere conocimientos técnicos o pagar licencias de cPanel.
+                  </p>
+                  <span className="text-xs font-bold text-violet-600 uppercase tracking-wider">Ideal para: Foros grandes, Apps Web (SaaS), Tiendas de alto tráfico.</span>
+                </div>
+              </div>
+              
+              <div className="flex flex-col md:flex-row gap-6 bg-[#F5F7FB] p-8 rounded-3xl border border-slate-100">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center shrink-0">
+                  <Activity className="w-8 h-8 text-violet-600" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-slate-900 mb-2">Hosting Cloud (La Nube)</h4>
+                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
+                    Es como alojarte en una red de hoteles interconectados. Tu web no depende de un solo servidor físico. Si un disco duro falla, otro servidor de la red asume la carga instantáneamente. Si sales en la televisión y recibes 100,000 visitas de golpe, los recursos escalan automáticamente.
+                  </p>
+                  <span className="text-xs font-bold text-violet-600 uppercase tracking-wider">Ideal para: Periódicos digitales, E-commerce gigantes, Startups.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 8: FAQs */}
+        <section className="py-20 bg-[#F5F7FB] border-t border-slate-200/60 px-6">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12 flex items-center justify-center gap-3">
+              <HelpCircle className="w-8 h-8 text-violet-500" />
+              Preguntas Frecuentes (FAQ)
+            </h2>
+
+            <div className="space-y-6">
+              <details className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <summary className="flex items-center justify-between cursor-pointer p-6 font-bold text-slate-900 text-lg list-none">
+                  ¿Debo comprar el dominio y el hosting en la misma empresa?
+                  <span className="text-violet-600 font-bold text-2xl group-open:rotate-45 transition-transform duration-200">+</span>
+                </summary>
+                <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-slate-200/50 mt-4 pt-4">
+                  Técnicamente no es obligatorio (puedes apuntar los DNS de un registrador externo hacia tu hosting), pero <strong>sí es muy recomendable para principiantes</strong>. Comprar todo junto te ahorra dolores de cabeza con la configuración técnica y la mayoría de proveedores buenos (como Hostinger o Bluehost) te regalan el dominio durante el primer año al contratar un plan anual.
+                </div>
+              </details>
+
+              <details className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <summary className="flex items-center justify-between cursor-pointer p-6 font-bold text-slate-900 text-lg list-none">
+                  ¿Qué es el Certificado SSL y por qué lo mencionan tanto?
+                  <span className="text-violet-600 font-bold text-2xl group-open:rotate-45 transition-transform duration-200">+</span>
+                </summary>
+                <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-slate-200/50 mt-4 pt-4">
+                  El SSL (Secure Sockets Layer) es la tecnología que encripta la información entre tu página y el usuario, haciendo que aparezca un candado cerrado y "HTTPS" en el navegador. Si no lo tienes, Google Chrome mostrará una advertencia gigante roja de "Sitio no seguro", espantando a tus clientes. <strong>Nunca pagues extra por esto</strong>; los hostings modernos como Hostinger incluyen SSL ilimitados y gratuitos de por vida (usando Let's Encrypt).
+                </div>
+              </details>
+
+              <details className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <summary className="flex items-center justify-between cursor-pointer p-6 font-bold text-slate-900 text-lg list-none">
+                  ¿Qué significa "Ancho de banda ilimitado" o "Tráfico ilimitado"?
+                  <span className="text-violet-600 font-bold text-2xl group-open:rotate-45 transition-transform duration-200">+</span>
+                </summary>
+                <div className="px-6 pb-6 text-slate-600 leading-relaxed border-t border-slate-200/50 mt-4 pt-4">
+                  Es un término de marketing. Ningún recurso físico en el planeta es "ilimitado". Lo que significa es que la empresa no te cobrará cargos adicionales si superas un límite de gigabytes transferidos mensual. Sin embargo, todos los hostings compartidos tienen límites en la cantidad de memoria RAM y CPU ("inodos" o "procesos de entrada"). Si tienes un pico viral y consumes todo tu RAM, tu sitio se caerá temporalmente, aunque tu ancho de banda sea "ilimitado".
+                </div>
+              </details>
             </div>
           </div>
         </section>

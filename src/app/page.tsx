@@ -3,12 +3,15 @@ import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Zap, Shield, Globe, ArrowUpRight } from "lucide-react";
 import { getCategoriesWithBooks, getOfficialTranslations } from "@/lib/docs";
-import { getDictionary } from "@/lib/i18n";
+import { getDictionary, getLocale } from "@/lib/i18n";
+import { getLandingPagesByLocale } from "@/lib/landing-pages";
 
 export default function Home() {
   const categories = getCategoriesWithBooks();
   const officialTranslations = getOfficialTranslations();
   const dict = getDictionary();
+  const locale = getLocale();
+  const landingPages = getLandingPagesByLocale(locale);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -142,9 +145,43 @@ export default function Home() {
         )}
       </main>
 
-      <footer className="border-t py-12 bg-background">
-        <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>© {new Date().getFullYear()} {dict.home.footerText}</p>
+      <footer className="border-t py-16 bg-muted/10">
+        <div className="container mx-auto px-4">
+          {landingPages.length > 0 && (
+            <div className="mb-12 text-center md:text-left">
+              <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
+                <div className="h-px bg-border flex-grow max-w-[40px] md:hidden" />
+                <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
+                  Guías y Recursos Recomendados
+                </h4>
+                <div className="h-px bg-border flex-grow max-w-[40px] md:hidden" />
+              </div>
+              <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {landingPages.map((page) => (
+                  <li key={page.path}>
+                    <Link 
+                      href={page.path} 
+                      className="group flex items-center p-3 rounded-xl border border-transparent hover:border-border hover:bg-muted/50 transition-all duration-300"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary mr-3 transition-colors shrink-0" />
+                      <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors font-medium">
+                        {page.title}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-muted-foreground" />
+              <span className="font-bold text-foreground tracking-tight">esdocu</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} {dict.home.footerText}
+            </p>
+          </div>
         </div>
       </footer>
     </div>

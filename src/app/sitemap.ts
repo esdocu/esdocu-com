@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { getAllDocSlugs } from '@/lib/docs';
 import { getLocale } from '@/lib/i18n';
+import { getLandingPagesByLocale } from '@/lib/landing-pages';
 
 export const dynamic = 'force-static';
 
@@ -18,58 +19,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 
-  if (locale === 'es') {
-    routes.push(
-      {
-        url: `${baseUrl}/mejor-app-para-leer-la-biblia`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/mejor-pagina-para-leer-la-biblia`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/mejor-app-para-leer-libros`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/mejor-hosting`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/biblia-online-gratis`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/biblia-reina-valera-online`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/biblia-sin-internet`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      },
-      {
-        url: `${baseUrl}/escuchar-la-biblia`,
-        lastModified: new Date(),
-        changeFrequency: 'weekly',
-        priority: 0.9,
-      }
-    );
-  }
+  const landingPages = getLandingPagesByLocale(locale);
+  landingPages.forEach((page) => {
+    routes.push({
+      url: `${baseUrl}${page.path}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+    });
+  });
 
   const slugs = getAllDocSlugs();
 

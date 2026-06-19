@@ -454,7 +454,7 @@ export default function BibleWebLandingPage() {
             <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12">
               Ventajas únicas de leer la Biblia en el navegador web
             </h2>
-            <div className="prose prose-slate prose-lg max-w-none text-slate-600 mb-12 text-center max-w-3xl mx-auto">
+            <div className="prose prose-slate prose-lg max-w-none text-slate-600 mb-12 text-center mx-auto">
               <p>
                 Aunque las aplicaciones móviles son extremadamente populares, millones de personas prefieren acudir a una página web para su lectura o estudio bíblico diario. Estas son las razones fundamentales de por qué la web sigue siendo la plataforma reina.
               </p>
@@ -535,14 +535,14 @@ export default function BibleWebLandingPage() {
                 </div>
               </div>
               <div className="w-full md:w-1/2 bg-white rounded-3xl p-8 border border-slate-100 shadow-xl relative overflow-hidden">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-bl from-amber-100/50 to-transparent rounded-bl-[100px]" />
-                 <h4 className="font-bold text-slate-900 text-lg mb-4 relative z-10">El equilibrio perfecto</h4>
-                 <p className="text-slate-600 text-sm leading-relaxed relative z-10 mb-4">
-                   Es importante mencionar que la inmensa mayoría de creyentes no necesitan herramientas exegéticas complejas para su día a día. De hecho, el exceso de información académica puede llegar a "secar" la experiencia devocional, convirtiendo un encuentro espiritual en un ejercicio puramente intelectual.
-                 </p>
-                 <p className="text-slate-600 text-sm leading-relaxed relative z-10 font-medium italic">
-                   "Para el 95% de tus lecturas, una página web limpia y sin distracciones como VeoBible será mucho más provechosa que una suite académica compleja."
-                 </p>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-bl from-amber-100/50 to-transparent rounded-bl-[100px]" />
+                <h4 className="font-bold text-slate-900 text-lg mb-4 relative z-10">El equilibrio perfecto</h4>
+                <p className="text-slate-600 text-sm leading-relaxed relative z-10 mb-4">
+                  Es importante mencionar que la inmensa mayoría de creyentes no necesitan herramientas exegéticas complejas para su día a día. De hecho, el exceso de información académica puede llegar a "secar" la experiencia devocional, convirtiendo un encuentro espiritual en un ejercicio puramente intelectual.
+                </p>
+                <p className="text-slate-600 text-sm leading-relaxed relative z-10 font-medium italic">
+                  "Para el 95% de tus lecturas, una página web limpia y sin distracciones como VeoBible será mucho más provechosa que una suite académica compleja."
+                </p>
               </div>
             </div>
           </div>
@@ -554,7 +554,7 @@ export default function BibleWebLandingPage() {
             <h2 className="text-3xl font-display font-extrabold text-slate-950 tracking-tight text-center mb-12">
               Guía práctica: Cómo organizar tu estudio bíblico en la computadora
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
               <div className="space-y-4">
                 <div className="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center font-bold text-xl shadow-md">1</div>
@@ -728,7 +728,7 @@ export default function BibleWebLandingPage() {
                   Esto suele deberse a cuestiones de derechos de autor (Copyright). Las traducciones modernas más populares (como la NVI, NTV o LBLA) no son de dominio público; pertenecen a sociedades bíblicas editoriales. Las páginas web deben pagar licencias costosas o llegar a acuerdos corporativos muy estrictos para poder mostrar esos textos completos en internet. Solo las traducciones muy antiguas (como la Reina-Valera antigua) son libres de derechos en todos los países.
                 </div>
               </details>
-              
+
               <details className="group bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
                 <summary className="flex items-center justify-between cursor-pointer p-6 font-bold text-slate-900 text-lg list-none">
                   ¿Puedo escuchar la Biblia en audio desde una página web?
