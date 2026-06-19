@@ -150,17 +150,17 @@ export default function Home() {
           {landingPages.length > 0 && (
             <div className="mb-12 text-center md:text-left">
               <div className="flex items-center gap-3 mb-6 justify-center md:justify-start">
-                <div className="h-px bg-border flex-grow max-w-[40px] md:hidden" />
+                <div className="h-px bg-border grow max-w-[40px] md:hidden" />
                 <h4 className="font-bold text-foreground text-sm uppercase tracking-wider">
                   Guías y Recursos Recomendados
                 </h4>
-                <div className="h-px bg-border flex-grow max-w-[40px] md:hidden" />
+                <div className="h-px bg-border grow max-w-[40px] md:hidden" />
               </div>
               <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {landingPages.map((page) => (
                   <li key={page.path}>
-                    <Link 
-                      href={page.path} 
+                    <Link
+                      href={page.path}
                       className="group flex items-center p-3 rounded-xl border border-transparent hover:border-border hover:bg-muted/50 transition-all duration-300"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary mr-3 transition-colors shrink-0" />
