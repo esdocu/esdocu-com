@@ -14,6 +14,7 @@ interface CompetitorData {
   audio: string;
   price: string;
   easeOfUse: string;
+  url: string;
 }
 
 export function ComparisonTable() {
@@ -23,6 +24,7 @@ export function ComparisonTable() {
     youversion: {
       name: "YouVersion (Bible.com)",
       focus: "Devocional diario, planes de lectura y comunidad.",
+      url: "https://www.bible.com",
       ads: (
         <div className="flex items-center gap-1.5 text-emerald-700">
           <Check className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
@@ -38,6 +40,7 @@ export function ComparisonTable() {
     gateway: {
       name: "Bible Gateway",
       focus: "Consulta rápida y búsqueda de textos paralelos.",
+      url: "https://www.biblegateway.com",
       ads: (
         <div className="flex items-center gap-1.5 text-red-700 font-medium">
           <X className="h-4.5 w-4.5 text-red-500 shrink-0" />
@@ -53,6 +56,7 @@ export function ComparisonTable() {
     biblehub: {
       name: "Bible Hub",
       focus: "Estudio exegético profundo, concordancia y comentarios.",
+      url: "https://biblehub.com",
       ads: (
         <div className="flex items-center gap-1.5 text-red-700 font-medium">
           <X className="h-4.5 w-4.5 text-red-500 shrink-0" />
@@ -181,6 +185,28 @@ export function ComparisonTable() {
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.easeOfUse}</td>
             </tr>
+            <tr>
+              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Visitar</td>
+              <td className="py-4 px-3 font-medium bg-amber-50/10 border-x border-amber-100/20 text-center">
+                <a
+                  href="https://veobible.com/es"
+                  target="_blank"
+                  className="inline-block w-full py-2 px-2 bg-amber-600 text-white font-bold rounded-lg shadow-sm hover:bg-amber-700 transition-colors"
+                >
+                  Ir a VeoBible
+                </a>
+              </td>
+              <td className="py-4 px-3 text-center">
+                <a
+                  href={selectedCompetitor.url}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-block w-full py-2 px-2 bg-slate-100 text-slate-700 font-bold rounded-lg border border-slate-200 hover:bg-slate-200 transition-colors"
+                >
+                  Visitar web
+                </a>
+              </td>
+            </tr>
 
           </tbody>
         </table>
@@ -307,6 +333,49 @@ export function ComparisonTable() {
               <td className="py-5 px-6 text-slate-600">Baja (Muy saturada de enlaces y tablas)</td>
             </tr>
 
+            {/* Row 8: Visitar */}
+            <tr>
+              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20 border-b-transparent">Visitar Sitio</td>
+              <td className="py-5 px-6 font-medium bg-amber-50/20 border-x border-amber-100/30 text-center border-b-transparent">
+                <a
+                  href="https://veobible.com/es"
+                  target="_blank"
+                  className="inline-block w-full py-2.5 px-4 bg-amber-600 text-white font-bold rounded-xl shadow-sm hover:bg-amber-700 transition-colors"
+                >
+                  Ir a VeoBible
+                </a>
+              </td>
+              <td className="py-5 px-6 text-center border-b-transparent">
+                <a
+                  href="https://www.bible.com"
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-block w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors"
+                >
+                  Visitar web
+                </a>
+              </td>
+              <td className="py-5 px-6 text-center border-b-transparent">
+                <a
+                  href="https://www.biblegateway.com"
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-block w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors"
+                >
+                  Visitar web
+                </a>
+              </td>
+              <td className="py-5 px-6 text-center border-b-transparent">
+                <a
+                  href="https://biblehub.com"
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-block w-full py-2.5 px-4 bg-slate-100 text-slate-700 font-bold rounded-xl border border-slate-200 hover:bg-slate-200 transition-colors"
+                >
+                  Visitar web
+                </a>
+              </td>
+            </tr>
 
           </tbody>
         </table>

@@ -39,8 +39,8 @@ export default function BibleLandingPage() {
       ads: "100% Libre de anuncios",
       ui: "Limpia, elegante, optimizada para la lectura",
       offline: "Sí, soporte offline completo",
-      audio: "Voz natural premium con planes de audio integrados",
-      price: "Gratis (Básico) / Suscripción premium accesible",
+      audio: "Voz natural premium con reproducción nativa",
+      price: "100% Gratis (Sostenido por canales asociados)",
       easeOfUse: "Excelente (Curva de aprendizaje nula)",
       isWinner: true,
     },
@@ -383,7 +383,7 @@ export default function BibleLandingPage() {
                   </div>
 
                   <p className="text-slate-600 mb-6 leading-relaxed">
-                    Un portal de referencia legendario, ideal para buscar versículos o comparar rápidamente traducciones en paralelo. Lamentablemente, la versión web y la aplicación gratuita contienen una cantidad de publicidad invasiva insostenible para la lectura continuada. Banners parpadeantes y vídeos publicitarios interrumpen la lectura, a menos que pagues su suscripción Plus.
+                    La aplicación móvil mantiene el potente motor de búsqueda de su web original, siendo ideal para buscar palabras específicas o comparar traducciones en paralelo. Lamentablemente, la experiencia en la versión gratuita de la app se ve afectada por publicidad invasiva. Banners publicitarios permanentes en la parte inferior de la pantalla y frecuentes ventanas emergentes invitándote a pagar su suscripción Plus rompen constantemente la inmersión del tiempo devocional.
                   </p>
 
                   <div className="space-y-3.5 mb-8">
@@ -395,7 +395,7 @@ export default function BibleLandingPage() {
                       </li>
                       <li className="flex items-start gap-2.5 text-sm text-slate-600">
                         <X className="h-4.5 w-4.5 text-red-500 shrink-0 mt-0.5" />
-                        <span><strong>Publicidad molesta:</strong> Banners que ensucian la experiencia estética y lectora.</span>
+                        <span><strong>Publicidad molesta:</strong> Banners constantes y avisos de mejora (upselling).</span>
                       </li>
                     </ul>
                   </div>
@@ -535,24 +535,24 @@ export default function BibleLandingPage() {
                 Tener la mejor app instalada es solo el primer paso. Aquí tienes 3 consejos probados para mantener la consistencia en tu devocional diario.
               </p>
             </div>
-            
+
             <div className="flex flex-col gap-8">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">1</div>
+                <div className="shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">1</div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Asigna un tiempo y lugar innegociables</h3>
                   <p className="text-slate-600 leading-relaxed">Ya sea por la mañana junto a tu café o antes de dormir, vincula tu lectura a un hábito existente. La consistencia en el horario y lugar programa a tu cerebro para esperar ese momento del día. Con el tiempo, verás que si un día te saltas la lectura, tu mente la reclamará naturalmente como hace con cualquier otro hábito sólido.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">2</div>
+                <div className="shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">2</div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Desactiva las notificaciones</h3>
                   <p className="text-slate-600 leading-relaxed">Cuando abras tu aplicación de lectura, activa el modo "No molestar" en tu teléfono. La lectura profunda requiere foco; una notificación de WhatsApp puede arruinar 15 minutos de concentración.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">3</div>
+                <div className="shrink-0 w-12 h-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xl">3</div>
                 <div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Comienza con un plan de lectura pequeño</h3>
                   <p className="text-slate-600 leading-relaxed">No intentes leer toda la Biblia en 30 días si nunca has mantenido el hábito. Empieza leyendo un capítulo de los Proverbios o del Evangelio de Juan cada día. Proverbios tiene 31 capítulos, uno por cada día del mes, y cada uno es breve y lleno de sabiduría aplicable. La constancia de cinco minutos diarios es infinitamente más valiosa que una sesión de dos horas que solo haces una vez por semana.</p>
