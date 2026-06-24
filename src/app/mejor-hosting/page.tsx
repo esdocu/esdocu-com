@@ -46,14 +46,18 @@ export default function HostingLandingPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Product",
-            name: "El Mejor Hosting en 2026",
+            "@type": "Article",
+            headline: "El Mejor Hosting en 2026",
             image: "https://esdocu.com/images/hosting-comparison.png",
             description:
               "Análisis comparativo de los mejores proveedores de hosting web. Comparamos Hostinger, Bluehost, SiteGround y GoDaddy.",
-            brand: {
-              "@type": "Brand",
+            author: {
+              "@type": "Person",
               name: "Hosting Comparado",
+            },
+            publisher: {
+              "@type": "Organization",
+              name: "Esdocu",
             }
           }),
         }}

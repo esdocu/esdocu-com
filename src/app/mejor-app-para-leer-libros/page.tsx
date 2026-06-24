@@ -83,19 +83,23 @@ export default function BooksLandingPage() {
       {/* Force Light Theme Client Component */}
       <ForceLightTheme />
 
-      {/* JSON-LD Structured Data for Google Rich Snippets (Stars Rating) */}
+      {/* JSON-LD Structured Data for Google Rich Snippets */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             "@context": "https://schema.org",
-            "@type": "Product",
-            "name": "Mejores apps para leer libros gratis en 2026",
+            "@type": "Article",
+            "headline": "Mejores apps para leer libros gratis en 2026",
             "image": "https://esdocu.com/images/wordsus-mockup.png",
             "description": "Análisis comparativo de las mejores aplicaciones para leer libros gratis. Comparamos Wordsus, Kindle, Google Play Libros y Wattpad.",
-            "brand": {
-              "@type": "Brand",
+            "author": {
+              "@type": "Person",
               "name": "Lectura Digital"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Esdocu"
             }
           })
         }}
