@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, ArrowRight } from "lucide-react";
 
 type CompetitorKey = "expressvpn" | "surfshark" | "cyberghost";
 
@@ -15,6 +15,7 @@ interface CompetitorData {
   noLogs: React.ReactNode;
   streaming: React.ReactNode;
   support: string;
+  url: string;
 }
 
 export function VpnComparisonTable() {
@@ -46,6 +47,7 @@ export function VpnComparisonTable() {
         </div>
       ),
       support: "Chat 24/7 en inglés, muy rápido.",
+      url: "https://www.expressvpn.com",
     },
     surfshark: {
       name: "Surfshark",
@@ -71,6 +73,7 @@ export function VpnComparisonTable() {
         </div>
       ),
       support: "Chat 24/7, soporte parcial en español.",
+      url: "https://www.surfshark.com",
     },
     cyberghost: {
       name: "CyberGhost",
@@ -96,6 +99,7 @@ export function VpnComparisonTable() {
         </div>
       ),
       support: "Chat 24/7 en inglés, 45 días de garantía.",
+      url: "https://www.cyberghostvpn.com",
     },
   };
 
@@ -218,6 +222,31 @@ export function VpnComparisonTable() {
                 Chat 24/7, soporte en español.
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.support}</td>
+            </tr>
+            <tr>
+              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Visitar</td>
+              <td className="py-4 px-3 bg-violet-50/10 border-x border-violet-100/20">
+                <a
+                  href="https://nordvpn.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Visitar NordVPN
+                  <ArrowRight className="h-3 w-3" />
+                </a>
+              </td>
+              <td className="py-4 px-3 text-slate-600">
+                <a
+                  href={selectedCompetitor.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Visitar {selectedCompetitor.name}
+                  <ArrowRight className="h-3 w-3" />
+                </a>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -357,6 +386,36 @@ export function VpnComparisonTable() {
               <td className="py-5 px-6 text-slate-600">Chat 24/7 en inglés, muy rápido.</td>
               <td className="py-5 px-6 text-slate-600">Chat 24/7, soporte parcial en español.</td>
               <td className="py-5 px-6 text-slate-600">Chat 24/7 en inglés, 45 días de garantía.</td>
+            </tr>
+
+            <tr>
+              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20">Visitar Web</td>
+              <td className="py-5 px-6 bg-violet-50/20 border-x border-violet-100/30">
+                <a
+                  href="https://nordvpn.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                >
+                  Visitar NordVPN
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.expressvpn.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar ExpressVPN <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.surfshark.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar Surfshark <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.cyberghostvpn.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar CyberGhost <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
             </tr>
 
           </tbody>

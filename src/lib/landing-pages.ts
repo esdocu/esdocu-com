@@ -8,6 +8,7 @@ export const ES_LANDING_PAGES: LandingPage[] = [
   { path: "/mejor-hosting", title: "El Mejor Hosting", locale: "es" },
   { path: "/mejor-vps", title: "El Mejor VPS", locale: "es" },
   { path: "/mejor-vpn", title: "La Mejor VPN", locale: "es" },
+  { path: "/mejor-hosting-wordpress", title: "El Mejor Hosting WordPress", locale: "es" },
 ];
 
 export function getLandingPagesByLocale(locale: string): LandingPage[] {

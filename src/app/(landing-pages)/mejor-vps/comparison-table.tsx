@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Check, X, Star } from "lucide-react";
+import { Check, X, Star, ArrowRight } from "lucide-react";
 
 type CompetitorKey = "digitalocean" | "linode" | "vultr";
 
@@ -16,6 +16,7 @@ interface CompetitorData {
   rootAccess: React.ReactNode;
   support: string;
   panel: string;
+  url: string;
 }
 
 export function VpsComparisonTable() {
@@ -38,6 +39,7 @@ export function VpsComparisonTable() {
       ),
       support: "Tickets y comunidad, plan premium de pago.",
       panel: "Panel propio limpio, sin cPanel/WHM incluido.",
+      url: "https://www.digitalocean.com",
     },
     linode: {
       name: "Linode (Akamai)",
@@ -55,6 +57,7 @@ export function VpsComparisonTable() {
       ),
       support: "Tickets 24/7, sin chat en español.",
       panel: "Cloud Manager propio, sin panel de hosting.",
+      url: "https://www.linode.com",
     },
     vultr: {
       name: "Vultr",
@@ -72,6 +75,7 @@ export function VpsComparisonTable() {
       ),
       support: "Tickets 24/7, sin soporte en español.",
       panel: "Panel propio básico, sin cPanel incluido.",
+      url: "https://www.vultr.com",
     },
   };
 
@@ -188,6 +192,31 @@ export function VpsComparisonTable() {
                 Chat 24/7 en español, respuesta rápida.
               </td>
               <td className="py-4 px-3 text-slate-600">{selectedCompetitor.support}</td>
+            </tr>
+            <tr>
+              <td className="py-4 px-3.5 font-bold text-slate-900 bg-slate-50/10">Visitar</td>
+              <td className="py-4 px-3 bg-violet-50/10 border-x border-violet-100/20">
+                <a
+                  href="https://www.hostg.xyz/SHJlB"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-white bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Visitar Hostinger
+                  <ArrowRight className="h-3 w-3" />
+                </a>
+              </td>
+              <td className="py-4 px-3 text-slate-600">
+                <a
+                  href={selectedCompetitor.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Visitar {selectedCompetitor.name}
+                  <ArrowRight className="h-3 w-3" />
+                </a>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -308,6 +337,36 @@ export function VpsComparisonTable() {
                 <div className="flex items-center gap-1.5 text-amber-700">
                   Backups opcionales (+20% del plan)
                 </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td className="py-5 px-6 font-bold text-slate-900 bg-slate-50/20">Visitar Web</td>
+              <td className="py-5 px-6 bg-violet-50/20 border-x border-violet-100/30">
+                <a
+                  href="https://www.hostg.xyz/SHJlB"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-white bg-violet-600 hover:bg-violet-700 px-4 py-2 rounded-lg transition-colors shadow-sm"
+                >
+                  Visitar Hostinger
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.digitalocean.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar DigitalOcean <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.linode.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar Linode <ArrowRight className="h-3.5 w-3.5" />
+                </a>
+              </td>
+              <td className="py-5 px-6 text-slate-600">
+                <a href="https://www.vultr.com" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors">
+                  Visitar Vultr <ArrowRight className="h-3.5 w-3.5" />
+                </a>
               </td>
             </tr>
 

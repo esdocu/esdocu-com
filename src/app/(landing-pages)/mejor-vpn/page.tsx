@@ -717,16 +717,23 @@ export default function VpnLandingPage() {
       </main>
 
       <footer className="border-t border-slate-200/60 bg-white py-12 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-violet-600" />
-            <span className="font-display font-bold text-lg tracking-tight text-slate-900">
-              VPN<span className="text-violet-600 font-medium">Comparado</span>
-            </span>
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-violet-600" />
+              <span className="font-display font-bold text-lg tracking-tight text-slate-900">
+                VPN<span className="text-violet-600 font-medium">Comparado</span>
+              </span>
+            </div>
+            <p className="text-slate-400 text-xs text-center md:text-left">
+              © {new Date().getFullYear()} VPN Comparado. Todos los derechos reservados.
+            </p>
           </div>
-          <p className="text-slate-400 text-xs text-center md:text-left">
-            © {new Date().getFullYear()} VPN Comparado. Todos los derechos reservados. Análisis independiente no afiliado.
-          </p>
+          <div className="border-t border-slate-100 pt-6">
+            <p className="text-slate-400 text-[11px] leading-relaxed text-center max-w-3xl mx-auto">
+              <strong className="text-slate-500">Aviso:</strong> Este sitio contiene enlaces de afiliado, lo que significa que podemos recibir una comisión si realizas una compra a través de ellos, sin costo adicional para ti. Nuestro análisis es completamente honesto, objetivo y basado en nuestra experiencia real con cada proveedor. Las comisiones de afiliado nos ayudan a mantener este sitio y seguir creando contenido de calidad.
+            </p>
+          </div>
         </div>
       </footer>
     </div>
